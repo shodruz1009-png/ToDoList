@@ -413,18 +413,8 @@
 <body>
 
 <!-- Google Login Overlay -->
-<div id="fb-login-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:#0E0E12;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px">
-  <div style="text-align:center">
-    <div style="font-size:56px;margin-bottom:12px">✅</div>
-    <div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:700;color:#fff;margin-bottom:6px">ToDoListUz</div>
-    <div style="font-size:14px;color:rgba(255,255,255,0.45);margin-bottom:32px">Barcha qurilmalarda bir xil ma'lumot</div>
-    <button onclick="signInWithGoogle()" style="display:flex;align-items:center;gap:12px;margin:0 auto;padding:14px 28px;border-radius:14px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-size:15px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s" onmouseover="this.style.background='rgba(255,255,255,0.14)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">
-      <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20H24v8h11.3C33.6 32.6 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 19.6-8 19.6-20 0-1.3-.1-2.7-.4-4z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 19 13 24 13c3 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.4 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-1.9 13.5-5l-6.2-5.2C29.5 35.6 26.9 36 24 36c-5.3 0-9.7-3.4-11.3-8.1l-6.6 5.1C9.7 39.6 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20H24v8h11.3c-.8 2.3-2.3 4.2-4.3 5.5l6.2 5.2C41.5 35.1 44 30 44 24c0-1.3-.1-2.7-.4-4z"/></svg>
-      Google bilan kirish
-    </button>
-    <div id="fb-login-status" style="margin-top:14px;font-size:12px;color:rgba(255,255,255,0.35)"></div>
-  </div>
-</div>
+<!-- fb-login-overlay moved to profile tab -->
+<div id="fb-login-overlay" style="display:none"></div>
 
 <!-- Sync status indicator -->
 <div id="fb-sync-status" style="display:none;position:fixed;bottom:70px;right:16px;z-index:500;background:rgba(124,92,252,0.15);border:1px solid rgba(124,92,252,0.3);border-radius:10px;padding:6px 12px;font-size:11px;color:#B48EFF;pointer-events:none">⟳ Saqlanmoqda...</div>
@@ -505,6 +495,7 @@
     <button class="tab"        id="tab-chest"   draggable="true" data-tab="chest"   onclick="showTab('chest')">🎲 Chest</button>
     <button class="tab"        id="tab-tarix"   draggable="true" data-tab="tarix"   onclick="showTab('tarix')">📋 Tarix</button>
     <button class="tab"        id="tab-pomo"    draggable="true" data-tab="pomo"    onclick="showTab('pomo')">⏱️ Pomodoro</button>
+    <button class="tab"        id="tab-ielts"   draggable="true" data-tab="ielts"   onclick="showTab('ielts')">📊 IELTS</button>
   </div>
 
   <div id="view-tasks">
@@ -527,7 +518,17 @@
     </div>
     <!-- Chest inline natija -->
     <div id="chest-inline-result" style="display:none;border-radius:14px;padding:14px 16px;margin-bottom:8px;animation:slideIn 0.25s ease"></div>
-    <div id="daily-section"><div class="section-title">Bugungi vazifalar</div><div class="task-list" id="daily-list"></div></div>
+    <div id="daily-section">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:20px 0 10px">
+        <div class="section-title" style="margin:0">Bugungi vazifalar</div>
+        <button id="inbox-toggle-btn" onclick="toggleInboxMode()" title="Barcha vazifalarni ko'rish" style="display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--text-muted);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.2s;white-space:nowrap">
+          <span id="inbox-toggle-icon" style="font-size:14px">📥</span>
+          <span id="inbox-toggle-label">Hammasi</span>
+          <span id="inbox-toggle-check" style="width:16px;height:16px;border-radius:4px;border:2px solid var(--border);background:transparent;display:inline-flex;align-items:center;justify-content:center;font-size:10px;transition:all 0.2s;flex-shrink:0"></span>
+        </button>
+      </div>
+      <div class="task-list" id="daily-list"></div>
+    </div>
     <div id="once-section"><div class="section-title">Bir martalik</div><div class="task-list" id="once-list"></div></div>
     <div class="empty" id="empty-msg" style="display:none"><div class="empty-icon">📝</div>Hali vazifa yo'q.<br>Yuqoridagi tugma bilan boshlang!</div>
   </div>
@@ -695,6 +696,15 @@
       </div>
     </div>
 
+    <!-- IELTS Natijalar qisqa ko'rinish -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px 18px;margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-size:11px;color:var(--text-muted);letter-spacing:0.06em;text-transform:uppercase;font-weight:600">📊 IELTS Natijalar</div>
+        <button onclick="openIeltsResultModal()" style="padding:5px 12px;border-radius:999px;border:1px solid rgba(124,92,252,0.4);background:rgba(124,92,252,0.12);color:#B48EFF;font-size:12px;cursor:pointer;font-family:DM Sans,sans-serif">+ Yangi</button>
+      </div>
+      <div id="profile-ielts-summary"></div>
+    </div>
+
     <!-- 2. Bu hafta statistika -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
       <div style="background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.25);border-radius:14px;padding:14px 16px">
@@ -809,6 +819,33 @@
 
 
 
+    <!-- Google Sync Card -->
+    <div id="profile-sync-card" style="border-radius:16px;padding:16px 18px;margin-bottom:12px;border:1px solid var(--border);background:var(--surface)">
+      <div style="font-size:11px;color:var(--text-muted);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:12px;font-weight:600">☁️ Qurilmalar sinxronizatsiyasi</div>
+      <!-- Not logged in state -->
+      <div id="sync-logged-out">
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">2 ta qurilmadan 1 ta akount boshqarish uchun Google bilan kiring</div>
+        <button onclick="signInWithGoogle()" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:var(--text);font-size:14px;font-weight:500;cursor:pointer;font-family:DM Sans,sans-serif;transition:all 0.2s;box-sizing:border-box" onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">
+          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20H24v8h11.3C33.6 32.6 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 19.6-8 19.6-20 0-1.3-.1-2.7-.4-4z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 19 13 24 13c3 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.4 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-1.9 13.5-5l-6.2-5.2C29.5 35.6 26.9 36 24 36c-5.3 0-9.7-3.4-11.3-8.1l-6.6 5.1C9.7 39.6 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20H24v8h11.3c-.8 2.3-2.3 4.2-4.3 5.5l6.2 5.2C41.5 35.1 44 30 44 24c0-1.3-.1-2.7-.4-4z"/></svg>
+          Google bilan kirish
+        </button>
+        <div id="fb-login-status" style="margin-top:8px;font-size:12px;color:var(--text-muted);text-align:center"></div>
+      </div>
+      <!-- Logged in state -->
+      <div id="sync-logged-in" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div id="sync-avatar" style="width:36px;height:36px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;overflow:hidden"></div>
+            <div>
+              <div id="sync-name" style="font-size:14px;font-weight:600;color:var(--text)"></div>
+              <div style="font-size:11px;color:#34D399;margin-top:1px">✅ Sinxronlashgan</div>
+            </div>
+          </div>
+          <button onclick="signOut()" style="padding:6px 14px;border-radius:999px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:12px;cursor:pointer">Chiqish</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 8. Xavfli zona -->
     <div style="background:var(--surface);border:1px solid rgba(248,113,113,0.2);border-radius:16px;padding:16px;margin-bottom:12px">
       <div style="font-size:11px;color:var(--text-dim);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:10px">⚠️ Xavfli zona</div>
@@ -818,6 +855,32 @@
 
   </div>
 
+
+  <!-- IELTS RESULTS VIEW -->
+  <div id="view-ielts" style="display:none;padding:4px 0">
+
+    <!-- Overall average card -->
+    <div id="ielts-overall-card" style="background:linear-gradient(135deg,rgba(124,92,252,0.18),rgba(180,142,255,0.08));border:1px solid rgba(124,92,252,0.4);border-radius:16px;padding:16px 20px;margin-bottom:14px;text-align:center;display:none">
+      <div style="font-size:11px;color:#B48EFF;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px">📊 O'rtacha Overall</div>
+      <div id="ielts-overall-val" style="font-family:Syne,sans-serif;font-size:52px;font-weight:700;color:#B48EFF;line-height:1">—</div>
+      <div id="ielts-overall-sub" style="font-size:12px;color:var(--text-muted);margin-top:4px"></div>
+    </div>
+
+    <!-- Add result button -->
+    <button onclick="openIeltsResultModal()" style="width:100%;padding:13px;border-radius:14px;border:2px dashed rgba(124,92,252,0.4);background:rgba(124,92,252,0.06);color:#B48EFF;font-size:14px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;margin-bottom:16px;transition:all 0.2s" onmouseover="this.style.borderColor='rgba(124,92,252,0.8)'" onmouseout="this.style.borderColor='rgba(124,92,252,0.4)'">
+      + Yangi natija qo'shish
+    </button>
+
+    <!-- History -->
+    <div style="font-size:11px;color:var(--text-dim);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:10px">📋 Natijalar tarixi</div>
+    <div id="ielts-history-list" style="display:flex;flex-direction:column;gap:8px"></div>
+    <div id="ielts-history-empty" style="text-align:center;padding:40px 20px;color:var(--text-dim);font-size:14px">
+      <div style="font-size:40px;margin-bottom:12px;opacity:0.5">📊</div>
+      Hali natija kiritilmagan
+    </div>
+  </div>
+
+  <!-- IELTS Result Modal -->
   <div id="view-tarix" style="display:none;padding:4px 0">
     <!-- MOOD TRACKER TUGMASI -->
     <button onclick="openMoodCalendar()" style="width:100%;margin-bottom:14px;padding:13px 18px;background:var(--surface);border:1px solid var(--border);border-radius:14px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all 0.2s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
@@ -2098,7 +2161,7 @@ function claimReward(id) {
 function deleteReward(id) { S.rewards=S.rewards.filter(x=>x.id!==id); save(); renderRewards(); }
 
 function showTab(tab) {
-  ['tasks','rewards','spin','profile','tarix','secret','goals','chest','pomo'].forEach(function(t){
+  ['tasks','rewards','spin','profile','tarix','secret','goals','chest','pomo','ielts'].forEach(function(t){
     var el=document.getElementById('view-'+t);
     if(el) el.style.display=tab===t?'':'none';
     var tb=document.getElementById('tab-'+t);
@@ -2106,12 +2169,13 @@ function showTab(tab) {
   });
   if(tab==='rewards') renderRewards();
   if(tab==='spin') renderSpin();
-  if(tab==='profile') { renderProfile(); renderStats(); renderCalendar(); renderIeltsCountdown(); }
+  if(tab==='profile') { renderProfile(); renderStats(); renderCalendar(); renderIeltsCountdown(); renderProfileIeltsSummary(); }
   if(tab==='tarix') renderTarix();
   if(tab==='secret') openSecretTab();
   if(tab==='goals') { checkNotifBar(); renderGoals(); }
   if(tab==='chest') renderChest();
   if(tab==='pomo') renderPomoTab();
+  if(tab==='ielts') renderIeltsTab();
   if(tab==='stats') { showTab('profile'); return; }
   if(tab==='calendar') { showTab('profile'); return; }
 }
@@ -2633,13 +2697,38 @@ function render() {
 }
 
 // Qidiruv + render task list
+// === INBOX MODE: barcha vazifalarni ko'rsatish ===
+var inboxMode = false;
+function toggleInboxMode() {
+  inboxMode = !inboxMode;
+  var btn = document.getElementById('inbox-toggle-btn');
+  var lbl = document.getElementById('inbox-toggle-label');
+  var chk = document.getElementById('inbox-toggle-check');
+  var ico = document.getElementById('inbox-toggle-icon');
+  if (inboxMode) {
+    btn.style.borderColor = 'var(--accent)';
+    btn.style.background = 'rgba(124,92,252,0.12)';
+    btn.style.color = 'var(--text)';
+    chk.style.background = 'var(--accent)';
+    chk.style.borderColor = 'var(--accent)';
+    chk.textContent = '✓';
+    ico.textContent = '📬';
+    lbl.textContent = 'Hammasi';
+  } else {
+    btn.style.borderColor = 'var(--border)';
+    btn.style.background = 'var(--surface)';
+    btn.style.color = 'var(--text-muted)';
+    chk.style.background = 'transparent';
+    chk.style.borderColor = 'var(--border)';
+    chk.textContent = '';
+    ico.textContent = '📥';
+    lbl.textContent = 'Hammasi';
+  }
+  renderTaskList();
+}
+
 function renderTaskList() {
   var q = (document.getElementById('task-search')||{value:''}).value.toLowerCase().trim();
-  var todayTasks = S.tasks.filter(function(t) {
-    if (t.postponedTo && t.postponedTo > today()) return false;
-    return taskDueToday(t);
-  });
-  var onceTasks = S.tasks.filter(function(t){ return t.repeat==='once' && (!t.postponedTo || t.postponedTo<=today()) && !t.done; });
 
   function applySearch(arr) {
     if (!q) return arr;
@@ -2647,10 +2736,6 @@ function renderTaskList() {
       return t.name.toLowerCase().includes(q) || (t.note && t.note.toLowerCase().includes(q));
     });
   }
-
-  var recurringTasks = todayTasks.filter(function(t){ return t.repeat!=='once'; });
-  var filteredRecurring = applySearch(recurringTasks);
-  var filteredOnce = applySearch(onceTasks);
 
   function sortByOrder(arr) {
     if (!S.taskOrder || S.taskOrder.length === 0) return arr;
@@ -2663,24 +2748,69 @@ function renderTaskList() {
   var dList=document.getElementById('daily-list'); dList.innerHTML='';
   var oList=document.getElementById('once-list'); oList.innerHTML='';
 
-  if (q) {
-    sortByOrder(filteredRecurring).forEach(function(t){ dList.appendChild(makeTaskEl(t)); });
-    filteredOnce.forEach(function(t){ oList.appendChild(makeTaskEl(t)); });
-  } else {
-    var active=sortByOrder(filteredRecurring.filter(function(t){return !t.done&&!t.skipped;}));
-    var skipped=sortByOrder(filteredRecurring.filter(function(t){return t.skipped&&!t.done;}));
-    active.forEach(function(t){dList.appendChild(makeTaskEl(t));});
-    if(skipped.length){
-      var s=document.createElement('div');s.style.cssText='font-size:11px;color:var(--text-dim);letter-spacing:0.06em;text-transform:uppercase;padding:8px 2px 4px;';s.textContent="O'tkazildi";dList.appendChild(s);
-      skipped.forEach(function(t){dList.appendChild(makeTaskEl(t));});
-    }
-    filteredOnce.forEach(function(t){oList.appendChild(makeTaskEl(t));});
-  }
+  // Update section title based on mode
+  var secTitle = document.querySelector('#daily-section .section-title');
+  if (secTitle) secTitle.textContent = inboxMode ? 'Barcha vazifalar' : 'Bugungi vazifalar';
 
-  document.getElementById('daily-section').style.display=filteredRecurring.length?'':'none';
-  document.getElementById('once-section').style.display=filteredOnce.length?'':'none';
-  var emptyMsg = document.getElementById('empty-msg');
-  if (emptyMsg) emptyMsg.style.display=(filteredRecurring.length===0&&filteredOnce.length===0)?'':'none';
+  if (inboxMode) {
+    // INBOX: show ALL tasks regardless of date
+    var allRecurring = applySearch(S.tasks.filter(function(t){ return t.repeat !== 'once'; }));
+    var allOnce = applySearch(S.tasks.filter(function(t){ return t.repeat === 'once' && !t.done; }));
+
+    // Group recurring by when they appear: today vs future
+    var tdStr = today();
+    var todayRecurring = allRecurring.filter(function(t){ return !t.postponedTo || t.postponedTo <= tdStr; });
+    var futureRecurring = allRecurring.filter(function(t){ return t.postponedTo && t.postponedTo > tdStr; });
+
+    sortByOrder(todayRecurring.filter(function(t){ return !t.done && !t.skipped; })).forEach(function(t){ dList.appendChild(makeTaskEl(t)); });
+    var skippedR = sortByOrder(todayRecurring.filter(function(t){ return t.skipped && !t.done; }));
+    if (skippedR.length) {
+      var sl=document.createElement('div'); sl.style.cssText='font-size:11px;color:var(--text-dim);letter-spacing:0.06em;text-transform:uppercase;padding:8px 2px 4px;'; sl.textContent="O'tkazildi"; dList.appendChild(sl);
+      skippedR.forEach(function(t){ dList.appendChild(makeTaskEl(t)); });
+    }
+    if (futureRecurring.length) {
+      var fl=document.createElement('div'); fl.style.cssText='font-size:11px;color:var(--accent);letter-spacing:0.06em;text-transform:uppercase;padding:12px 2px 4px;display:flex;align-items:center;gap:6px;'; fl.innerHTML='<span>📅</span> Keyingi kunlarga rejalashtirilgan'; dList.appendChild(fl);
+      futureRecurring.sort(function(a,b){ return (a.postponedTo||'').localeCompare(b.postponedTo||''); }).forEach(function(t){ dList.appendChild(makeTaskEl(t)); });
+    }
+
+    allOnce.forEach(function(t){ oList.appendChild(makeTaskEl(t)); });
+
+    document.getElementById('daily-section').style.display = (allRecurring.length) ? '' : 'none';
+    document.getElementById('once-section').style.display = allOnce.length ? '' : 'none';
+    var emptyMsg = document.getElementById('empty-msg');
+    if (emptyMsg) emptyMsg.style.display = (allRecurring.length === 0 && allOnce.length === 0) ? '' : 'none';
+
+  } else {
+    // NORMAL: only today's tasks
+    var todayTasks = S.tasks.filter(function(t) {
+      if (t.postponedTo && t.postponedTo > today()) return false;
+      return taskDueToday(t);
+    });
+    var onceTasks = S.tasks.filter(function(t){ return t.repeat==='once' && (!t.postponedTo || t.postponedTo<=today()) && !t.done; });
+
+    var recurringTasks = todayTasks.filter(function(t){ return t.repeat!=='once'; });
+    var filteredRecurring = applySearch(recurringTasks);
+    var filteredOnce = applySearch(onceTasks);
+
+    if (q) {
+      sortByOrder(filteredRecurring).forEach(function(t){ dList.appendChild(makeTaskEl(t)); });
+      filteredOnce.forEach(function(t){ oList.appendChild(makeTaskEl(t)); });
+    } else {
+      var active=sortByOrder(filteredRecurring.filter(function(t){return !t.done&&!t.skipped;}));
+      var skipped=sortByOrder(filteredRecurring.filter(function(t){return t.skipped&&!t.done;}));
+      active.forEach(function(t){dList.appendChild(makeTaskEl(t));});
+      if(skipped.length){
+        var s=document.createElement('div');s.style.cssText='font-size:11px;color:var(--text-dim);letter-spacing:0.06em;text-transform:uppercase;padding:8px 2px 4px;';s.textContent="O'tkazildi";dList.appendChild(s);
+        skipped.forEach(function(t){dList.appendChild(makeTaskEl(t));});
+      }
+      filteredOnce.forEach(function(t){oList.appendChild(makeTaskEl(t));});
+    }
+
+    document.getElementById('daily-section').style.display=filteredRecurring.length?'':'none';
+    document.getElementById('once-section').style.display=filteredOnce.length?'':'none';
+    var emptyMsg = document.getElementById('empty-msg');
+    if (emptyMsg) emptyMsg.style.display=(filteredRecurring.length===0&&filteredOnce.length===0)?'':'none';
+  }
 }
 
 load();
@@ -4473,19 +4603,22 @@ setInterval(function(){ if(document.getElementById('view-spin') && document.getE
   var FIXED_ORDER = ['tasks','rewards','goals','chest','tarix','pomo'];
 
   function getTabOrder() {
+    try {
+      var saved = JSON.parse(localStorage.getItem(TAB_ORDER_KEY) || 'null');
+      if (saved && saved.length > 0) return saved;
+    } catch(e) {}
     return FIXED_ORDER;
   }
 
   function saveTabOrder(order) {
-    // Tab tartibi saqlanmaydi — har doim FIXED_ORDER
+    try { localStorage.setItem(TAB_ORDER_KEY, JSON.stringify(order)); } catch(e) {}
   }
 
   function applyTabOrder() {
     var bar = document.getElementById('tabs-bar');
     if (!bar) return;
-    // localStorage da eski tartib bo'lsa o'chirib tashlash
-    try { localStorage.removeItem(TAB_ORDER_KEY); } catch(e) {}
-    FIXED_ORDER.forEach(function(tabId) {
+    var order = getTabOrder();
+    order.forEach(function(tabId) {
       var btn = document.getElementById('tab-' + tabId);
       if (btn) bar.appendChild(btn);
     });
@@ -5097,7 +5230,7 @@ function renderBadges() {
   var startX = 0, startY = 0;
 
   function saveTabOrder(order) {
-    // Tab tartibi saqlanmaydi — har doim fixed tartib
+    try { localStorage.setItem(TAB_ORDER_KEY, JSON.stringify(order)); } catch(e) {}
   }
 
   document.addEventListener('DOMContentLoaded', function() {
@@ -6557,6 +6690,260 @@ window.addEventListener('load', function() {
   tryInitFirebase();
 });
 
+
+// ============================================================
+// IELTS RESULTS
+// ============================================================
+
+var listeningBandTable = [[39,9],[37,8.5],[35,8],[33,7.5],[30,7],[27,6.5],[23,6],[20,5.5],[16,5],[13,4.5],[10,4],[8,3.5],[6,3],[4,2.5],[3,2]];
+var readingBandTable   = [[39,9],[37,8.5],[35,8],[33,7.5],[30,7],[27,6.5],[23,6],[19,5.5],[15,5],[13,4.5],[10,4],[8,3.5],[6,3],[4,2.5],[3,2]];
+var currentIeltsSection = null;
+
+function rawToBand(raw, table) {
+  raw = parseInt(raw);
+  if (isNaN(raw)) return null;
+  for (var i = 0; i < table.length; i++) {
+    if (raw >= table[i][0]) return table[i][1];
+  }
+  return 1.0;
+}
+
+function selectIeltsSection(sec) {
+  currentIeltsSection = sec;
+  var cols = { listening:'#60A5FA', reading:'#34D399', writing:'#F5A623', speaking:'#F87171' };
+  var ids  = { listening:'ielts-sec-l', reading:'ielts-sec-r', writing:'ielts-sec-w', speaking:'ielts-sec-s' };
+  Object.keys(ids).forEach(function(s) {
+    var btn = document.getElementById(ids[s]);
+    if (!btn) return;
+    btn.style.borderWidth = s === sec ? '2px' : '2px';
+    btn.style.opacity = s === sec ? '1' : '0.5';
+    btn.style.transform = s === sec ? 'scale(1.03)' : 'scale(1)';
+  });
+  var rawRow  = document.getElementById('ielts-raw-row');
+  var bandRow = document.getElementById('ielts-band-row');
+  if (sec === 'listening' || sec === 'reading') {
+    rawRow.style.display  = 'block';
+    bandRow.style.display = 'none';
+    document.getElementById('ielts-res-band-preview').style.color = cols[sec];
+  } else {
+    rawRow.style.display  = 'none';
+    bandRow.style.display = 'block';
+  }
+}
+
+function calcIeltsBandLive() {
+  var raw = document.getElementById('ielts-res-raw').value;
+  var table = currentIeltsSection === 'listening' ? listeningBandTable : readingBandTable;
+  var band = rawToBand(raw, table);
+  document.getElementById('ielts-res-band-preview').textContent = band !== null ? band.toFixed(1) : '—';
+}
+
+function openIeltsResultModal() {
+  currentIeltsSection = null;
+  var today = new Date();
+  var dd = String(today.getDate()).padStart(2,'0');
+  var mm = String(today.getMonth()+1).padStart(2,'0');
+  var yyyy = today.getFullYear();
+  document.getElementById('ielts-res-date').value = yyyy+'-'+mm+'-'+dd;
+  document.getElementById('ielts-res-raw').value  = '';
+  document.getElementById('ielts-res-band').value = '';
+  document.getElementById('ielts-res-band-preview').textContent = '—';
+  document.getElementById('ielts-raw-row').style.display  = 'none';
+  document.getElementById('ielts-band-row').style.display = 'none';
+  // reset section button opacity
+  ['ielts-sec-l','ielts-sec-r','ielts-sec-w','ielts-sec-s'].forEach(function(id){
+    var b = document.getElementById(id); if(b) b.style.opacity='1'; b.style.transform='scale(1)';
+  });
+  document.getElementById('ielts-result-modal').style.display = 'flex';
+}
+
+function closeIeltsResultModal() {
+  document.getElementById('ielts-result-modal').style.display = 'none';
+}
+
+function saveIeltsResult() {
+  if (!currentIeltsSection) { toast('Section tanlang!'); return; }
+  var date = document.getElementById('ielts-res-date').value;
+  if (!date) { toast('Sana kiriting!'); return; }
+
+  var entry = { id: Date.now(), date: date, section: currentIeltsSection };
+
+  if (currentIeltsSection === 'listening' || currentIeltsSection === 'reading') {
+    var raw = parseInt(document.getElementById('ielts-res-raw').value);
+    if (isNaN(raw) || raw < 0 || raw > 40) { toast('Raw score kiriting (0-40)!'); return; }
+    var table = currentIeltsSection === 'listening' ? listeningBandTable : readingBandTable;
+    entry.raw  = raw;
+    entry.band = rawToBand(raw, table);
+  } else {
+    var band = parseFloat(document.getElementById('ielts-res-band').value);
+    if (isNaN(band) || band < 0 || band > 9) { toast('Band score kiriting (0-9)!'); return; }
+    // Round to nearest 0.5
+    entry.band = Math.round(band * 2) / 2;
+  }
+
+  if (!S.ieltsResults) S.ieltsResults = [];
+  S.ieltsResults.unshift(entry);
+  save();
+  closeIeltsResultModal();
+  renderIeltsTab();
+  renderProfileIeltsSummary();
+  toast('Natija saqlandi!');
+}
+
+function deleteIeltsResult(id) {
+  var ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9000;display:flex;align-items:center;justify-content:center;padding:20px';
+  var box = document.createElement('div');
+  box.style.cssText = 'background:var(--surface);border:2px solid rgba(248,113,113,0.3);border-radius:20px;padding:26px 22px;width:100%;max-width:320px;text-align:center';
+  box.innerHTML =
+    '<div style="font-size:36px;margin-bottom:10px">🗑️</div>' +
+    '<div style="font-family:Syne,sans-serif;font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px">Natijani o\'chirish</div>' +
+    '<div style="font-size:13px;color:var(--text-muted);margin-bottom:20px">Bu natija butunlay o\'chib ketadi!</div>' +
+    '<div style="display:flex;gap:10px">' +
+      '<button id="ielts-del-no"  style="flex:1;padding:12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:14px;cursor:pointer;font-family:DM Sans,sans-serif">Bekor</button>' +
+      '<button id="ielts-del-yes" style="flex:2;padding:12px;border-radius:12px;border:none;background:#F87171;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:DM Sans,sans-serif">Ha, o\'chirish</button>' +
+    '</div>';
+  ov.appendChild(box);
+  document.body.appendChild(ov);
+  document.getElementById('ielts-del-no').onclick  = function(){ ov.remove(); };
+  document.getElementById('ielts-del-yes').onclick = function(){
+    ov.remove();
+    S.ieltsResults = (S.ieltsResults || []).filter(function(r){ return r.id !== id; });
+    save();
+    renderIeltsTab();
+    renderProfileIeltsSummary();
+    toast('🗑️ Natija o\'chirildi');
+  };
+  ov.addEventListener('click', function(e){ if(e.target === ov) ov.remove(); });
+}
+
+function calcOverallAverage() {
+  var results = S.ieltsResults || [];
+  if (!results.length) return null;
+  // Use all band scores
+  var bands = results.map(function(r){ return r.band; }).filter(function(b){ return b != null; });
+  if (!bands.length) return null;
+  var avg = bands.reduce(function(a,b){return a+b;},0) / bands.length;
+  return Math.round(avg * 2) / 2;
+}
+
+function renderIeltsTab() {
+  var results = S.ieltsResults || [];
+  var histEl  = document.getElementById('ielts-history-list');
+  var emptyEl = document.getElementById('ielts-history-empty');
+  var overallCard = document.getElementById('ielts-overall-card');
+
+  // Overall average
+  var overall = calcOverallAverage();
+  if (overall !== null) {
+    overallCard.style.display = 'block';
+    document.getElementById('ielts-overall-val').textContent = overall.toFixed(1);
+    var count = results.length;
+    document.getElementById('ielts-overall-sub').textContent = count + ' ta natija asosida';
+  } else {
+    overallCard.style.display = 'none';
+  }
+
+  // History
+  if (!results.length) {
+    histEl.innerHTML = '';
+    emptyEl.style.display = 'block';
+    return;
+  }
+  emptyEl.style.display = 'none';
+
+  var sectionInfo = {
+    listening: { label:'🎧 Listening', color:'#60A5FA', bg:'rgba(96,165,250,0.08)', border:'rgba(96,165,250,0.25)' },
+    reading:   { label:'📖 Reading',   color:'#34D399', bg:'rgba(52,211,153,0.08)', border:'rgba(52,211,153,0.25)' },
+    writing:   { label:'✍️ Writing',   color:'#F5A623', bg:'rgba(245,166,35,0.08)', border:'rgba(245,166,35,0.25)' },
+    speaking:  { label:'🗣️ Speaking',  color:'#F87171', bg:'rgba(248,113,113,0.08)', border:'rgba(248,113,113,0.25)' }
+  };
+
+  histEl.innerHTML = results.map(function(r) {
+    var info = sectionInfo[r.section] || { label: r.section, color:'#B48EFF', bg:'rgba(124,92,252,0.08)', border:'rgba(124,92,252,0.25)' };
+    var scoreStr = r.raw !== undefined ? r.raw+'/40' : '';
+    var bandStr  = r.band !== undefined ? 'Band ' + r.band.toFixed(1) : '';
+    return '<div style="background:'+info.bg+';border:1px solid '+info.border+';border-radius:14px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between">' +
+      '<div>' +
+        '<div style="font-size:13px;font-weight:600;color:'+info.color+';margin-bottom:4px">'+info.label+'</div>' +
+        '<div style="font-size:11px;color:var(--text-muted)">📅 '+r.date+'</div>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:10px">' +
+        '<div style="text-align:right">' +
+          (scoreStr ? '<div style="font-family:Syne,sans-serif;font-size:18px;font-weight:700;color:'+info.color+'">'+scoreStr+'</div>' : '') +
+          '<div style="font-size:13px;font-weight:600;color:'+info.color+'">'+bandStr+'</div>' +
+        '</div>' +
+        '<button onclick="deleteIeltsResult('+r.id+')" style="background:none;border:none;color:var(--text-dim);font-size:16px;cursor:pointer;padding:4px">🗑</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+function renderProfileIeltsSummary() {
+  var el = document.getElementById('profile-ielts-summary');
+  if (!el) return;
+  var results = S.ieltsResults || [];
+  if (results.length === 0) {
+    el.innerHTML = '<div style="text-align:center;padding:12px 0;color:var(--text-dim);font-size:13px">Hali natija kiritilmagan<br><span style="font-size:11px;opacity:0.6">+ Yangi tugmasi bilan qoshing</span></div>';
+    return;
+  }
+
+  var sections = [
+    { key:'listening', label:'🎧 L', color:'#60A5FA' },
+    { key:'reading',   label:'📖 R', color:'#34D399' },
+    { key:'writing',   label:'✍️ W', color:'#F5A623' },
+    { key:'speaking',  label:'🗣️ S', color:'#F87171' }
+  ];
+
+  // Helper: compute median of an array
+  function calcMedian(arr) {
+    if (!arr.length) return null;
+    var sorted = arr.slice().sort(function(a,b){return a-b;});
+    var mid = Math.floor(sorted.length / 2);
+    var med = sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid-1] + sorted[mid]) / 2;
+    // Round to nearest 0.5 (IELTS standard)
+    return Math.round(med * 2) / 2;
+  }
+
+  var cards = sections.map(function(s) {
+    // Filter last 5 results for this specific section
+    var sectionResults = results.filter(function(r){ return r.section === s.key; }).slice(0, 5);
+    var vals = sectionResults.map(function(r){ return r.band; }).filter(function(v){ return v !== null && v !== undefined; });
+    var median = calcMedian(vals);
+    var topText = median !== null ? median.toFixed(1) : '—';
+    var botText = vals.length > 0 ? ('median (' + vals.length + ')') : '';
+    return '<div style="flex:1;text-align:center;background:var(--surface2);border-radius:10px;padding:8px 4px">'+
+      '<div style="font-size:10px;color:'+s.color+';margin-bottom:4px">'+s.label+'</div>'+
+      '<div style="font-size:15px;font-weight:700;color:'+s.color+';font-family:Syne,sans-serif">'+topText+'</div>'+
+      (botText?'<div style="font-size:10px;color:var(--text-dim);margin-top:2px">'+botText+'</div>':'')+
+    '</div>';
+  }).join('');
+
+  // Overall: median of all section medians that exist
+  var sectionMedians = sections.map(function(s){
+    var sectionResults = results.filter(function(r){ return r.section === s.key; }).slice(0, 5);
+    var vals = sectionResults.map(function(r){ return r.band; }).filter(function(v){ return v !== null && v !== undefined; });
+    return calcMedian(vals);
+  }).filter(function(v){ return v !== null; });
+
+  var overallMedian = calcMedian(sectionMedians);
+  var totalCount = results.slice(0, 5).length;
+  var countLabel = totalCount === 1 ? '1 ta natija' : totalCount + ' ta natija';
+
+  var overallHtml = overallMedian !== null
+    ? '<div style="text-align:center;margin-top:10px;padding:8px;background:rgba(124,92,252,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;gap:8px">'+
+        '<span style="font-size:11px;color:#B48EFF">Overall median: </span>'+
+        '<span style="font-size:18px;font-weight:700;color:#B48EFF;font-family:Syne,sans-serif">'+overallMedian.toFixed(1)+'</span>'+
+        '<span style="font-size:10px;color:var(--text-dim);background:var(--surface2);border-radius:999px;padding:2px 8px">so\'ngi '+countLabel+'</span>'+
+      '</div>'
+    : '';
+
+  var historyBtn = results.length > 1
+    ? '<div style="text-align:center;margin-top:8px"><button onclick="showTab(&quot;ielts&quot;)" style="background:none;border:none;color:var(--text-dim);font-size:12px;cursor:pointer">Barcha '+results.length+' ta natija ➜</button></div>'
+    : '';
+
+  el.innerHTML = '<div style="display:flex;gap:6px">'+cards+'</div>'+overallHtml+historyBtn;
+}
+
 function signInWithGoogle() {
   if (!fbAuth) {
     document.getElementById('fb-login-status').textContent = 'Firebase yuklanmadi, qayta urining...';
@@ -6577,15 +6964,29 @@ function fbInitDone() {
 
 // Auth state listener
 fbAuth.onAuthStateChanged(function(user) {
-  var overlay = document.getElementById('fb-login-overlay');
+  var loggedOut = document.getElementById('sync-logged-out');
+  var loggedIn  = document.getElementById('sync-logged-in');
   if (user) {
     fbUser = user;
-    if (overlay) overlay.style.display = 'none';
+    if (loggedOut) loggedOut.style.display = 'none';
+    if (loggedIn)  loggedIn.style.display  = 'block';
+    // Show user info
+    var nameEl   = document.getElementById('sync-name');
+    var avatarEl = document.getElementById('sync-avatar');
+    if (nameEl)   nameEl.textContent = user.displayName || user.email || '';
+    if (avatarEl) {
+      if (user.photoURL) {
+        avatarEl.innerHTML = '<img src="'+user.photoURL+'" style="width:100%;height:100%;object-fit:cover" />';
+      } else {
+        avatarEl.textContent = (user.displayName||'U').charAt(0).toUpperCase();
+      }
+    }
     // Load data from Firestore
     fbLoadData();
   } else {
     fbUser = null;
-    if (overlay) overlay.style.display = 'flex';
+    if (loggedOut) loggedOut.style.display = 'block';
+    if (loggedIn)  loggedIn.style.display  = 'none';
   }
 });
 
@@ -6663,6 +7064,44 @@ function fbSaveData() {
   }, 2000);
 } // end fbInitDone
 </script>
+
+
+  <!-- IELTS Result Modal -->
+  <div id="ielts-result-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:300;align-items:center;justify-content:center;padding:20px">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:24px;width:100%;max-width:360px">
+      <div style="font-family:Syne,sans-serif;font-size:18px;font-weight:700;margin-bottom:6px">📊 IELTS Natija</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:18px">Bitta section natijasini kiriting</div>
+      <div style="margin-bottom:14px">
+        <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:8px">Section tanlang</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <button id="ielts-sec-l" onclick="selectIeltsSection('listening')" style="padding:10px;border-radius:10px;border:2px solid rgba(96,165,250,0.3);background:rgba(96,165,250,0.06);color:#60A5FA;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s">🎧 Listening</button>
+          <button id="ielts-sec-r" onclick="selectIeltsSection('reading')"   style="padding:10px;border-radius:10px;border:2px solid rgba(52,211,153,0.3);background:rgba(52,211,153,0.06);color:#34D399;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s">📖 Reading</button>
+          <button id="ielts-sec-w" onclick="selectIeltsSection('writing')"   style="padding:10px;border-radius:10px;border:2px solid rgba(245,166,35,0.3);background:rgba(245,166,35,0.06);color:#F5A623;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s">✍️ Writing</button>
+          <button id="ielts-sec-s" onclick="selectIeltsSection('speaking')"  style="padding:10px;border-radius:10px;border:2px solid rgba(248,113,113,0.3);background:rgba(248,113,113,0.06);color:#F87171;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s">🗣️ Speaking</button>
+        </div>
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px">Sana</label>
+        <input type="date" id="ielts-res-date" style="width:100%;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:DM Sans,sans-serif;outline:none;box-sizing:border-box" />
+      </div>
+      <div id="ielts-raw-row" style="display:none;margin-bottom:14px">
+        <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px">Raw score (0-40)</label>
+        <div style="display:flex;gap:10px;align-items:center">
+          <input type="number" id="ielts-res-raw" min="0" max="40" placeholder="masalan: 19" oninput="calcIeltsBandLive()" style="flex:1;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:DM Sans,sans-serif;outline:none" />
+          <div style="font-size:13px;color:var(--text-muted)">&#8594;</div>
+          <div id="ielts-res-band-preview" style="min-width:64px;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;font-size:16px;font-weight:700;text-align:center;color:var(--text)">—</div>
+        </div>
+      </div>
+      <div id="ielts-band-row" style="display:none;margin-bottom:14px">
+        <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px">Band score (0-9, masalan: 6.5)</label>
+        <input type="number" id="ielts-res-band" min="0" max="9" step="0.5" placeholder="masalan: 6.5" style="width:100%;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:DM Sans,sans-serif;outline:none;box-sizing:border-box" />
+      </div>
+      <div style="display:flex;gap:10px">
+        <button onclick="closeIeltsResultModal()" style="flex:1;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:14px;cursor:pointer">Bekor</button>
+        <button onclick="saveIeltsResult()" style="flex:2;padding:12px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer">💾 Saqlash</button>
+      </div>
+    </div>
+  </div>
 
 </body>
 </html>
