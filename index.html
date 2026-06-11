@@ -139,7 +139,9 @@
   body.light .search-bar { background:#fff; }
 
   /* Note field */
-  .task-note { font-size:11px; color:var(--text-muted); margin-top:3px; font-style:italic; overflow-wrap:break-word; word-break:break-word; }
+  .task-note { font-size:13px; color:var(--text-muted); margin-top:4px; font-style:italic; overflow-wrap:break-word; word-break:break-word; }
+  .task-note-collapsed { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .task-note-toggle { font-size:11px; color:var(--accent); background:none; border:none; cursor:pointer; padding:2px 0; font-family:'DM Sans',sans-serif; margin-top:2px; display:block; }
 
   /* Pomodoro */
   .pomo-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:600; display:flex; align-items:center; justify-content:center; padding:20px; }
@@ -198,7 +200,7 @@
 
   .section-title { font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-dim); margin:20px 0 10px; font-weight:500; }
   .task-list { display:flex; flex-direction:column; gap:8px; }
-  .task-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 14px; display:flex; align-items:center; gap:10px; transition:all 0.2s; animation:slideIn 0.25s ease; }
+  .task-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; display:flex; align-items:center; gap:10px; transition:all 0.2s; animation:slideIn 0.25s ease; }
   @keyframes slideIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
   .task-card:hover { border-color:var(--border-hover); }
   .task-card.done { opacity:0.4; }
@@ -211,18 +213,18 @@
   .check-btn svg { width:14px; height:14px; }
 
   .task-info { flex:1; min-width:0; }
-  .task-name { font-size:15px; color:var(--text); white-space:normal; overflow-wrap:break-word; word-break:break-word; }
-  .task-sub { font-size:11px; color:var(--text-dim); margin-top:2px; }
+  .task-name { font-size:16px; color:var(--text); white-space:normal; overflow-wrap:break-word; word-break:break-word; }
+  .task-sub { font-size:12px; color:var(--text-dim); margin-top:2px; }
 
   .task-badges { display:flex; align-items:center; gap:5px; flex-shrink:0; flex-wrap:wrap; justify-content:flex-end; }
-  .badge { font-size:11px; padding:3px 8px; border-radius:999px; font-weight:500; white-space:nowrap; }
+  .badge { font-size:12px; padding:4px 9px; border-radius:999px; font-weight:500; white-space:nowrap; }
   .badge-repeat { background:rgba(124,92,252,0.15); color:#B48EFF; border:1px solid rgba(124,92,252,0.25); }
   .badge-once { background:var(--surface2); color:var(--text-muted); border:1px solid var(--border); }
   .badge-weekly { background:rgba(96,165,250,0.15); color:#60A5FA; border:1px solid rgba(96,165,250,0.25); }
   .badge-coins { color:var(--gold); background:var(--gold-dim); border:1px solid rgba(245,166,35,0.2); }
 
   .task-actions { display:flex; gap:4px; flex-shrink:0; }
-  .act-btn { background:none; border:1px solid var(--border); border-radius:7px; cursor:pointer; padding:5px 8px; font-size:11px; color:var(--text-muted); transition:all 0.15s; white-space:nowrap; font-family:'DM Sans',sans-serif; }
+  .act-btn { background:none; border:1px solid var(--border); border-radius:7px; cursor:pointer; padding:6px 10px; font-size:13px; color:var(--text-muted); transition:all 0.15s; white-space:nowrap; font-family:'DM Sans',sans-serif; }
   .act-btn:hover { border-color:var(--border-hover); color:var(--text); }
   .act-btn.del:hover { border-color:var(--red); color:var(--red); }
 
@@ -359,11 +361,108 @@
   .pin-ok:hover { background:#9B7FFF;border-color:transparent; }
 
   /* ===== MOBIL RESPONSIVE ===== */
+  /* Mobile action menu */
+  .task-menu-btn {
+    display: none;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 18px;
+    color: var(--text-muted);
+    cursor: pointer;
+    flex-shrink: 0;
+    line-height: 1;
+    transition: all 0.15s;
+  }
+  .task-menu-btn:hover { border-color: var(--border-hover); color: var(--text); }
+
+  .task-action-sheet {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 900;
+  }
+  .task-action-sheet.open { display: block; }
+  .task-action-sheet-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+  }
+  .task-action-sheet-inner {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-radius: 20px 20px 0 0;
+    padding: 16px 16px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .sheet-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sheet-badge-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+  }
+  .sheet-btn {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    font-size: 15px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .sheet-btn:hover { border-color: var(--border-hover); }
+  .sheet-btn.danger { color: var(--red); border-color: rgba(248,113,113,0.2); background: rgba(248,113,113,0.06); }
+  .sheet-btn.done-btn { color: var(--green); border-color: rgba(52,211,153,0.25); background: rgba(52,211,153,0.06); }
+  .sheet-cancel-btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text-muted);
+    font-size: 15px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+
   @media (max-width: 480px) {
     .wrapper { padding: 20px 14px 100px; }
-    .header { margin-bottom: 20px; gap: 8px; }
+    .header { margin-bottom: 20px; gap: 6px; flex-wrap: nowrap; }
     .header-left h1 { font-size: 22px; }
-    .coins-pill { padding: 6px 12px; font-size: 13px; }
+    .coins-pill { padding: 6px 10px; font-size: 12px; }
+    /* Telefonda header compactroq */
+    #header-spin-btn { padding: 0 8px !important; font-size: 12px !important; }
+    #header-spin-btn #header-spin-label { display: none; }
+    #theme-toggle { width: 32px !important; height: 32px !important; font-size: 15px !important; }
+    #level-badge { padding: 4px 7px !important; }
+    #level-badge span { font-size: 11px !important; }
+    .coins-text { display: none; }
+    /* Ismi va avatar joyi */
+    .header-left > div { gap: 6px !important; }
     .stats { gap: 7px; margin-bottom: 14px; }
     .stat { padding: 10px 10px; border-radius: 12px; }
     .stat-label { font-size: 10px; }
@@ -372,10 +471,23 @@
     .tabs { flex-wrap: nowrap !important; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
     .tabs::-webkit-scrollbar { display: none; }
     .tab { padding: 8px 14px; font-size: 12px; white-space: nowrap; flex-shrink: 0; }
-    .task-card { padding: 10px 10px; gap: 8px; border-radius: 12px; }
+    /* Compact mobile task card */
+    .task-card { padding: 11px 12px; gap: 8px; border-radius: 12px; flex-wrap: nowrap; align-items: center; }
+    .task-info { min-width: 0; flex: 1; }
     .task-name { font-size: 14px; }
-    .check-btn { width: 26px; height: 26px; }
+    .check-btn { width: 26px; height: 26px; flex-shrink: 0; }
     .badge { font-size: 10px; padding: 2px 6px; }
+    /* On mobile: hide badges & actions, show them in task-info row instead */
+    .task-badges { display: none; }
+    .task-actions { display: none; }
+    .task-menu-btn { display: flex; align-items: center; justify-content: center; }
+    /* Show compact badges below task name */
+    .task-info-badges {
+      display: flex !important;
+      gap: 5px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
     .act-btn { padding: 6px 8px; font-size: 12px; min-width: 32px; min-height: 32px; display: flex; align-items: center; justify-content: center; }
     .modal-overlay { padding: 10px; align-items: flex-end; }
     .modal { border-radius: 20px 20px 14px 14px; padding: 20px 16px; max-height: 88vh; overflow-y: auto; }
@@ -440,9 +552,9 @@
         style="height:36px;padding:0 12px;border-radius:18px;border:1px solid var(--border);background:var(--theme-toggle-bg);cursor:pointer;display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:var(--text);transition:all 0.2s;flex-shrink:0;font-family:'DM Sans',sans-serif">
         🎰 <span id="header-spin-label">Spin</span>
       </button>
-      <div class="coins-pill">
+      <div class="coins-pill" id="header-coins-pill" onclick="showTab('profile')" style="cursor:pointer">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M9 9h4.5a1.5 1.5 0 010 3H9m0 3h4.5"/></svg>
-        <span id="coins-display">0</span> tanga
+        <span id="coins-display">0</span><span class="coins-text"> tanga</span>
       </div>
     </div>
   </div>
@@ -518,17 +630,7 @@
     </div>
     <!-- Chest inline natija -->
     <div id="chest-inline-result" style="display:none;border-radius:14px;padding:14px 16px;margin-bottom:8px;animation:slideIn 0.25s ease"></div>
-    <div id="daily-section">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin:20px 0 10px">
-        <div class="section-title" style="margin:0">Bugungi vazifalar</div>
-        <button id="inbox-toggle-btn" onclick="toggleInboxMode()" title="Barcha vazifalarni ko'rish" style="display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--text-muted);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.2s;white-space:nowrap">
-          <span id="inbox-toggle-icon" style="font-size:14px">📥</span>
-          <span id="inbox-toggle-label">Hammasi</span>
-          <span id="inbox-toggle-check" style="width:16px;height:16px;border-radius:4px;border:2px solid var(--border);background:transparent;display:inline-flex;align-items:center;justify-content:center;font-size:10px;transition:all 0.2s;flex-shrink:0"></span>
-        </button>
-      </div>
-      <div class="task-list" id="daily-list"></div>
-    </div>
+    <div id="daily-section"><div class="section-title">Bugungi vazifalar</div><div class="task-list" id="daily-list"></div></div>
     <div id="once-section"><div class="section-title">Bir martalik</div><div class="task-list" id="once-list"></div></div>
     <div class="empty" id="empty-msg" style="display:none"><div class="empty-icon">📝</div>Hali vazifa yo'q.<br>Yuqoridagi tugma bilan boshlang!</div>
   </div>
@@ -646,6 +748,7 @@
       <div id="profile-age-big" style="font-size:14px;color:var(--text-muted)">Yosh kiritilmagan</div>
       <button onclick="showProfileEdit()" style="margin-top:10px;padding:7px 18px;border-radius:999px;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:13px;cursor:pointer">&#9998; Tahrirlash</button>
     </div>
+
 
 
     <!-- IELTS Deadline Countdown -->
@@ -819,6 +922,13 @@
 
 
 
+    <!-- 8. Xavfli zona -->
+    <div style="background:var(--surface);border:1px solid rgba(248,113,113,0.2);border-radius:16px;padding:16px;margin-bottom:12px">
+      <div style="font-size:11px;color:var(--text-dim);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:10px">⚠️ Xavfli zona</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.6">Akkauntni <b style="color:var(--text)">qayta boshlash</b> barcha vazifalar, tangalar, streak va statistikani o'chirib tashlaydi. Bu amalni qaytarib bo'lmaydi!</div>
+      <button onclick="confirmRestart()" style="width:100%;padding:12px;border-radius:12px;border:1px solid rgba(248,113,113,0.4);background:rgba(248,113,113,0.08);color:#F87171;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">🔄 Akkauntni qayta boshlash</button>
+    </div>
+
     <!-- Google Sync Card -->
     <div id="profile-sync-card" style="border-radius:16px;padding:16px 18px;margin-bottom:12px;border:1px solid var(--border);background:var(--surface)">
       <div style="font-size:11px;color:var(--text-muted);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:12px;font-weight:600">☁️ Qurilmalar sinxronizatsiyasi</div>
@@ -846,12 +956,6 @@
       </div>
     </div>
 
-    <!-- 8. Xavfli zona -->
-    <div style="background:var(--surface);border:1px solid rgba(248,113,113,0.2);border-radius:16px;padding:16px;margin-bottom:12px">
-      <div style="font-size:11px;color:var(--text-dim);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:10px">⚠️ Xavfli zona</div>
-      <div style="font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.6">Akkauntni <b style="color:var(--text)">qayta boshlash</b> barcha vazifalar, tangalar, streak va statistikani o'chirib tashlaydi. Bu amalni qaytarib bo'lmaydi!</div>
-      <button onclick="confirmRestart()" style="width:100%;padding:12px;border-radius:12px;border:1px solid rgba(248,113,113,0.4);background:rgba(248,113,113,0.08);color:#F87171;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">🔄 Akkauntni qayta boshlash</button>
-    </div>
 
   </div>
 
@@ -1554,6 +1658,7 @@ function load() {
 }
 
 function save() {
+  S._savedAt = Date.now();
   try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {}
 }
 
@@ -1915,8 +2020,7 @@ function checkDailyComplete() {
   });
   if(todayTasks.length===0) return;
   var allDone = todayTasks.every(function(t){ return t.done || t.skipped; });
-  if(allDone && !S.dailyBonusDate) { S.dailyBonusDate = today(); }
-  else if(allDone && S.dailyBonusDate !== today()) {
+  if(allDone && S.dailyBonusDate !== today()) {
     S.dailyBonusDate = today();
     addXP(XP_DAILY_100, 'Kunlik 100%');
     toast('🌟 100% Bajarildi! +'+XP_DAILY_100+' XP bonus!');
@@ -1967,7 +2071,6 @@ function unskipTask(id) {
   t.skipped=false; t.skippedDate=null;
   if(t.repeat==='interval') t.nextDate=today();
   S.coins+=1;
-  if(!S.totalCoins) S.totalCoins=0; S.totalCoins+=1;
   addTarixLog('in',t.name+' qaytarildi',1);
   toast('Qaytarildi! +1 tanga qaytdi');
   save(); render();
@@ -2337,8 +2440,13 @@ function makeTaskEl(t) {
     </button>
     <div class="task-info">
       <div class="task-name">${t.emoji ? `<span style="margin-right:5px;font-size:16px">${t.emoji}</span>` : ''}${esc(t.name)}</div>
-      ${t.note ? `<div class="task-note">📝 ${esc(t.note)}</div>` : ''}
+      ${t.note ? `<div class="task-note task-note-collapsed" id="note-${t.id}">📝 ${esc(t.note)}</div><button class="task-note-toggle" onclick="toggleNote(${t.id},this)">Ko'proq ▼</button>` : ''}
       ${subText?`<div class="task-sub">${subText}</div>`:''}
+      <div class="task-info-badges" style="display:none">
+        <span class="badge ${rl.cls}">${rl.text}</span>
+        ${diffBadge(t.diff||1)}
+        <span class="badge badge-coins">+${t.coins}🪙</span>
+      </div>
     </div>
     <div class="task-badges">
       <span class="badge ${rl.cls}">${rl.text}</span>
@@ -2353,6 +2461,7 @@ function makeTaskEl(t) {
       <button class="act-btn" onclick="editTask(${t.id})" title="Tahrirlash">✏️</button>
       <button class="act-btn del" onclick="deleteTask(${t.id})">🗑</button>
     </div>
+    <button class="task-menu-btn" onclick="openTaskSheet(${t.id})" title="Amallar">⋯</button>
   `;
 
   // Drag events  only on handle
@@ -2697,38 +2806,13 @@ function render() {
 }
 
 // Qidiruv + render task list
-// === INBOX MODE: barcha vazifalarni ko'rsatish ===
-var inboxMode = false;
-function toggleInboxMode() {
-  inboxMode = !inboxMode;
-  var btn = document.getElementById('inbox-toggle-btn');
-  var lbl = document.getElementById('inbox-toggle-label');
-  var chk = document.getElementById('inbox-toggle-check');
-  var ico = document.getElementById('inbox-toggle-icon');
-  if (inboxMode) {
-    btn.style.borderColor = 'var(--accent)';
-    btn.style.background = 'rgba(124,92,252,0.12)';
-    btn.style.color = 'var(--text)';
-    chk.style.background = 'var(--accent)';
-    chk.style.borderColor = 'var(--accent)';
-    chk.textContent = '✓';
-    ico.textContent = '📬';
-    lbl.textContent = 'Hammasi';
-  } else {
-    btn.style.borderColor = 'var(--border)';
-    btn.style.background = 'var(--surface)';
-    btn.style.color = 'var(--text-muted)';
-    chk.style.background = 'transparent';
-    chk.style.borderColor = 'var(--border)';
-    chk.textContent = '';
-    ico.textContent = '📥';
-    lbl.textContent = 'Hammasi';
-  }
-  renderTaskList();
-}
-
 function renderTaskList() {
   var q = (document.getElementById('task-search')||{value:''}).value.toLowerCase().trim();
+  var todayTasks = S.tasks.filter(function(t) {
+    if (t.postponedTo && t.postponedTo > today()) return false;
+    return taskDueToday(t);
+  });
+  var onceTasks = S.tasks.filter(function(t){ return t.repeat==='once' && (!t.postponedTo || t.postponedTo<=today()) && !t.done; });
 
   function applySearch(arr) {
     if (!q) return arr;
@@ -2736,6 +2820,10 @@ function renderTaskList() {
       return t.name.toLowerCase().includes(q) || (t.note && t.note.toLowerCase().includes(q));
     });
   }
+
+  var recurringTasks = todayTasks.filter(function(t){ return t.repeat!=='once'; });
+  var filteredRecurring = applySearch(recurringTasks);
+  var filteredOnce = applySearch(onceTasks);
 
   function sortByOrder(arr) {
     if (!S.taskOrder || S.taskOrder.length === 0) return arr;
@@ -2748,69 +2836,24 @@ function renderTaskList() {
   var dList=document.getElementById('daily-list'); dList.innerHTML='';
   var oList=document.getElementById('once-list'); oList.innerHTML='';
 
-  // Update section title based on mode
-  var secTitle = document.querySelector('#daily-section .section-title');
-  if (secTitle) secTitle.textContent = inboxMode ? 'Barcha vazifalar' : 'Bugungi vazifalar';
-
-  if (inboxMode) {
-    // INBOX: show ALL tasks regardless of date
-    var allRecurring = applySearch(S.tasks.filter(function(t){ return t.repeat !== 'once'; }));
-    var allOnce = applySearch(S.tasks.filter(function(t){ return t.repeat === 'once' && !t.done; }));
-
-    // Group recurring by when they appear: today vs future
-    var tdStr = today();
-    var todayRecurring = allRecurring.filter(function(t){ return !t.postponedTo || t.postponedTo <= tdStr; });
-    var futureRecurring = allRecurring.filter(function(t){ return t.postponedTo && t.postponedTo > tdStr; });
-
-    sortByOrder(todayRecurring.filter(function(t){ return !t.done && !t.skipped; })).forEach(function(t){ dList.appendChild(makeTaskEl(t)); });
-    var skippedR = sortByOrder(todayRecurring.filter(function(t){ return t.skipped && !t.done; }));
-    if (skippedR.length) {
-      var sl=document.createElement('div'); sl.style.cssText='font-size:11px;color:var(--text-dim);letter-spacing:0.06em;text-transform:uppercase;padding:8px 2px 4px;'; sl.textContent="O'tkazildi"; dList.appendChild(sl);
-      skippedR.forEach(function(t){ dList.appendChild(makeTaskEl(t)); });
-    }
-    if (futureRecurring.length) {
-      var fl=document.createElement('div'); fl.style.cssText='font-size:11px;color:var(--accent);letter-spacing:0.06em;text-transform:uppercase;padding:12px 2px 4px;display:flex;align-items:center;gap:6px;'; fl.innerHTML='<span>📅</span> Keyingi kunlarga rejalashtirilgan'; dList.appendChild(fl);
-      futureRecurring.sort(function(a,b){ return (a.postponedTo||'').localeCompare(b.postponedTo||''); }).forEach(function(t){ dList.appendChild(makeTaskEl(t)); });
-    }
-
-    allOnce.forEach(function(t){ oList.appendChild(makeTaskEl(t)); });
-
-    document.getElementById('daily-section').style.display = (allRecurring.length) ? '' : 'none';
-    document.getElementById('once-section').style.display = allOnce.length ? '' : 'none';
-    var emptyMsg = document.getElementById('empty-msg');
-    if (emptyMsg) emptyMsg.style.display = (allRecurring.length === 0 && allOnce.length === 0) ? '' : 'none';
-
+  if (q) {
+    sortByOrder(filteredRecurring).forEach(function(t){ dList.appendChild(makeTaskEl(t)); });
+    filteredOnce.forEach(function(t){ oList.appendChild(makeTaskEl(t)); });
   } else {
-    // NORMAL: only today's tasks
-    var todayTasks = S.tasks.filter(function(t) {
-      if (t.postponedTo && t.postponedTo > today()) return false;
-      return taskDueToday(t);
-    });
-    var onceTasks = S.tasks.filter(function(t){ return t.repeat==='once' && (!t.postponedTo || t.postponedTo<=today()) && !t.done; });
-
-    var recurringTasks = todayTasks.filter(function(t){ return t.repeat!=='once'; });
-    var filteredRecurring = applySearch(recurringTasks);
-    var filteredOnce = applySearch(onceTasks);
-
-    if (q) {
-      sortByOrder(filteredRecurring).forEach(function(t){ dList.appendChild(makeTaskEl(t)); });
-      filteredOnce.forEach(function(t){ oList.appendChild(makeTaskEl(t)); });
-    } else {
-      var active=sortByOrder(filteredRecurring.filter(function(t){return !t.done&&!t.skipped;}));
-      var skipped=sortByOrder(filteredRecurring.filter(function(t){return t.skipped&&!t.done;}));
-      active.forEach(function(t){dList.appendChild(makeTaskEl(t));});
-      if(skipped.length){
-        var s=document.createElement('div');s.style.cssText='font-size:11px;color:var(--text-dim);letter-spacing:0.06em;text-transform:uppercase;padding:8px 2px 4px;';s.textContent="O'tkazildi";dList.appendChild(s);
-        skipped.forEach(function(t){dList.appendChild(makeTaskEl(t));});
-      }
-      filteredOnce.forEach(function(t){oList.appendChild(makeTaskEl(t));});
+    var active=sortByOrder(filteredRecurring.filter(function(t){return !t.done&&!t.skipped;}));
+    var skipped=sortByOrder(filteredRecurring.filter(function(t){return t.skipped&&!t.done;}));
+    active.forEach(function(t){dList.appendChild(makeTaskEl(t));});
+    if(skipped.length){
+      var s=document.createElement('div');s.style.cssText='font-size:11px;color:var(--text-dim);letter-spacing:0.06em;text-transform:uppercase;padding:8px 2px 4px;';s.textContent="O'tkazildi";dList.appendChild(s);
+      skipped.forEach(function(t){dList.appendChild(makeTaskEl(t));});
     }
-
-    document.getElementById('daily-section').style.display=filteredRecurring.length?'':'none';
-    document.getElementById('once-section').style.display=filteredOnce.length?'':'none';
-    var emptyMsg = document.getElementById('empty-msg');
-    if (emptyMsg) emptyMsg.style.display=(filteredRecurring.length===0&&filteredOnce.length===0)?'':'none';
+    filteredOnce.forEach(function(t){oList.appendChild(makeTaskEl(t));});
   }
+
+  document.getElementById('daily-section').style.display=filteredRecurring.length?'':'none';
+  document.getElementById('once-section').style.display=filteredOnce.length?'':'none';
+  var emptyMsg = document.getElementById('empty-msg');
+  if (emptyMsg) emptyMsg.style.display=(filteredRecurring.length===0&&filteredOnce.length===0)?'':'none';
 }
 
 load();
@@ -2919,7 +2962,7 @@ function kiAns(ok,dateStr){
     saveSecretData(sd);if(_secretUnlocked)renderSecretContent();
   }catch(e){}
   if(ok){S.coins=(S.coins||0)+3;addTarixLog('in','🔐 Shaxsiy nazorat: bardosh ✅',3);save();render();toast('✅ Bardosh! +3 tanga');confetti();}
-  else{S.coins=(S.coins||0)-5;if(S.coins<0)S.coins=0;addTarixLog('out','🔐 Shaxsiy nazorat: yiqildim ❌',-5);save();render();toast('😢 Yiqildim. -5 tanga jazo!');}
+  else{S.coins=(S.coins||0)-5;addTarixLog('out','🔐 Shaxsiy nazorat: yiqildim ❌',-5);save();render();toast('😢 Yiqildim. -5 tanga jazo!');}
   setTimeout(function(){if(window._kiQ&&window._kiQ.length>0)showKI(window._kiQ.shift());},900);
 }
 setInterval(checkKI,5*60*1000);
@@ -3742,77 +3785,106 @@ function secretLog(status, when) {
   var t = (when === 'yesterday') ? yesterday() : today();
   var prevStatus = d.log[t];
 
-  // Already logged today — allow change but reverse coins first
-  if(prevStatus === 'clean' && status !== 'clean') {
-    // was clean, now fail — reverse daily coin + any streak bonus
-    S.coins = (S.coins||0) - 3;
-    S.totalCoins = (S.totalCoins||0) - 3;
-    addTarixLog('out', 'Shaxsiy nazorat: kun bekor qilindi', -3);
+  // Streak bonus: sana+milestone bo'yicha saqlash (e.g. "2026-06-11_3")
+  if(!d.streakBonusGiven) d.streakBonusGiven = {};
+  if(!d.streakBonusByDate) d.streakBonusByDate = {};
+
+  // ── 1. ROLLBACK: avvalgi tanlov effektlarini bekor qilish ──────────────────
+  if(prevStatus) {
+    if(prevStatus === 'clean') {
+      // Kunlik +3 va streak bonuslarini qaytarish
+      S.coins      = (S.coins||0)      - 3;
+      S.totalCoins = (S.totalCoins||0) - 3;
+      // Shu kun uchun berilgan streak bonusini qaytarish (bitta kalit)
+      var bonusKey = t + '_milestone';
+      if(d.streakBonusByDate[bonusKey]) {
+        var mB = d.streakBonusByDate[bonusKey];
+        S.coins      = (S.coins||0)      - mB;
+        S.totalCoins = (S.totalCoins||0) - mB;
+        delete d.streakBonusByDate[bonusKey];
+      }
+      // Tarixdan shu kunga tegishli yozuvlarni o'chirish (spam oldini olish)
+      if(S.tarix) S.tarix = S.tarix.filter(function(r){
+        return r.uniqueKey !== 'secret_clean_'+t && r.uniqueKey !== 'secret_bonus_'+t;
+      });
+    } else if(prevStatus === 'fail' || prevStatus === 'fail2x') {
+      var prevPenalty = prevStatus === 'fail2x' ? 10 : 5;
+      // coins va totalCoins ikkalasini ham qaytarish
+      S.coins      = (S.coins||0)      + prevPenalty;
+      S.totalCoins = (S.totalCoins||0) + prevPenalty;
+      // Tarixdan shu kunga tegishli jazo yozuvini o'chirish
+      if(S.tarix) S.tarix = S.tarix.filter(function(r){ return r.uniqueKey !== 'secret_fail_'+t; });
+    }
+    // secret history dan bu kun yozuvini o'chirish
+    if(d.history) d.history = d.history.filter(function(h){ return h.date !== t; });
     save();
-  } else if(prevStatus === 'fail' && status === 'clean') {
-    // was fail, now marking clean — add coins back
   }
 
   d.log[t] = status;
 
+  // ── 2. YANGI TANLOV effektlarini qo'llash ────────────────────────────────────
   if(status === 'clean') {
-    // +3 daily coin
     var coinGain = 3;
-    S.coins = (S.coins||0) + coinGain;
+    S.coins      = (S.coins||0)      + coinGain;
     S.totalCoins = (S.totalCoins||0) + coinGain;
-    addTarixLog('in', 'Shaxsiy nazorat: bugungi kun ✅', coinGain);
+    // uniqueKey bilan yozsak, fikr o'zgartirish tarixga spam qilmaydi
+    addTarixLog('in', 'Shaxsiy nazorat: bugungi kun ✅', coinGain, 'secret_clean_'+t);
 
-    // Check streak bonuses — barcha o'tilgan milestonlarni tekshir
-    if(!d.streakBonusGiven) d.streakBonusGiven = {};
+    // Streak bonuslarini tekshir (d.log[t] allaqachon 'clean' qilib yozilgan)
     var newStreak = calcSecretStreak(d.log);
     var totalCoinGain = coinGain;
-    var milestones = Object.keys(SEC_STREAK_BONUSES).map(Number).sort(function(a,b){return a-b;});
-    milestones.forEach(function(m) {
-      if(newStreak >= m && !d.streakBonusGiven[m]) {
-        var mBonus = SEC_STREAK_BONUSES[m];
-        d.streakBonusGiven[m] = true;
+    // Faqat bitta — ENG YUQORI milestone bonusi beriladi (if-else if zanjiri).
+    // streakBonusByDate[t+'_m']: bu kun uchun bonus allaqachon berilganini tekshiradi
+    // (toggle/fikr o'zgartirish holatida spam oldini oladi va rollback uchun kerak).
+    var streakBonusKey = t + '_milestone';
+    if(!d.streakBonusByDate[streakBonusKey]) {
+      var mBonus = 0, mLabel = 0;
+      if      (newStreak >= 30) { mBonus = SEC_STREAK_BONUSES[30]; mLabel = 30; }
+      else if (newStreak >= 14) { mBonus = SEC_STREAK_BONUSES[14]; mLabel = 14; }
+      else if (newStreak >= 7)  { mBonus = SEC_STREAK_BONUSES[7];  mLabel = 7;  }
+      else if (newStreak >= 3)  { mBonus = SEC_STREAK_BONUSES[3];  mLabel = 3;  }
+      if(mBonus > 0) {
+        d.streakBonusByDate[streakBonusKey] = mBonus; // rollback + spam himoya
         totalCoinGain += mBonus;
-        S.coins = (S.coins||0) + mBonus;
+        S.coins      = (S.coins||0)      + mBonus;
         S.totalCoins = (S.totalCoins||0) + mBonus;
-        addTarixLog('in', '🔥 Shaxsiy nazorat: ' + m + ' kun streak bonusi!', mBonus);
-        setTimeout(function(mn, mb){ return function(){ toast('🔥 ' + mn + ' kun streak! +' + mb + ' bonus tanga!'); }; }(m, mBonus), 400);
+        addTarixLog('in', '🔥 Shaxsiy nazorat: ' + mLabel + ' kun streak bonusi!', mBonus, 'secret_bonus_'+t);
+        setTimeout(function(ml, mb){ return function(){ toast('🔥 ' + ml + ' kun streak! +' + mb + ' bonus tanga!'); }; }(mLabel, mBonus), 400);
       }
-    });
+    }
     save();
 
-    // Log to secret history
     if(!d.history) d.history = [];
+    // unshift (filter yuqorida allaqachon bajarildi) — bir kunda bitta yozuv
     d.history.unshift({date: t, status: 'clean', coins: totalCoinGain, streak: newStreak});
     if(d.history.length > 60) d.history = d.history.slice(0, 60);
 
   } else if(status === 'fail') {
-    // Ketma-ket fail kunlarini sanash (bugundan oldingi kunlar)
     var consecutiveFails = 0;
     var checkDate = new Date();
-    checkDate.setDate(checkDate.getDate() - 1); // kechadan boshlash
+    checkDate.setDate(checkDate.getDate() - 1);
     for(var ci = 0; ci < 30; ci++) {
       var ck = checkDate.getFullYear()+'-'+String(checkDate.getMonth()+1).padStart(2,'0')+'-'+String(checkDate.getDate()).padStart(2,'0');
       if(d.log[ck] === 'fail') { consecutiveFails++; checkDate.setDate(checkDate.getDate()-1); }
       else break;
     }
-    // Agar oldingi 2 kun ham fail bo'lsa (jami 3+ kun ketma-ket) — 2x jazo
     var penalty = (consecutiveFails >= 2) ? 10 : 5;
-    S.coins = Math.max(0, (S.coins||0) - penalty);
-    S.totalCoins = Math.max(0, (S.totalCoins||0) - penalty);
-    addTarixLog('out', 'Shaxsiy nazorat: yiqildim ❌ (jazo' + (consecutiveFails >= 2 ? ', 2x⚠️' : '') + ')', -penalty);
+    S.coins      = (S.coins||0)      - penalty;
+    S.totalCoins = (S.totalCoins||0) - penalty;
+    // uniqueKey bilan: bir kunda faqat bitta jazo yozuvi
+    addTarixLog('out', 'Shaxsiy nazorat: yiqildim ❌ (jazo' + (consecutiveFails >= 2 ? ', 2x⚠️' : '') + ')', -penalty, 'secret_fail_'+t);
     save();
     setTimeout(function(){
       if(consecutiveFails >= 2) toast('⚠️ 3 kun ketma-ket! 2x jazo: -' + penalty + ' tanga!');
       else toast('😔 -' + penalty + ' tanga jazo!');
     }, 200);
 
-    // Reset streak bonuses for broken streak milestones
-    if(!d.streakBonusGiven) d.streakBonusGiven = {};
-    // Clear all streak bonuses so they can be earned again
+    // Streak singanida — milestone flaglarini tozalash (keyingi streakda qayta olsin)
     d.streakBonusGiven = {};
 
     if(!d.history) d.history = [];
     var failLabel = consecutiveFails >= 2 ? 'fail2x' : 'fail';
+    // bir kunda bitta yozuv (filter yuqorida allaqachon bajarildi)
     d.history.unshift({date: t, status: failLabel, coins: -penalty, streak: 0});
     if(d.history.length > 60) d.history = d.history.slice(0, 60);
   }
@@ -3845,16 +3917,25 @@ function secretEditLog() {
   var d = getSecretData();
   var yday = yesterday();
   var prevStatus = d.log[yday];
+  if(!d.streakBonusByDate) d.streakBonusByDate = {};
+  if(!d.streakBonusGiven) d.streakBonusGiven = {};
   if(prevStatus === 'clean') {
+    // Kunlik +3 tangani qaytarish
     S.coins = (S.coins||0) - 3;
     S.totalCoins = (S.totalCoins||0) - 3;
-    addTarixLog('out', 'Shaxsiy nazorat: javob o\'zgartirildi (bekor)', -3);
+    // Shu kun uchun berilgan streak bonusini qaytarish (bitta kalit)
+    var bonusKey = yday + '_milestone';
+    if(d.streakBonusByDate[bonusKey]) {
+      var mB = d.streakBonusByDate[bonusKey];
+      S.coins      = (S.coins||0)      - mB;
+      S.totalCoins = (S.totalCoins||0) - mB;
+      delete d.streakBonusByDate[bonusKey];
+    }
     save();
   } else if(prevStatus === 'fail' || prevStatus === 'fail2x') {
     var refund = prevStatus === 'fail2x' ? 10 : 5;
     S.coins = (S.coins||0) + refund;
     S.totalCoins = (S.totalCoins||0) + refund;
-    addTarixLog('in', 'Shaxsiy nazorat: jazo bekor qilindi', refund);
     save();
   }
   // Log va historydan o'chirish
@@ -4112,6 +4193,7 @@ function goalCheckToday(id) {
     if(g.daysCoinsGiven[t]) {
       delete g.daysCoinsGiven[t];
       S.coins = (S.coins||0) - coinAward;
+      if(S.totalCoins) S.totalCoins = Math.max(0, S.totalCoins - coinAward);
       addTarixLog('out', g.name+' bekor', -coinAward, 'goal_'+g.id);
     }
     toast('Belgi olib tashlandi');
@@ -4121,6 +4203,8 @@ function goalCheckToday(id) {
     if(!g.daysCoinsGiven[t]) {
       g.daysCoinsGiven[t] = 1;
       S.coins = (S.coins||0) + coinAward;
+      if(!S.totalCoins) S.totalCoins = 0;
+      S.totalCoins += coinAward;
       addTarixLog('in', g.emoji+' '+g.name, coinAward, 'goal_'+g.id);
       toast(g.emoji + ' +1 kun! +' + coinAward + ' tanga! Davom eting!');
       confetti();
@@ -4603,22 +4687,19 @@ setInterval(function(){ if(document.getElementById('view-spin') && document.getE
   var FIXED_ORDER = ['tasks','rewards','goals','chest','tarix','pomo'];
 
   function getTabOrder() {
-    try {
-      var saved = JSON.parse(localStorage.getItem(TAB_ORDER_KEY) || 'null');
-      if (saved && saved.length > 0) return saved;
-    } catch(e) {}
     return FIXED_ORDER;
   }
 
   function saveTabOrder(order) {
-    try { localStorage.setItem(TAB_ORDER_KEY, JSON.stringify(order)); } catch(e) {}
+    // Tab tartibi saqlanmaydi — har doim FIXED_ORDER
   }
 
   function applyTabOrder() {
     var bar = document.getElementById('tabs-bar');
     if (!bar) return;
-    var order = getTabOrder();
-    order.forEach(function(tabId) {
+    // localStorage da eski tartib bo'lsa o'chirib tashlash
+    try { localStorage.removeItem(TAB_ORDER_KEY); } catch(e) {}
+    FIXED_ORDER.forEach(function(tabId) {
       var btn = document.getElementById('tab-' + tabId);
       if (btn) bar.appendChild(btn);
     });
@@ -5230,7 +5311,7 @@ function renderBadges() {
   var startX = 0, startY = 0;
 
   function saveTabOrder(order) {
-    try { localStorage.setItem(TAB_ORDER_KEY, JSON.stringify(order)); } catch(e) {}
+    // Tab tartibi saqlanmaydi — har doim fixed tartib
   }
 
   document.addEventListener('DOMContentLoaded', function() {
@@ -6791,30 +6872,12 @@ function saveIeltsResult() {
 }
 
 function deleteIeltsResult(id) {
-  var ov = document.createElement('div');
-  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9000;display:flex;align-items:center;justify-content:center;padding:20px';
-  var box = document.createElement('div');
-  box.style.cssText = 'background:var(--surface);border:2px solid rgba(248,113,113,0.3);border-radius:20px;padding:26px 22px;width:100%;max-width:320px;text-align:center';
-  box.innerHTML =
-    '<div style="font-size:36px;margin-bottom:10px">🗑️</div>' +
-    '<div style="font-family:Syne,sans-serif;font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px">Natijani o\'chirish</div>' +
-    '<div style="font-size:13px;color:var(--text-muted);margin-bottom:20px">Bu natija butunlay o\'chib ketadi!</div>' +
-    '<div style="display:flex;gap:10px">' +
-      '<button id="ielts-del-no"  style="flex:1;padding:12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:14px;cursor:pointer;font-family:DM Sans,sans-serif">Bekor</button>' +
-      '<button id="ielts-del-yes" style="flex:2;padding:12px;border-radius:12px;border:none;background:#F87171;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:DM Sans,sans-serif">Ha, o\'chirish</button>' +
-    '</div>';
-  ov.appendChild(box);
-  document.body.appendChild(ov);
-  document.getElementById('ielts-del-no').onclick  = function(){ ov.remove(); };
-  document.getElementById('ielts-del-yes').onclick = function(){
-    ov.remove();
-    S.ieltsResults = (S.ieltsResults || []).filter(function(r){ return r.id !== id; });
-    save();
-    renderIeltsTab();
-    renderProfileIeltsSummary();
-    toast('🗑️ Natija o\'chirildi');
-  };
-  ov.addEventListener('click', function(e){ if(e.target === ov) ov.remove(); });
+  if (!confirm('Ochirmoqchimisiz?')) return;
+  S.ieltsResults = (S.ieltsResults || []).filter(function(r){ return r.id !== id; });
+  save();
+  renderIeltsTab();
+  renderProfileIeltsSummary();
+  toast('Ochirildi');
 }
 
 function calcOverallAverage() {
@@ -6886,54 +6949,32 @@ function renderProfileIeltsSummary() {
     el.innerHTML = '<div style="text-align:center;padding:12px 0;color:var(--text-dim);font-size:13px">Hali natija kiritilmagan<br><span style="font-size:11px;opacity:0.6">+ Yangi tugmasi bilan qoshing</span></div>';
     return;
   }
-
+  var latest = results[0];
   var sections = [
     { key:'listening', label:'🎧 L', color:'#60A5FA' },
     { key:'reading',   label:'📖 R', color:'#34D399' },
     { key:'writing',   label:'✍️ W', color:'#F5A623' },
     { key:'speaking',  label:'🗣️ S', color:'#F87171' }
   ];
-
-  // Helper: compute median of an array
-  function calcMedian(arr) {
-    if (!arr.length) return null;
-    var sorted = arr.slice().sort(function(a,b){return a-b;});
-    var mid = Math.floor(sorted.length / 2);
-    var med = sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid-1] + sorted[mid]) / 2;
-    // Round to nearest 0.5 (IELTS standard)
-    return Math.round(med * 2) / 2;
-  }
-
   var cards = sections.map(function(s) {
-    // Filter last 5 results for this specific section
-    var sectionResults = results.filter(function(r){ return r.section === s.key; }).slice(0, 5);
-    var vals = sectionResults.map(function(r){ return r.band; }).filter(function(v){ return v !== null && v !== undefined; });
-    var median = calcMedian(vals);
-    var topText = median !== null ? median.toFixed(1) : '—';
-    var botText = vals.length > 0 ? ('median (' + vals.length + ')') : '';
+    var val = latest[s.key];
+    var top = '—', bot = '';
+    if (val !== null && val !== undefined) {
+      if (typeof val === 'object') { top = val.raw+'/40'; bot = val.band.toFixed(1); }
+      else { top = val.toFixed(1); bot = 'band'; }
+    }
     return '<div style="flex:1;text-align:center;background:var(--surface2);border-radius:10px;padding:8px 4px">'+
       '<div style="font-size:10px;color:'+s.color+';margin-bottom:4px">'+s.label+'</div>'+
-      '<div style="font-size:15px;font-weight:700;color:'+s.color+';font-family:Syne,sans-serif">'+topText+'</div>'+
-      (botText?'<div style="font-size:10px;color:var(--text-dim);margin-top:2px">'+botText+'</div>':'')+
+      '<div style="font-size:15px;font-weight:700;color:'+s.color+';font-family:Syne,sans-serif">'+top+'</div>'+
+      (bot?'<div style="font-size:10px;color:var(--text-dim);margin-top:2px">'+bot+'</div>':'')+
     '</div>';
   }).join('');
 
-  // Overall: median of all section medians that exist
-  var sectionMedians = sections.map(function(s){
-    var sectionResults = results.filter(function(r){ return r.section === s.key; }).slice(0, 5);
-    var vals = sectionResults.map(function(r){ return r.band; }).filter(function(v){ return v !== null && v !== undefined; });
-    return calcMedian(vals);
-  }).filter(function(v){ return v !== null; });
-
-  var overallMedian = calcMedian(sectionMedians);
-  var totalCount = results.slice(0, 5).length;
-  var countLabel = totalCount === 1 ? '1 ta natija' : totalCount + ' ta natija';
-
-  var overallHtml = overallMedian !== null
-    ? '<div style="text-align:center;margin-top:10px;padding:8px;background:rgba(124,92,252,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;gap:8px">'+
-        '<span style="font-size:11px;color:#B48EFF">Overall median: </span>'+
-        '<span style="font-size:18px;font-weight:700;color:#B48EFF;font-family:Syne,sans-serif">'+overallMedian.toFixed(1)+'</span>'+
-        '<span style="font-size:10px;color:var(--text-dim);background:var(--surface2);border-radius:999px;padding:2px 8px">so\'ngi '+countLabel+'</span>'+
+  var overallHtml = latest.overall !== undefined
+    ? '<div style="text-align:center;margin-top:10px;padding:8px;background:rgba(124,92,252,0.1);border-radius:10px">'+
+        '<span style="font-size:11px;color:#B48EFF">Overall: </span>'+
+        '<span style="font-size:18px;font-weight:700;color:#B48EFF;font-family:Syne,sans-serif">'+latest.overall.toFixed(1)+'</span>'+
+        '<span style="font-size:11px;color:var(--text-dim);margin-left:8px">'+latest.date+'</span>'+
       '</div>'
     : '';
 
@@ -6942,6 +6983,19 @@ function renderProfileIeltsSummary() {
     : '';
 
   el.innerHTML = '<div style="display:flex;gap:6px">'+cards+'</div>'+overallHtml+historyBtn;
+}
+
+function toggleNote(id, btn) {
+  var el = document.getElementById('note-' + id);
+  if (!el) return;
+  var collapsed = el.classList.contains('task-note-collapsed');
+  if (collapsed) {
+    el.classList.remove('task-note-collapsed');
+    btn.textContent = "Yopish ▲";
+  } else {
+    el.classList.add('task-note-collapsed');
+    btn.textContent = "Ko'proq ▼";
+  }
 }
 
 function signInWithGoogle() {
@@ -6999,8 +7053,16 @@ function fbLoadData() {
       if (data.state) {
         try {
           var remoteS = JSON.parse(data.state);
-          // Merge: remote wins
-          S = Object.assign(S, remoteS);
+          // Timestamp-based merge: yangroq versiya g'alaba qiladi
+          var localTs  = S._savedAt  || 0;
+          var remoteTs = remoteS._savedAt || 0;
+          if (remoteTs >= localTs) {
+            // Remote yangroq yoki teng — remote bilan yangilaymiz
+            S = Object.assign(S, remoteS);
+          } else {
+            // Local yangroq — local ma'lumotni Firestore ga yuklaymiz
+            fbSaveData();
+          }
           // Migrate goals
           (S.goals||[]).forEach(function(g) {
             if (!g.daysCoinsGiven) {
@@ -7102,6 +7164,52 @@ function fbSaveData() {
       </div>
     </div>
   </div>
+
+<!-- Mobile Task Action Sheet -->
+<div id="task-action-sheet" class="task-action-sheet">
+  <div class="task-action-sheet-backdrop" onclick="closeTaskSheet()"></div>
+  <div class="task-action-sheet-inner">
+    <div class="sheet-title" id="sheet-task-name"></div>
+    <div class="sheet-badge-row" id="sheet-badge-row"></div>
+    <div id="sheet-btns"></div>
+    <button class="sheet-cancel-btn" onclick="closeTaskSheet()">Yopish</button>
+  </div>
+</div>
+
+<script>
+function openTaskSheet(id) {
+  const t = S.tasks.find(x=>x.id===id);
+  if (!t) return;
+  const rl = repeatLabel(t);
+  const canPostpone = !t.done && !t.skipped && (t.repeat==='interval'||t.repeat==='once');
+  document.getElementById('sheet-task-name').textContent = (t.emoji ? t.emoji+' ' : '') + t.name;
+  document.getElementById('sheet-badge-row').innerHTML =
+    `<span class="badge ${rl.cls}">${rl.text}</span>${diffBadge(t.diff||1)}<span class="badge badge-coins">+${t.coins}🪙</span>`;
+  let btns = '';
+  if (!t.done && !t.skipped) {
+    btns += `<button class="sheet-btn done-btn" onclick="closeTaskSheet();toggleTask(${id})">✅ Bajarildi deb belgilash</button>`;
+    btns += `<button class="sheet-btn" onclick="closeTaskSheet();skipTask(${id})">⏭ Otkazib yuborish</button>`;
+  }
+  if (t.done) {
+    btns += `<button class="sheet-btn" onclick="closeTaskSheet();toggleTask(${id})">↩️ Bajarilmadi deb belgilash</button>`;
+  }
+  if (t.skipped && !t.done) {
+    btns += `<button class="sheet-btn" onclick="closeTaskSheet();unskipTask(${id})">🔄 Qaytarish</button>`;
+  }
+  if (canPostpone) {
+    btns += `<button class="sheet-btn" onclick="closeTaskSheet();postponeTask(${id})">📅 Ertaga o'tkazish</button>`;
+  }
+  btns += `<button class="sheet-btn" onclick="closeTaskSheet();editTask(${id})">✏️ Tahrirlash</button>`;
+  btns += `<button class="sheet-btn danger" onclick="closeTaskSheet();deleteTask(${id})">🗑 O'chirish</button>`;
+  document.getElementById('sheet-btns').innerHTML = btns;
+  document.getElementById('task-action-sheet').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeTaskSheet() {
+  document.getElementById('task-action-sheet').classList.remove('open');
+  document.body.style.overflow = '';
+}
+</script>
 
 </body>
 </html>
