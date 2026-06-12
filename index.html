@@ -1626,15 +1626,15 @@ const SUPABASE_KEY = 'sb_publishable_wC9prq5vpxF70j1YHj5Phg_zF9XfgY8';
 
 async function saveToSupabase(state) {
   try {
-    await fetch(SUPABASE_URL + '/rest/v1/app_data?id=eq.main', {
-      method: 'PATCH',
+    await fetch(SUPABASE_URL + '/rest/v1/app_data', {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'apikey': SUPABASE_KEY,
         'Authorization': 'Bearer ' + SUPABASE_KEY,
-        'Prefer': 'return=minimal'
+        'Prefer': 'resolution=merge-duplicates,return=minimal'
       },
-      body: JSON.stringify({ data: state, updated_at: new Date().toISOString() })
+      body: JSON.stringify({ id: 'main', data: state, updated_at: new Date().toISOString() })
     });
   } catch(e) {
     console.warn('Supabase saqlash xatosi:', e);
@@ -1650,7 +1650,7 @@ async function loadFromSupabase() {
       }
     });
     const rows = await res.json();
-    if (rows && rows[0] && rows[0].data && Object.keys(rows[0].data).length > 0) {
+    if (rows && rows[0] && rows[0].data) {
       return rows[0].data;
     }
   } catch(e) {
@@ -3001,12 +3001,12 @@ function renderTaskList() {
   load();
   render();
 
-  // 2. Supabaseden yuklash (agar yangroq ma'lumot bo'lsa — ustiga yozamiz)
+  // 2. Supabaseden yuklash (har doim remote ustunlik qiladi)
   const remoteData = await loadFromSupabase();
   if (remoteData) {
     const localSaved = S._savedAt || 0;
     const remoteSaved = remoteData._savedAt || 0;
-    if (remoteSaved >= localSaved) {
+    if (remoteSaved >= localSaved || localSaved === 0) {
       S = Object.assign(S, remoteData);
       (S.goals||[]).forEach(function(g) {
         if (!g.daysCoinsGiven) {
