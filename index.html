@@ -1683,6 +1683,87 @@ async function loadFromSupabase() {
 }
 // =========================================
 
+// ============ SUPABASE REALTIME ============
+var _realtimeChannel = null;
+var _lastProcessedAt = null;
+
+function startRealtimeSync() {
+  // Supabase Realtime WebSocket orqali ulanish
+  var wsUrl = 'wss://bxifqgzmtxwpgdfgyyzu.supabase.co/realtime/v1/websocket?apikey=' + SUPABASE_KEY + '&vsn=1.0.0';
+  var ws;
+
+  function connect() {
+    try {
+      ws = new WebSocket(wsUrl);
+
+      ws.onopen = function() {
+        // app_data jadvalidagi o'zgarishlarni kuzatamiz
+        ws.send(JSON.stringify({
+          topic: 'realtime:public:app_data',
+          event: 'phx_join',
+          payload: { config: { broadcast: { self: false }, presence: { key: '' } } },
+          ref: '1'
+        }));
+        console.log('Realtime ulandi');
+      };
+
+      ws.onmessage = function(e) {
+        try {
+          var msg = JSON.parse(e.data);
+          // Heartbeat javob
+          if (msg.event === 'heartbeat') {
+            ws.send(JSON.stringify({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: null }));
+            return;
+          }
+          // Ma'lumot o'zgarganda
+          if (msg.event === 'INSERT' || msg.event === 'UPDATE') {
+            var newData = msg.payload && msg.payload.record && msg.payload.record.data;
+            var newUpdatedAt = msg.payload && msg.payload.record && msg.payload.record.updated_at;
+            if (!newData) return;
+            // O'zimiz yozgan o'zgarishni qayta yuklamaslik
+            if (newUpdatedAt && newUpdatedAt === S._serverSavedAt) return;
+            if (_lastProcessedAt && newUpdatedAt === _lastProcessedAt) return;
+            _lastProcessedAt = newUpdatedAt;
+            // Boshqa qurilmadan kelgan yangilanish — qabul qilamiz
+            S = Object.assign({}, S, newData);
+            S._serverSavedAt = newUpdatedAt;
+            (S.goals||[]).forEach(function(g) {
+              if (!g.daysCoinsGiven) {
+                g.daysCoinsGiven = {};
+                Object.keys(g.daysChecked||{}).forEach(function(d) { g.daysCoinsGiven[d] = 1; });
+              }
+            });
+            recalcStreakFromLog();
+            try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(ex) {}
+            render();
+            toast('🔄 Yangilandi');
+          }
+        } catch(ex) { }
+      };
+
+      ws.onclose = function() {
+        // Ulanish uzilsa — 3 soniyadan keyin qayta ulanamiz
+        setTimeout(connect, 3000);
+      };
+
+      ws.onerror = function() {
+        ws.close();
+      };
+
+    } catch(ex) {
+      setTimeout(connect, 5000);
+    }
+  }
+
+  connect();
+}
+
+// Sahifa yuklanganda Realtime ni boshlaymiz
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(startRealtimeSync, 2000);
+});
+// ==========================================
+
 function load() {
   try {
     const raw = localStorage.getItem(KEY);
