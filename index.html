@@ -7192,13 +7192,30 @@ function signInWithGoogle() {
     document.getElementById('fb-login-status').textContent = 'Firebase yuklanmadi, qayta urining...';
     return;
   }
-  document.getElementById('fb-login-status').textContent = 'Kirilmoqda...';
   var provider = new firebase.auth.GoogleAuthProvider();
-  // Har safar akkaunt tanlash oynasini ochadi — bir nechta Gmail bo'lsa ham tanlab kirish mumkin
   provider.setCustomParameters({ prompt: 'select_account' });
-  fbAuth.signInWithPopup(provider).catch(function(err) {
-    document.getElementById('fb-login-status').textContent = 'Xato: ' + err.message;
-  });
+
+  // Mobil qurilmalarda popup ishlamaydi — redirect usulini ishlatamiz
+  var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  if (isMobile) {
+    document.getElementById('fb-login-status').textContent = 'Google ga yo\'naltirilmoqda...';
+    fbAuth.signInWithRedirect(provider).catch(function(err) {
+      document.getElementById('fb-login-status').textContent = 'Xato: ' + err.message;
+    });
+  } else {
+    document.getElementById('fb-login-status').textContent = 'Kirilmoqda...';
+    fbAuth.signInWithPopup(provider).catch(function(err) {
+      // Popup bloklangan bo'lsa redirect ga o'tamiz
+      if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user') {
+        document.getElementById('fb-login-status').textContent = 'Google ga yo\'naltirilmoqda...';
+        fbAuth.signInWithRedirect(provider).catch(function(e) {
+          document.getElementById('fb-login-status').textContent = 'Xato: ' + e.message;
+        });
+      } else {
+        document.getElementById('fb-login-status').textContent = 'Xato: ' + err.message;
+      }
+    });
+  }
 }
 
 function signOut() {
@@ -7214,6 +7231,18 @@ function signOut() {
 }
 
 function fbInitDone() {
+
+// Mobil redirect dan qaytganda natijani ushlash
+fbAuth.getRedirectResult().then(function(result) {
+  if (result && result.user) {
+    // onAuthStateChanged o'zi ishga tushadi — bu yerda qo'shimcha ish kerak emas
+    var el = document.getElementById('fb-login-status');
+    if (el) el.textContent = '';
+  }
+}).catch(function(err) {
+  var el = document.getElementById('fb-login-status');
+  if (el) el.textContent = 'Kirish xatosi: ' + err.message;
+});
 
 // Auth state listener
 fbAuth.onAuthStateChanged(function(user) {
@@ -7278,57 +7307,37 @@ fbAuth.onAuthStateChanged(function(user) {
 // Soat farqi sababli "kim yangiroq" degan qaror noto'g'ri bo'lsa ham,
 // ikkala tomondagi yozuvlar saqlanib qoladi (ustma-ust tushganda esa yangiroq tomon g'olib).
 function mergeStateArrays(localS, remoteS) {
-  // Skalyar maydonlar uchun: ikkalasidan yangiroq tomon g'olib
+  var merged = Object.assign({}, localS, remoteS);
   var remoteWins = (remoteS._savedAt || 0) >= (localS._savedAt || 0);
-  var merged = Object.assign({}, remoteWins ? localS : remoteS, remoteWins ? remoteS : localS);
-
-  // Massivlar uchun: HECH QACHON yo'qotmaymiz — id bo'yicha birlashtirамiz
-  // Bir xil id bo'lsa — yangiroq tomon (_savedAt katta) g'olib
   ['tasks', 'goals', 'ieltsResults'].forEach(function(key) {
-    var localArr  = localS[key]  || [];
-    var remoteArr = remoteS[key] || [];
-    // Ikkala massiv ham bo'sh bo'lsa — skip
-    if (!localArr.length && !remoteArr.length) {
-      merged[key] = [];
-      return;
-    }
+    var a = localS[key] || [];
+    var b = remoteS[key] || [];
+    if (!a.length && !b.length) return;
+    var winnerArr = remoteWins ? b : a;
+    var loserArr  = remoteWins ? a : b;
     var map = {};
     var order = [];
-    // Avval ikkalasini ham map ga solamiz (loser tomon avval)
-    var loser  = remoteWins ? localArr  : remoteArr;
-    var winner = remoteWins ? remoteArr : localArr;
-    loser.forEach(function(item) {
+    winnerArr.forEach(function(item) {
       if (item && item.id != null) {
         map[item.id] = item;
         order.push(item.id);
       }
     });
-    // Winner ustiga yozadi (bir xil id bo'lsa winner versiyasi qoladi)
-    winner.forEach(function(item) {
-      if (item && item.id != null) {
-        if (!(item.id in map)) order.push(item.id);
-        map[item.id] = item; // winner doim ustiga yozadi
+    loserArr.forEach(function(item) {
+      if (item && item.id != null && !(item.id in map)) {
+        map[item.id] = item;
+        order.push(item.id);
       }
     });
-    merged[key] = order.map(function(id) { return map[id]; }).filter(Boolean);
+    merged[key] = order.map(function(id) { return map[id]; });
   });
-
-  // taskOrder: winner tomonniki, lekin merged tasks dagi id lar bilan to'ldiramiz
-  var winnerOrder = remoteWins ? (remoteS.taskOrder || []) : (localS.taskOrder || []);
-  var allIds = (merged.tasks || []).map(function(t) { return t.id; });
-  var orderSet = {};
-  winnerOrder.forEach(function(id) { orderSet[id] = true; });
-  // Tartibda bo'lmagan yangi id larni oxiriga qo'shamiz
-  allIds.forEach(function(id) { if (!orderSet[id]) winnerOrder.push(id); });
-  merged.taskOrder = winnerOrder.filter(function(id) {
-    return allIds.indexOf(id) !== -1; // o'chirilgan task id larini tozalaymiz
-  });
-
-  // secretHabit.log: ikkala tomondan birlashtirамiz
+  // secretHabit.log ni ham birlashtirish — ikkala qurilmadagi yozuvlar saqlansin
+  // PIN: yangiroq tomon g'olib (Object.assign allaqachon remoteWins tomonini olgan)
   var localHabit  = localS.secretHabit  || {log:{}, pin:DEFAULT_PIN};
   var remoteHabit = remoteS.secretHabit || {log:{}, pin:DEFAULT_PIN};
   var mergedLog = Object.assign({}, localHabit.log || {}, remoteHabit.log || {});
-  Object.keys(localHabit.log || {}).forEach(function(day) {
+  // Ikki tomonda ham mavjud kun bo'lsa — yangiroq tomon g'olib
+  Object.keys(localHabit.log  || {}).forEach(function(day) {
     if (remoteHabit.log && remoteHabit.log[day] !== undefined) {
       mergedLog[day] = remoteWins ? remoteHabit.log[day] : localHabit.log[day];
     }
