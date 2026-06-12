@@ -529,12 +529,7 @@
 </head>
 <body>
 
-<!-- Google Login Overlay -->
-<!-- fb-login-overlay moved to profile tab -->
-<div id="fb-login-overlay" style="display:none"></div>
 
-<!-- Sync status indicator -->
-<div id="fb-sync-status" style="display:none;position:fixed;bottom:70px;right:16px;z-index:500;background:rgba(124,92,252,0.15);border:1px solid rgba(124,92,252,0.3);border-radius:10px;padding:6px 12px;font-size:11px;color:#B48EFF;pointer-events:none">⟳ Saqlanmoqda...</div>
 
 <div class="wrapper">
   <div class="header">
@@ -939,33 +934,7 @@
       <button onclick="confirmRestart()" style="width:100%;padding:12px;border-radius:12px;border:1px solid rgba(248,113,113,0.4);background:rgba(248,113,113,0.08);color:#F87171;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">🔄 Akkauntni qayta boshlash</button>
     </div>
 
-    <!-- Google Sync Card -->
-    <div id="profile-sync-card" style="border-radius:16px;padding:16px 18px;margin-bottom:12px;border:1px solid var(--border);background:var(--surface)">
-      <div style="font-size:11px;color:var(--text-muted);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:12px;font-weight:600">☁️ Qurilmalar sinxronizatsiyasi</div>
-      <!-- Not logged in state -->
-      <div id="sync-logged-out">
-        <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">2 ta qurilmadan 1 ta akount boshqarish uchun Google bilan kiring</div>
-        <button onclick="signInWithGoogle()" style="display:flex;align-items:center;gap:10px;width:100%;padding:12px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:var(--text);font-size:14px;font-weight:500;cursor:pointer;font-family:DM Sans,sans-serif;transition:all 0.2s;box-sizing:border-box" onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">
-          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20H24v8h11.3C33.6 32.6 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 19.6-8 19.6-20 0-1.3-.1-2.7-.4-4z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 19 13 24 13c3 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.4 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-1.9 13.5-5l-6.2-5.2C29.5 35.6 26.9 36 24 36c-5.3 0-9.7-3.4-11.3-8.1l-6.6 5.1C9.7 39.6 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20H24v8h11.3c-.8 2.3-2.3 4.2-4.3 5.5l6.2 5.2C41.5 35.1 44 30 44 24c0-1.3-.1-2.7-.4-4z"/></svg>
-          Google bilan kirish
-        </button>
-        <div id="fb-login-status" style="margin-top:8px;font-size:12px;color:var(--text-muted);text-align:center"></div>
-      </div>
-      <!-- Logged in state -->
-      <div id="sync-logged-in" style="display:none">
-        <div style="display:flex;align-items:center;justify-content:space-between">
-          <div style="display:flex;align-items:center;gap:10px">
-            <div id="sync-avatar" style="width:36px;height:36px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;overflow:hidden"></div>
-            <div>
-              <div id="sync-name" style="font-size:14px;font-weight:600;color:var(--text)"></div>
-              <div id="sync-email" style="font-size:11px;color:var(--text-muted);margin-top:1px"></div>
-              <div id="sync-last-time" style="font-size:11px;color:#34D399;margin-top:1px">✅ Sinxronlashgan</div>
-            </div>
-          </div>
-          <button onclick="signOut()" style="padding:6px 14px;border-radius:999px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:12px;cursor:pointer">Chiqish</button>
-        </div>
-      </div>
-    </div>
+
 
 
   </div>
@@ -1487,7 +1456,7 @@
 
 <script>
 const KEY_BASE = 'mytasks_v5';
-var KEY = KEY_BASE; // login bo'lganda user.uid ga o'zgaradi
+var KEY = KEY_BASE;
 const DAYS_UZ = ['Yakshanba','Dushanba','Seshanba','Chorshanba','Payshanba','Juma','Shanba'];
 const MONTHS_UZ = ['yanvar','fevral','mart','aprel','may','iyun','iyul','avgust','sentabr','oktabr','noyabr','dekabr'];
 const SHORT_DAYS = ['Ya','Du','Se','Ch','Pa','Ju','Sh'];
@@ -1651,6 +1620,46 @@ function recalcStreakFromLog() {
   if (streak > (S.bestStreak||0)) S.bestStreak = streak;
 }
 
+// ============ SUPABASE CONFIG ============
+const SUPABASE_URL = 'https://bxifqgzmtxwpgdfgyyzu.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_wC9prq5vpxF70j1YHj5Phg_zF9XfgY8';
+
+async function saveToSupabase(state) {
+  try {
+    await fetch(SUPABASE_URL + '/rest/v1/app_data?id=eq.main', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ data: state, updated_at: new Date().toISOString() })
+    });
+  } catch(e) {
+    console.warn('Supabase saqlash xatosi:', e);
+  }
+}
+
+async function loadFromSupabase() {
+  try {
+    const res = await fetch(SUPABASE_URL + '/rest/v1/app_data?id=eq.main&select=data', {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY
+      }
+    });
+    const rows = await res.json();
+    if (rows && rows[0] && rows[0].data && Object.keys(rows[0].data).length > 0) {
+      return rows[0].data;
+    }
+  } catch(e) {
+    console.warn('Supabase yuklash xatosi:', e);
+  }
+  return null;
+}
+// =========================================
+
 function load() {
   try {
     const raw = localStorage.getItem(KEY);
@@ -1674,9 +1683,7 @@ function load() {
 function save() {
   S._savedAt = Date.now();
   try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {}
-  // Firebase SDK yuklanmagan bo'lsa fbSaveData o'zi qaytadi (if (!fbUser) return)
-  // Shuning uchun bu chaqiruv har doim xavfsiz — override kerak emas
-  if (typeof fbSaveData === 'function') fbSaveData();
+  saveToSupabase(S);
 }
 
 function wasTaskDoneOnDate(t, dateStr) {
@@ -2988,17 +2995,42 @@ function renderTaskList() {
   if (emptyMsg) emptyMsg.style.display = (filteredRecurring.length===0 && filteredOnce.length===0) ? '' : 'none';
 }
 
-load();
-if (S.pendingStreakMsg) {
-  setTimeout(()=>{ toast(S.pendingStreakMsg); confetti(); S.pendingStreakMsg=null; save(); }, 600);
-}
-if (S.pendingMissedMsg) {
-  setTimeout(function(){ toast(S.pendingMissedMsg); S.pendingMissedMsg=null; save(); }, 1200);
-}
-if (S.pendingLevelUp) {
-  setTimeout(function(){ showLevelUpModal(getLevel(S.pendingLevelUp)); S.pendingLevelUp=null; save(); }, 1800);
-}
-render();
+// Supabase + localStorage birgalikda yuklash
+(async function() {
+  // 1. Avval localStorage dan tez yuklaymiz (UI tezroq ko'rinadi)
+  load();
+  render();
+
+  // 2. Supabaseden yuklash (agar yangroq ma'lumot bo'lsa — ustiga yozamiz)
+  const remoteData = await loadFromSupabase();
+  if (remoteData) {
+    const localSaved = S._savedAt || 0;
+    const remoteSaved = remoteData._savedAt || 0;
+    if (remoteSaved >= localSaved) {
+      S = Object.assign(S, remoteData);
+      (S.goals||[]).forEach(function(g) {
+        if (!g.daysCoinsGiven) {
+          g.daysCoinsGiven = {};
+          Object.keys(g.daysChecked||{}).forEach(function(d) { g.daysCoinsGiven[d] = 1; });
+        }
+      });
+      recalcStreakFromLog();
+      checkReset();
+      try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {}
+      render();
+    }
+  }
+
+  if (S.pendingStreakMsg) {
+    setTimeout(()=>{ toast(S.pendingStreakMsg); confetti(); S.pendingStreakMsg=null; save(); }, 600);
+  }
+  if (S.pendingMissedMsg) {
+    setTimeout(function(){ toast(S.pendingMissedMsg); S.pendingMissedMsg=null; save(); }, 1200);
+  }
+  if (S.pendingLevelUp) {
+    setTimeout(function(){ showLevelUpModal(getLevel(S.pendingLevelUp)); S.pendingLevelUp=null; save(); }, 1800);
+  }
+})();
 // Sahifa yangilanishida aktiv chest questni tiklash
 if (S.isChestQuestActive && S.chestQuest) {
   renderChestQuestBox();
@@ -3741,20 +3773,7 @@ function confirmRestart() {
       coins:0, totalCoins:0, streak:0, lastDate:null, nextId:200, nextRid:20,
       secretHabit: {log:{}, pin:DEFAULT_PIN},
     };
-    // Firestore dan ham o'chirish — aks holda reload da eski data qaytib keladi
-    if (fbUser && fbDb) {
-      fbDb.collection('users').doc(fbUser.uid).delete()
-        .then(function() {
-          // O'chirilgandan keyin yangi bo'sh state ni yozamiz (login saqlansin)
-          save();
-        })
-        .catch(function(err) {
-          console.log('Firestore delete error:', err);
-          save(); // xato bo'lsa ham localStorage dagi yangi state saqlanadi
-        });
-    } else {
-      save();
-    }
+    save();
     render();
     ov.remove();
     toast('✅ Akkaunt qayta boshlandi!');
@@ -3773,7 +3792,7 @@ var _secretUnlocked = false;
 var SECRET_KEY = 'secret_habit_v1';
 
 function getSecretData() {
-  // S.secretHabit — asosiy manba (Firebase bilan sync bo'ladi)
+  // S.secretHabit — asosiy manba
   // Eski localStorage da data bo'lsa — S ga ko'chiramiz (bir martalik migration)
   if (!S.secretHabit) {
     try {
@@ -3787,7 +3806,7 @@ function getSecretData() {
   return S.secretHabit;
 }
 function saveSecretData(d) {
-  // S ichiga yozib, keyin save() orqali Firebase ga ham yuboriladi
+  // S ichiga yozib, keyin save() orqali saqlanadi
   S.secretHabit = d;
   save();
 }
@@ -6881,648 +6900,7 @@ function updateFloatTimer() {
 })();
 </script>
 
-<!-- Firebase SDKs -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script>
-// ============================================================
-// FIREBASE CONFIG & INIT
-// ============================================================
-var fbConfig = {
-  apiKey: "AIzaSyDwIT9vFstiU-PDY5GDWT9k0j8WnWo2GeU",
-  authDomain: "todolist-e9e43.firebaseapp.com",
-  projectId: "todolist-e9e43",
-  storageBucket: "todolist-e9e43.firebasestorage.app",
-  messagingSenderId: "483405535186",
-  appId: "1:483405535186:web:cbc392ddaeb5447774da0b",
-  measurementId: "G-R44HLHFSF3"
-};
-var fbAuth = null;
-var fbDb   = null;
-var fbUser = null;
-var fbSyncTimer = null;
-var fbInitAttempts = 0;
-var fbUnsubscribe = null;  // global — signOut() va fbLoadData() ikkovi ham ko'radi
-var fbFirstLoad = true;
 
-function tryInitFirebase() {
-  fbInitAttempts++;
-  if (typeof firebase === 'undefined') {
-    if (fbInitAttempts < 20) {
-      setTimeout(tryInitFirebase, 300);
-    } else {
-      console.log('Firebase SDK yuklanmadi (internet bor-yoqligini tekshiring)');
-      var el = document.getElementById('fb-login-status');
-      if (el) el.textContent = 'Internet aloqasi yoq yoki Firebase yuklanmadi';
-    }
-    return;
-  }
-  try {
-    if (!firebase.apps.length) {
-      firebase.initializeApp(fbConfig);
-    }
-    fbAuth = firebase.auth();
-    fbDb   = firebase.firestore();
-    // Offline persistence — internet yo'q bo'lganda ham ishlaydi, qayta ulananda sync bo'ladi
-    fbDb.enablePersistence({ synchronizeTabs: true }).catch(function(err) {
-      if (err.code === 'failed-precondition') {
-        // Bir nechta tab ochiq — faqat bitta tab persistence ishlatadi, bu normal
-        console.log('Persistence: bir nechta tab ochiq');
-      } else if (err.code === 'unimplemented') {
-        // Brauzer qo'llab-quvvatlamaydi (eski Safari)
-        console.log('Persistence qollab-quvvatlanmaydi');
-      }
-    });
-    fbInitDone();
-  } catch(e) {
-    console.log('Firebase init error:', e);
-  }
-}
-
-window.addEventListener('load', function() {
-  tryInitFirebase();
-});
-
-
-// ============================================================
-// IELTS RESULTS
-// ============================================================
-
-var listeningBandTable = [[39,9],[37,8.5],[35,8],[33,7.5],[30,7],[27,6.5],[23,6],[20,5.5],[16,5],[13,4.5],[10,4],[8,3.5],[6,3],[4,2.5],[3,2]];
-var readingBandTable   = [[39,9],[37,8.5],[35,8],[33,7.5],[30,7],[27,6.5],[23,6],[19,5.5],[15,5],[13,4.5],[10,4],[8,3.5],[6,3],[4,2.5],[3,2]];
-var currentIeltsSection = null;
-
-function rawToBand(raw, table) {
-  raw = parseInt(raw);
-  if (isNaN(raw)) return null;
-  for (var i = 0; i < table.length; i++) {
-    if (raw >= table[i][0]) return table[i][1];
-  }
-  return 1.0;
-}
-
-function selectIeltsSection(sec) {
-  currentIeltsSection = sec;
-  var cols = { listening:'#60A5FA', reading:'#34D399', writing:'#F5A623', speaking:'#F87171' };
-  var ids  = { listening:'ielts-sec-l', reading:'ielts-sec-r', writing:'ielts-sec-w', speaking:'ielts-sec-s' };
-  Object.keys(ids).forEach(function(s) {
-    var btn = document.getElementById(ids[s]);
-    if (!btn) return;
-    btn.style.borderWidth = s === sec ? '2px' : '2px';
-    btn.style.opacity = s === sec ? '1' : '0.5';
-    btn.style.transform = s === sec ? 'scale(1.03)' : 'scale(1)';
-  });
-  var rawRow  = document.getElementById('ielts-raw-row');
-  var bandRow = document.getElementById('ielts-band-row');
-  if (sec === 'listening' || sec === 'reading') {
-    rawRow.style.display  = 'block';
-    bandRow.style.display = 'none';
-    document.getElementById('ielts-res-band-preview').style.color = cols[sec];
-  } else {
-    rawRow.style.display  = 'none';
-    bandRow.style.display = 'block';
-  }
-}
-
-function calcIeltsBandLive() {
-  var raw = document.getElementById('ielts-res-raw').value;
-  var table = currentIeltsSection === 'listening' ? listeningBandTable : readingBandTable;
-  var band = rawToBand(raw, table);
-  document.getElementById('ielts-res-band-preview').textContent = band !== null ? band.toFixed(1) : '—';
-}
-
-function openIeltsResultModal() {
-  currentIeltsSection = null;
-  var today = new Date();
-  var dd = String(today.getDate()).padStart(2,'0');
-  var mm = String(today.getMonth()+1).padStart(2,'0');
-  var yyyy = today.getFullYear();
-  document.getElementById('ielts-res-date').value = yyyy+'-'+mm+'-'+dd;
-  document.getElementById('ielts-res-raw').value  = '';
-  document.getElementById('ielts-res-band').value = '';
-  document.getElementById('ielts-res-band-preview').textContent = '—';
-  document.getElementById('ielts-raw-row').style.display  = 'none';
-  document.getElementById('ielts-band-row').style.display = 'none';
-  // reset section button opacity
-  ['ielts-sec-l','ielts-sec-r','ielts-sec-w','ielts-sec-s'].forEach(function(id){
-    var b = document.getElementById(id); if(b) { b.style.opacity='1'; b.style.transform='scale(1)'; }
-  });
-  document.getElementById('ielts-result-modal').style.display = 'flex';
-}
-
-function closeIeltsResultModal() {
-  document.getElementById('ielts-result-modal').style.display = 'none';
-}
-
-function saveIeltsResult() {
-  if (!currentIeltsSection) { toast('Section tanlang!'); return; }
-  var date = document.getElementById('ielts-res-date').value;
-  if (!date) { toast('Sana kiriting!'); return; }
-
-  var entry = { id: Date.now(), date: date, section: currentIeltsSection };
-
-  if (currentIeltsSection === 'listening' || currentIeltsSection === 'reading') {
-    var raw = parseInt(document.getElementById('ielts-res-raw').value);
-    if (isNaN(raw) || raw < 0 || raw > 40) { toast('Raw score kiriting (0-40)!'); return; }
-    var table = currentIeltsSection === 'listening' ? listeningBandTable : readingBandTable;
-    entry.raw  = raw;
-    entry.band = rawToBand(raw, table);
-  } else {
-    var band = parseFloat(document.getElementById('ielts-res-band').value);
-    if (isNaN(band) || band < 0 || band > 9) { toast('Band score kiriting (0-9)!'); return; }
-    // Round to nearest 0.5
-    entry.band = Math.round(band * 2) / 2;
-  }
-
-  if (!S.ieltsResults) S.ieltsResults = [];
-  S.ieltsResults.unshift(entry);
-  save();
-  closeIeltsResultModal();
-  renderIeltsTab();
-  renderProfileIeltsSummary();
-  toast('Natija saqlandi!');
-}
-
-function deleteIeltsResult(id) {
-  if (!confirm('Ochirmoqchimisiz?')) return;
-  S.ieltsResults = (S.ieltsResults || []).filter(function(r){ return r.id !== id; });
-  save();
-  renderIeltsTab();
-  renderProfileIeltsSummary();
-  toast('Ochirildi');
-}
-
-function calcOverallAverage() {
-  var results = S.ieltsResults || [];
-  if (!results.length) return null;
-  // Use all band scores
-  var bands = results.map(function(r){ return r.band; }).filter(function(b){ return b != null; });
-  if (!bands.length) return null;
-  var avg = bands.reduce(function(a,b){return a+b;},0) / bands.length;
-  return Math.round(avg * 2) / 2;
-}
-
-function renderIeltsTab() {
-  var results = S.ieltsResults || [];
-  var histEl  = document.getElementById('ielts-history-list');
-  var emptyEl = document.getElementById('ielts-history-empty');
-  var overallCard = document.getElementById('ielts-overall-card');
-
-  // Overall average
-  var overall = calcOverallAverage();
-  if (overall !== null) {
-    overallCard.style.display = 'block';
-    document.getElementById('ielts-overall-val').textContent = overall.toFixed(1);
-    var count = results.length;
-    document.getElementById('ielts-overall-sub').textContent = count + ' ta natija asosida';
-  } else {
-    overallCard.style.display = 'none';
-  }
-
-  // History
-  if (!results.length) {
-    histEl.innerHTML = '';
-    emptyEl.style.display = 'block';
-    return;
-  }
-  emptyEl.style.display = 'none';
-
-  var sectionInfo = {
-    listening: { label:'🎧 Listening', color:'#60A5FA', bg:'rgba(96,165,250,0.08)', border:'rgba(96,165,250,0.25)' },
-    reading:   { label:'📖 Reading',   color:'#34D399', bg:'rgba(52,211,153,0.08)', border:'rgba(52,211,153,0.25)' },
-    writing:   { label:'✍️ Writing',   color:'#F5A623', bg:'rgba(245,166,35,0.08)', border:'rgba(245,166,35,0.25)' },
-    speaking:  { label:'🗣️ Speaking',  color:'#F87171', bg:'rgba(248,113,113,0.08)', border:'rgba(248,113,113,0.25)' }
-  };
-
-  histEl.innerHTML = results.map(function(r) {
-    var info = sectionInfo[r.section] || { label: r.section, color:'#B48EFF', bg:'rgba(124,92,252,0.08)', border:'rgba(124,92,252,0.25)' };
-    var scoreStr = r.raw !== undefined ? r.raw+'/40' : '';
-    var bandStr  = r.band !== undefined ? 'Band ' + r.band.toFixed(1) : '';
-    return '<div style="background:'+info.bg+';border:1px solid '+info.border+';border-radius:14px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between">' +
-      '<div>' +
-        '<div style="font-size:13px;font-weight:600;color:'+info.color+';margin-bottom:4px">'+info.label+'</div>' +
-        '<div style="font-size:11px;color:var(--text-muted)">📅 '+r.date+'</div>' +
-      '</div>' +
-      '<div style="display:flex;align-items:center;gap:10px">' +
-        '<div style="text-align:right">' +
-          (scoreStr ? '<div style="font-family:Syne,sans-serif;font-size:18px;font-weight:700;color:'+info.color+'">'+scoreStr+'</div>' : '') +
-          '<div style="font-size:13px;font-weight:600;color:'+info.color+'">'+bandStr+'</div>' +
-        '</div>' +
-        '<button onclick="deleteIeltsResult('+r.id+')" style="background:none;border:none;color:var(--text-dim);font-size:16px;cursor:pointer;padding:4px">🗑</button>' +
-      '</div>' +
-    '</div>';
-  }).join('');
-}
-function renderProfileIeltsSummary() {
-  var el = document.getElementById('profile-ielts-summary');
-  if (!el) return;
-  var results = S.ieltsResults || [];
-  if (results.length === 0) {
-    el.innerHTML = '<div style="text-align:center;padding:12px 0;color:var(--text-dim);font-size:13px">Hali natija kiritilmagan<br><span style="font-size:11px;opacity:0.6">+ Yangi tugmasi bilan qoshing</span></div>';
-    return;
-  }
-  // Har bir section uchun alohida eng yangi yozuvni topamiz
-  // (results[0] bitta entry — u barcha sectionlarni emas, faqat bittasini ifodalaydi)
-  var latestBySection = {};
-  results.forEach(function(r) {
-    if (r.section && !latestBySection[r.section]) {
-      latestBySection[r.section] = r; // results saralanган bo'lsa birinchisi eng yangi
-    }
-  });
-
-  var sections = [
-    { key:'listening', label:'🎧 L', color:'#60A5FA' },
-    { key:'reading',   label:'📖 R', color:'#34D399' },
-    { key:'writing',   label:'✍️ W', color:'#F5A623' },
-    { key:'speaking',  label:'🗣️ S', color:'#F87171' }
-  ];
-  var cards = sections.map(function(s) {
-    var entry = latestBySection[s.key];
-    var top = '—', bot = '';
-    if (entry) {
-      if (entry.raw !== undefined) { top = entry.raw + '/40'; }
-      if (entry.band !== undefined) { bot = entry.band.toFixed(1); }
-      else if (entry.raw === undefined && entry.band !== undefined) { top = entry.band.toFixed(1); }
-    }
-    return '<div style="flex:1;text-align:center;background:var(--surface2);border-radius:10px;padding:8px 4px">'+
-      '<div style="font-size:10px;color:'+s.color+';margin-bottom:4px">'+s.label+'</div>'+
-      '<div style="font-size:15px;font-weight:700;color:'+s.color+';font-family:Syne,sans-serif">'+top+'</div>'+
-      (bot?'<div style="font-size:10px;color:var(--text-dim);margin-top:2px">'+bot+'</div>':'')+
-    '</div>';
-  }).join('');
-
-  // Overall: barcha 4 sectiondan eng yangilarining o'rtachasi (mavjud bo'lsa)
-  var availableBands = sections.map(function(s) {
-    return latestBySection[s.key] ? latestBySection[s.key].band : null;
-  }).filter(function(b) { return b !== null && b !== undefined; });
-  var overallBand = availableBands.length === 4
-    ? (availableBands.reduce(function(a,b){return a+b;}, 0) / 4)
-    : null;
-  var latestDate = results[0] ? results[0].date : '';
-  var overallHtml = overallBand !== null
-    ? '<div style="text-align:center;margin-top:10px;padding:8px;background:rgba(124,92,252,0.1);border-radius:10px">'+
-        '<span style="font-size:11px;color:#B48EFF">Overall: </span>'+
-        '<span style="font-size:18px;font-weight:700;color:#B48EFF;font-family:Syne,sans-serif">'+overallBand.toFixed(1)+'</span>'+
-        '<span style="font-size:11px;color:var(--text-dim);margin-left:8px">'+latestDate+'</span>'+
-      '</div>'
-    : '';
-
-  var historyBtn = results.length > 1
-    ? '<div style="text-align:center;margin-top:8px"><button onclick="showTab(&quot;ielts&quot;)" style="background:none;border:none;color:var(--text-dim);font-size:12px;cursor:pointer">Barcha '+results.length+' ta natija ➜</button></div>'
-    : '';
-
-  el.innerHTML = '<div style="display:flex;gap:6px">'+cards+'</div>'+overallHtml+historyBtn;
-}
-
-function toggleNote(id, btn) {
-  var el = document.getElementById('note-' + id);
-  if (!el) return;
-  var collapsed = el.classList.contains('task-note-collapsed');
-  if (collapsed) {
-    el.classList.remove('task-note-collapsed');
-    btn.textContent = "Yopish ▲";
-  } else {
-    el.classList.add('task-note-collapsed');
-    btn.textContent = "Ko'proq ▼";
-  }
-}
-
-function signInWithGoogle() {
-  if (!fbAuth) {
-    document.getElementById("fb-login-status").textContent = "Firebase yuklanmadi, qayta urining...";
-    return;
-  }
-  var provider = new firebase.auth.GoogleAuthProvider();
-  provider.setCustomParameters({ prompt: "select_account" });
-  document.getElementById("fb-login-status").textContent = "Kirilmoqda...";
-  fbAuth.signInWithPopup(provider).catch(function(err) {
-    document.getElementById("fb-login-status").textContent = "Xato: " + err.message;
-  });
-}
-
-function signOut() {
-  if (!fbAuth) return;
-  // Listenerni to'xtatamiz
-  if (typeof fbUnsubscribe === 'function') { fbUnsubscribe(); fbUnsubscribe = null; }
-  fbUser = null;
-  KEY = KEY_BASE;
-  fbAuth.signOut().then(function() {
-    // Sahifani tozalaymiz — yangi akkount uchun fresh start
-    window.location.reload();
-  });
-}
-
-function fbInitDone() {
-
-// Mobil redirect dan qaytganda natijani ushlash
-
-// Auth state listener
-fbAuth.onAuthStateChanged(function(user) {
-  var loggedOut = document.getElementById('sync-logged-out');
-  var loggedIn  = document.getElementById('sync-logged-in');
-  if (user) {
-    fbUser = user;
-    // Har bir user o'z localStorage key ga ega
-    KEY = KEY_BASE + '_' + user.uid;
-
-    if (loggedOut) loggedOut.style.display = 'none';
-    if (loggedIn)  loggedIn.style.display  = 'block';
-    // Show user info
-    var nameEl   = document.getElementById('sync-name');
-    var emailEl  = document.getElementById('sync-email');
-    var avatarEl = document.getElementById('sync-avatar');
-    if (nameEl)   nameEl.textContent = user.displayName || user.email || '';
-    if (emailEl)  emailEl.textContent = user.email || '';
-    if (avatarEl) {
-      if (user.photoURL) {
-        avatarEl.innerHTML = '<img src="'+user.photoURL+'" style="width:100%;height:100%;object-fit:cover" />';
-      } else {
-        avatarEl.textContent = (user.displayName||'U').charAt(0).toUpperCase();
-      }
-    }
-    // Shu userning localStorage cache ni yuklaymiz (agar bor bo'lsa)
-    try {
-      var cached = localStorage.getItem(KEY);
-      if (cached) {
-        // Bu user uchun saqlangan data bor — yuklaymiz
-        var cachedS = JSON.parse(cached);
-        S = Object.assign({
-          tasks:[], taskOrder:[], rewards:JSON.parse(JSON.stringify(defaultRewards)),
-          coins:0, totalCoins:0, streak:0, lastDate:null, nextId:200, nextRid:20,
-        }, cachedS);
-        checkReset();
-        recalcStreakFromLog();
-        render();
-      } else {
-        // Bu user uchun local data yo'q — S ni tozalaymiz (Firestore dan keladi yoki 0 dan boshlanadi)
-        S = {
-          tasks:[], taskOrder:[], rewards:JSON.parse(JSON.stringify(defaultRewards)),
-          coins:0, totalCoins:0, streak:0, lastDate:null, nextId:200, nextRid:20,
-        };
-        render();
-      }
-    } catch(e) {}
-    // Keyin Firestore dan real-time yuklaymiz (Firestore ustunlik qiladi)
-    fbLoadData();
-  } else {
-    fbUser = null;
-    KEY = KEY_BASE;
-    if (loggedOut) loggedOut.style.display = 'block';
-    if (loggedIn)  loggedIn.style.display  = 'none';
-  }
-});
-
-// Real-time listener — har qanday qurilmadan o'zgarish bo'lsa, darhol yangilanadi
-// (fbUnsubscribe va fbFirstLoad global e'lon qilingan — signOut() ham ko'rishi uchun)
-
-// Bir nechta qurilmadagi o'zgarishlarni yo'qotmaslik uchun massivlarni id bo'yicha birlashtiramiz.
-// Soat farqi sababli "kim yangiroq" degan qaror noto'g'ri bo'lsa ham,
-// ikkala tomondagi yozuvlar saqlanib qoladi (ustma-ust tushganda esa yangiroq tomon g'olib).
-function mergeStateArrays(localS, remoteS) {
-  var merged = Object.assign({}, localS, remoteS);
-  var remoteWins = (remoteS._savedAt || 0) >= (localS._savedAt || 0);
-  ['tasks', 'goals', 'ieltsResults'].forEach(function(key) {
-    var a = localS[key] || [];
-    var b = remoteS[key] || [];
-    if (!a.length && !b.length) return;
-    var winnerArr = remoteWins ? b : a;
-    var loserArr  = remoteWins ? a : b;
-    var map = {};
-    var order = [];
-    winnerArr.forEach(function(item) {
-      if (item && item.id != null) {
-        map[item.id] = item;
-        order.push(item.id);
-      }
-    });
-    loserArr.forEach(function(item) {
-      if (item && item.id != null && !(item.id in map)) {
-        map[item.id] = item;
-        order.push(item.id);
-      }
-    });
-    merged[key] = order.map(function(id) { return map[id]; });
-  });
-  // secretHabit.log ni ham birlashtirish — ikkala qurilmadagi yozuvlar saqlansin
-  // PIN: yangiroq tomon g'olib (Object.assign allaqachon remoteWins tomonini olgan)
-  var localHabit  = localS.secretHabit  || {log:{}, pin:DEFAULT_PIN};
-  var remoteHabit = remoteS.secretHabit || {log:{}, pin:DEFAULT_PIN};
-  var mergedLog = Object.assign({}, localHabit.log || {}, remoteHabit.log || {});
-  // Ikki tomonda ham mavjud kun bo'lsa — yangiroq tomon g'olib
-  Object.keys(localHabit.log  || {}).forEach(function(day) {
-    if (remoteHabit.log && remoteHabit.log[day] !== undefined) {
-      mergedLog[day] = remoteWins ? remoteHabit.log[day] : localHabit.log[day];
-    }
-  });
-  merged.secretHabit = {
-    log: mergedLog,
-    pin: remoteWins ? (remoteHabit.pin || DEFAULT_PIN) : (localHabit.pin || DEFAULT_PIN),
-  };
-  return merged;
-}
-
-function applyRemoteState(remoteS) {
-  S = mergeStateArrays(S, remoteS);
-  // Migrate goals
-  (S.goals||[]).forEach(function(g) {
-    if (!g.daysCoinsGiven) {
-      g.daysCoinsGiven = {};
-      Object.keys(g.daysChecked||{}).forEach(function(d) {
-        g.daysCoinsGiven[d] = 1;
-      });
-    }
-  });
-  // MUHIM: avval recalcStreakFromLog — S.streak ni to'g'ri o'rnatadi,
-  // keyin checkReset — tayyor S.streak asosida bonus/jazo beradi (streak ni o'zgartirmaydi).
-  recalcStreakFromLog();
-  checkReset();
-  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {}
-  render();
-  if (typeof renderGoals === 'function') renderGoals();
-}
-
-function fbLoadData() {
-  if (!fbUser) return;
-  fbFirstLoad = true;
-  // Eski listenerni to'xtatamiz (agar bor bo'lsa)
-  if (fbUnsubscribe) { fbUnsubscribe(); fbUnsubscribe = null; }
-
-  fbUnsubscribe = fbDb.collection('users').doc(fbUser.uid).onSnapshot(function(doc) {
-    if (doc.exists) {
-      var data = doc.data();
-      if (data.state) {
-        try {
-          var remoteS = JSON.parse(data.state);
-          var localTs  = S._savedAt  || 0;
-          var remoteTs = remoteS._savedAt || 0;
-
-          if (fbFirstLoad) {
-            // Sahifa birinchi ochilganda: Firestore DOIM to'g'ri manba
-            // LocalStorage eski bo'lishi mumkin — uni ustidan Firestore yozadi
-            fbFirstLoad = false;
-            applyRemoteState(remoteS);
-          } else {
-            // Real-time update: boshqa qurilmadan o'zgarish keldi
-            // DOIM merge qilamiz — timestamp kim katta bo'lishidan qat'i nazar,
-            // ikkala qurilmadagi yangi elementlar (tasks/goals/ieltsResults) saqlanib qoladi.
-            // mergeStateArrays() ichida yangiroq tomon skaljar maydonlarda g'olib bo'ladi,
-            // lekin massiv elementlari id bo'yicha birlashtirilib, hech biri yo'qolmaydi.
-            applyRemoteState(remoteS);
-          }
-        } catch(e) { console.log('fbLoadData parse error:', e); }
-      }
-    } else {
-      // Birinchi marta — local ma'lumotni Firestore ga yuklaymiz
-      fbFirstLoad = false;
-      fbSaveData();
-    }
-  }, function(err) {
-    console.log('Firestore onSnapshot error:', err);
-  });
-}
-
-// Save to Firestore (debounced, with retry on failure)
-var fbRetryTimer = null;
-var fbRetryCount = 0;
-
-function fbSaveData() {
-  if (!fbUser) return;
-  if (fbSyncTimer) clearTimeout(fbSyncTimer);
-  if (fbRetryTimer) { clearTimeout(fbRetryTimer); fbRetryTimer = null; }
-  var statusEl = document.getElementById('fb-sync-status');
-  if (statusEl) { statusEl.style.display = 'block'; statusEl.textContent = '⟳ Saqlanmoqda...'; }
-  fbSyncTimer = setTimeout(function() {
-    fbDoSave();
-  }, 1500);
-}
-
-// Darhol saqlash (debounce'siz) — sahifa yopilayotganda yoki internet qaytganda ishlatiladi
-function fbSaveDataNow() {
-  if (!fbUser) return;
-  if (fbSyncTimer) { clearTimeout(fbSyncTimer); fbSyncTimer = null; }
-  fbDoSave();
-}
-
-// Yil o'tgan loglarni tozalaydi — Firestore 1MB limitiga tushmaslik uchun
-// Har safar saqlaganda ishga tushadi, lekin faqat 1 yildan eski yozuvlarni o'chiradi
-function trimStateBeforeSave(s) {
-  var trimmed = Object.assign({}, s);
-  var oneYearAgo = new Date();
-  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-  var cutoffDate = oneYearAgo.toISOString().slice(0, 10); // "YYYY-MM-DD"
-
-  // taskDoneLog — har bir task uchun 1 yildan eski sanalarni o'chirish
-  if (trimmed.taskDoneLog) {
-    var tl = {};
-    Object.keys(trimmed.taskDoneLog).forEach(function(id) {
-      var filtered = (trimmed.taskDoneLog[id] || []).filter(function(d) {
-        return d >= cutoffDate;
-      });
-      if (filtered.length > 0) tl[id] = filtered;
-    });
-    trimmed.taskDoneLog = tl;
-  }
-
-  // taskSkipLog — xuddi shunday
-  if (trimmed.taskSkipLog) {
-    var sl = {};
-    Object.keys(trimmed.taskSkipLog).forEach(function(id) {
-      var filtered = (trimmed.taskSkipLog[id] || []).filter(function(d) {
-        return d >= cutoffDate;
-      });
-      if (filtered.length > 0) sl[id] = filtered;
-    });
-    trimmed.taskSkipLog = sl;
-  }
-
-  // ieltsResults — sana maydoni "date" bo'lgan yozuvlar
-  if (trimmed.ieltsResults) {
-    trimmed.ieltsResults = trimmed.ieltsResults.filter(function(r) {
-      return r && r.date && r.date >= cutoffDate;
-    });
-  }
-
-  // tarixLog — sana maydoni "date" yoki "ts" (timestamp) bo'lishi mumkin
-  if (trimmed.tarixLog) {
-    trimmed.tarixLog = trimmed.tarixLog.filter(function(r) {
-      if (!r) return false;
-      var d = r.date || (r.ts ? new Date(r.ts).toISOString().slice(0, 10) : null);
-      return d && d >= cutoffDate;
-    });
-  }
-
-  // secretHabit.log — kalitlar "YYYY-MM-DD" sana formatida
-  if (trimmed.secretHabit && trimmed.secretHabit.log) {
-    var newLog = {};
-    Object.keys(trimmed.secretHabit.log).forEach(function(day) {
-      if (day >= cutoffDate) newLog[day] = trimmed.secretHabit.log[day];
-    });
-    trimmed.secretHabit = Object.assign({}, trimmed.secretHabit, { log: newLog });
-  }
-
-  return trimmed;
-}
-
-function fbDoSave() {
-  if (!fbUser) return;
-  var statusEl = document.getElementById('fb-sync-status');
-  var safeState = trimStateBeforeSave(S);
-  fbDb.collection('users').doc(fbUser.uid).set({
-    state: JSON.stringify(safeState),
-    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-  }).then(function() {
-    fbRetryCount = 0;
-    if (statusEl) statusEl.style.display = 'none';
-    // Oxirgi sync vaqtini profile da ko'rsatamiz
-    var syncTimeEl = document.getElementById('sync-last-time');
-    if (syncTimeEl) {
-      var now = new Date();
-      syncTimeEl.textContent = '✅ ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ' da saqlandi';
-    }
-  }).catch(function(err) {
-    console.log('Save error:', err);
-    if (statusEl) { statusEl.style.display = 'block'; statusEl.textContent = '❌ Xato, qayta urinilmoqda...'; }
-    // Eksponensial qayta urinish: 3s, 6s, 12s... maksimal 60s, internet qaytguncha
-    fbRetryCount++;
-    var delay = Math.min(3000 * Math.pow(2, fbRetryCount - 1), 60000);
-    fbRetryTimer = setTimeout(function() {
-      fbDoSave();
-    }, delay);
-  });
-}
-
-// Internet qaytganda darhol qayta urinish
-window.addEventListener('online', function() {
-  if (fbUser) fbSaveDataNow();
-});
-
-// Sahifa yopilayotganda / fonga o'tayotganda kutilayotgan o'zgarishni darhol yuborish
-window.addEventListener('visibilitychange', function() {
-  if (document.visibilityState === 'hidden' && fbUser && fbSyncTimer) {
-    fbSaveDataNow();
-  }
-});
-window.addEventListener('beforeunload', function() {
-  if (fbUser && fbSyncTimer) {
-    fbSaveDataNow();
-  }
-});
-
-// save() already calls fbSaveData() internally — override endi kerak emas.
-  // (save() funksiyasi boshidanoq fbSaveData ni chaqiradi, fbUser null bo'lsa u o'zi qaytadi)
-
-  // Show user name if logged in
-  setTimeout(function() {
-    if (fbUser) {
-      var nameEl = document.getElementById('user-name');
-      if (nameEl && fbUser.displayName && nameEl.textContent.trim() === 'Foydalanuvchi') {
-        nameEl.textContent = fbUser.displayName.split(' ')[0];
-      }
-    }
-  }, 2000);
-} // end fbInitDone
-</script>
 
 
   <!-- IELTS Result Modal -->
