@@ -1629,16 +1629,25 @@ const SUPABASE_KEY = 'sb_publishable_wC9prq5vpxF70j1YHj5Phg_zF9XfgY8';
 
 async function saveToSupabase(state) {
   try {
-    await fetch(SUPABASE_URL + '/rest/v1/app_data', {
+    // updated_at ni SUPABASE server belgilaydi (DEFAULT now()) — qurilma soatiga bog'liq emas
+    const res = await fetch(SUPABASE_URL + '/rest/v1/app_data', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'apikey': SUPABASE_KEY,
         'Authorization': 'Bearer ' + SUPABASE_KEY,
-        'Prefer': 'resolution=merge-duplicates,return=minimal'
+        'Prefer': 'resolution=merge-duplicates,return=representation'
       },
       body: JSON.stringify({ id: 'main', data: state, updated_at: new Date().toISOString() })
     });
+    if (res.ok) {
+      const rows = await res.json();
+      if (rows && rows[0] && rows[0].updated_at) {
+        // Server tomonidan belgilangan vaqtni saqlaymiz — keyingi taqqoslash uchun
+        S._serverSavedAt = rows[0].updated_at;
+        try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {}
+      }
+    }
   } catch(e) {
     console.warn('Supabase saqlash xatosi:', e);
   }
@@ -1646,7 +1655,7 @@ async function saveToSupabase(state) {
 
 async function loadFromSupabase() {
   try {
-    const res = await fetch(SUPABASE_URL + '/rest/v1/app_data?id=eq.main&select=data', {
+    const res = await fetch(SUPABASE_URL + '/rest/v1/app_data?id=eq.main&select=data,updated_at', {
       headers: {
         'apikey': SUPABASE_KEY,
         'Authorization': 'Bearer ' + SUPABASE_KEY
@@ -1654,7 +1663,8 @@ async function loadFromSupabase() {
     });
     const rows = await res.json();
     if (rows && rows[0] && rows[0].data) {
-      return rows[0].data;
+      // Server updated_at ni ham qaytaramiz — ishonchli taqqoslash uchun
+      return { data: rows[0].data, updatedAt: rows[0].updated_at };
     }
   } catch(e) {
     console.warn('Supabase yuklash xatosi:', e);
@@ -3004,13 +3014,21 @@ function renderTaskList() {
   load();
   render();
 
-  // 2. Supabaseden yuklash (har doim remote ustunlik qiladi)
-  const remoteData = await loadFromSupabase();
-  if (remoteData) {
-    const localSaved = S._savedAt || 0;
-    const remoteSaved = remoteData._savedAt || 0;
-    if (remoteSaved >= localSaved || localSaved === 0) {
-      S = Object.assign(S, remoteData);
+  // 2. Supabaseden yuklash
+  // Strategiya: server updated_at ishonchli (qurilma soatiga bog'liq emas)
+  // Agar remote yaniroq bo'lsa — remote olamiz va local ni yangilaymiz
+  // Agar local yaniroq bo'lsa — remote ni yangilaymiz
+  // Agar supabaseda hech narsa yo'q — local ni yuboramiz
+  const remote = await loadFromSupabase();
+  if (remote) {
+    const remoteState = remote.data;
+    const remoteUpdatedAt = remote.updatedAt || '1970-01-01';
+    const localUpdatedAt  = S._serverSavedAt || '1970-01-01';
+    // Server vaqti bo'yicha taqqoslaymiz — qurilma soati farqi yo'q
+    if (remoteUpdatedAt >= localUpdatedAt) {
+      // Remote yaniroq — to'liq remote olamiz
+      S = Object.assign({}, S, remoteState);
+      S._serverSavedAt = remoteUpdatedAt;
       (S.goals||[]).forEach(function(g) {
         if (!g.daysCoinsGiven) {
           g.daysCoinsGiven = {};
@@ -3021,7 +3039,13 @@ function renderTaskList() {
       checkReset();
       try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {}
       render();
+    } else {
+      // Local yaniroq — remote ni boshqa qurilmalar uchun yangilaymiz
+      saveToSupabase(S);
     }
+  } else {
+    // Supabaseda hech narsa yo'q — birinchi qurilma, localdan yuklaymiz
+    saveToSupabase(S);
   }
 
   if (S.pendingStreakMsg) {
@@ -6987,6 +7011,147 @@ function closeTaskSheet() {
   document.getElementById('task-action-sheet').classList.remove('open');
   document.body.style.overflow = '';
 }
+
+// ============ IELTS RESULT FUNCTIONS ============
+var _ieltsSection = null;
+
+function openIeltsResultModal() {
+  var modal = document.getElementById('ielts-result-modal');
+  if (!modal) return;
+  _ieltsSection = null;
+  var dateInput = document.getElementById('ielts-res-date');
+  if (dateInput) dateInput.value = today();
+  var rawInput = document.getElementById('ielts-res-raw');
+  if (rawInput) rawInput.value = '';
+  var bandInput = document.getElementById('ielts-res-band');
+  if (bandInput) bandInput.value = '';
+  var preview = document.getElementById('ielts-res-band-preview');
+  if (preview) preview.textContent = '—';
+  var rawRow = document.getElementById('ielts-raw-row');
+  if (rawRow) rawRow.style.display = 'none';
+  var bandRow = document.getElementById('ielts-band-row');
+  if (bandRow) bandRow.style.display = 'none';
+  ['l','r','w','s'].forEach(function(k) {
+    var btn = document.getElementById('ielts-sec-'+k);
+    if (btn) btn.style.opacity = '1';
+  });
+  modal.style.display = 'flex';
+}
+
+function closeIeltsResultModal() {
+  var modal = document.getElementById('ielts-result-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function selectIeltsSection(sec) {
+  _ieltsSection = sec;
+  var rawRow = document.getElementById('ielts-raw-row');
+  var bandRow = document.getElementById('ielts-band-row');
+  if (sec === 'listening' || sec === 'reading') {
+    if (rawRow) rawRow.style.display = 'block';
+    if (bandRow) bandRow.style.display = 'none';
+  } else {
+    if (rawRow) rawRow.style.display = 'none';
+    if (bandRow) bandRow.style.display = 'block';
+  }
+  ['l','r','w','s'].forEach(function(k) {
+    var btn = document.getElementById('ielts-sec-'+k);
+    if (btn) btn.style.opacity = '0.4';
+  });
+  var map = {listening:'l', reading:'r', writing:'w', speaking:'s'};
+  var active = document.getElementById('ielts-sec-' + map[sec]);
+  if (active) active.style.opacity = '1';
+}
+
+function calcIeltsBandLive() {
+  var rawVal = parseInt(document.getElementById('ielts-res-raw').value);
+  var preview = document.getElementById('ielts-res-band-preview');
+  if (!preview) return;
+  if (isNaN(rawVal) || rawVal < 0 || rawVal > 40) { preview.textContent = '—'; return; }
+  var band = rawToBand(rawVal, _ieltsSection);
+  preview.textContent = band !== null ? band : '—';
+}
+
+function rawToBand(raw, sec) {
+  var lTable = [0,2.5,3,3,3.5,3.5,4,4,4.5,4.5,5,5,5.5,5.5,6,6,6,6.5,6.5,7,7,7,7.5,7.5,8,8,8,8.5,8.5,8.5,9,9,9,9,9,9,9,9,9,9,9];
+  var rTable = [0,2.5,3,3,3.5,4,4,4.5,5,5,5,5.5,5.5,6,6,6,6.5,6.5,7,7,7,7.5,7.5,8,8,8,8.5,8.5,9,9,9,9,9,9,9,9,9,9,9,9,9];
+  if (sec === 'listening') return lTable[Math.min(raw, 40)] || 0;
+  if (sec === 'reading') return rTable[Math.min(raw, 40)] || 0;
+  return null;
+}
+
+function saveIeltsResult() {
+  if (!_ieltsSection) { toast('❗ Section tanlang!'); return; }
+  var dateVal = document.getElementById('ielts-res-date').value;
+  if (!dateVal) { toast('❗ Sana kiriting!'); return; }
+  var band = null;
+  if (_ieltsSection === 'listening' || _ieltsSection === 'reading') {
+    var raw = parseInt(document.getElementById('ielts-res-raw').value);
+    if (isNaN(raw) || raw < 0 || raw > 40) { toast('❗ Raw score kiriting (0-40)!'); return; }
+    band = rawToBand(raw, _ieltsSection);
+  } else {
+    band = parseFloat(document.getElementById('ielts-res-band').value);
+    if (isNaN(band) || band < 0 || band > 9) { toast('❗ Band score kiriting (0-9)!'); return; }
+  }
+  if (!S.ieltsResults) S.ieltsResults = [];
+  S.ieltsResults.push({ section: _ieltsSection, band: band, date: dateVal, id: Date.now() });
+  save();
+  closeIeltsResultModal();
+  renderIeltsTab();
+  toast('✅ Natija saqlandi!');
+}
+
+function renderIeltsTab() {
+  var list = document.getElementById('ielts-history-list');
+  var empty = document.getElementById('ielts-history-empty');
+  var overallCard = document.getElementById('ielts-overall-card');
+  if (!list) return;
+  var results = S.ieltsResults || [];
+  if (results.length === 0) {
+    list.innerHTML = '';
+    if (empty) empty.style.display = 'block';
+    if (overallCard) overallCard.style.display = 'none';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+  // Overall hisoblash
+  var secs = ['listening','reading','writing','speaking'];
+  var secBands = {};
+  secs.forEach(function(s) {
+    var arr = results.filter(function(r){ return r.section === s; });
+    if (arr.length > 0) secBands[s] = arr[arr.length-1].band;
+  });
+  var vals = Object.values(secBands);
+  if (vals.length === 4 && overallCard) {
+    var overall = Math.round(vals.reduce(function(a,b){return a+b;},0) / 4 * 2) / 2;
+    overallCard.style.display = 'block';
+    var valEl = document.getElementById('ielts-overall-val');
+    var subEl = document.getElementById('ielts-overall-sub');
+    if (valEl) valEl.textContent = overall;
+    if (subEl) subEl.textContent = 'L:'+secBands.listening+' R:'+secBands.reading+' W:'+secBands.writing+' S:'+secBands.speaking;
+  }
+  var secColors = {listening:'#60A5FA', reading:'#34D399', writing:'#F5A623', speaking:'#F87171'};
+  var secEmoji = {listening:'🎧', reading:'📖', writing:'✍️', speaking:'🗣️'};
+  var sorted = results.slice().sort(function(a,b){ return b.id - a.id; });
+  list.innerHTML = sorted.map(function(r) {
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between">' +
+      '<div style="display:flex;align-items:center;gap:10px">' +
+      '<span style="font-size:20px">' + (secEmoji[r.section]||'📊') + '</span>' +
+      '<div><div style="font-size:13px;font-weight:600;color:var(--text);text-transform:capitalize">' + r.section + '</div>' +
+      '<div style="font-size:11px;color:var(--text-muted)">' + r.date + '</div></div></div>' +
+      '<div style="display:flex;align-items:center;gap:10px">' +
+      '<div style="font-size:24px;font-weight:700;color:' + (secColors[r.section]||'var(--accent)') + ';font-family:Syne,sans-serif">' + r.band + '</div>' +
+      '<button onclick="deleteIeltsResult(' + r.id + ')" style="background:none;border:none;color:var(--text-dim);font-size:16px;cursor:pointer;padding:4px">🗑️</button>' +
+      '</div></div>';
+  }).join('');
+}
+
+function deleteIeltsResult(id) {
+  S.ieltsResults = (S.ieltsResults || []).filter(function(r){ return r.id !== id; });
+  save();
+  renderIeltsTab();
+}
+// ================================================
 </script>
 
 </body>
