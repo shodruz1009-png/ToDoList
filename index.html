@@ -7190,33 +7190,15 @@ function toggleNote(id, btn) {
 
 function signInWithGoogle() {
   if (!fbAuth) {
-    document.getElementById('fb-login-status').textContent = 'Firebase yuklanmadi, qayta urining...';
+    document.getElementById("fb-login-status").textContent = "Firebase yuklanmadi, qayta urining...";
     return;
   }
   var provider = new firebase.auth.GoogleAuthProvider();
-  provider.setCustomParameters({ prompt: 'select_account' });
-
-  // Mobil qurilmalarda popup ishlamaydi — redirect usulini ishlatamiz
-  var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  if (isMobile) {
-    document.getElementById('fb-login-status').textContent = 'Google ga yo\'naltirilmoqda...';
-    fbAuth.signInWithRedirect(provider).catch(function(err) {
-      document.getElementById('fb-login-status').textContent = 'Xato: ' + err.message;
-    });
-  } else {
-    document.getElementById('fb-login-status').textContent = 'Kirilmoqda...';
-    fbAuth.signInWithPopup(provider).catch(function(err) {
-      // Popup bloklangan bo'lsa redirect ga o'tamiz
-      if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user') {
-        document.getElementById('fb-login-status').textContent = 'Google ga yo\'naltirilmoqda...';
-        fbAuth.signInWithRedirect(provider).catch(function(e) {
-          document.getElementById('fb-login-status').textContent = 'Xato: ' + e.message;
-        });
-      } else {
-        document.getElementById('fb-login-status').textContent = 'Xato: ' + err.message;
-      }
-    });
-  }
+  provider.setCustomParameters({ prompt: "select_account" });
+  document.getElementById("fb-login-status").textContent = "Kirilmoqda...";
+  fbAuth.signInWithPopup(provider).catch(function(err) {
+    document.getElementById("fb-login-status").textContent = "Xato: " + err.message;
+  });
 }
 
 function signOut() {
@@ -7234,16 +7216,6 @@ function signOut() {
 function fbInitDone() {
 
 // Mobil redirect dan qaytganda natijani ushlash
-fbAuth.getRedirectResult().then(function(result) {
-  if (result && result.user) {
-    // onAuthStateChanged o'zi ishga tushadi — bu yerda qo'shimcha ish kerak emas
-    var el = document.getElementById('fb-login-status');
-    if (el) el.textContent = '';
-  }
-}).catch(function(err) {
-  var el = document.getElementById('fb-login-status');
-  if (el) el.textContent = 'Kirish xatosi: ' + err.message;
-});
 
 // Auth state listener
 fbAuth.onAuthStateChanged(function(user) {
