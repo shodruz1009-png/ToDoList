@@ -134,8 +134,13 @@
   .search-bar { width:100%; padding:11px 14px 11px 38px; background:var(--surface); border:1px solid var(--border); border-radius:12px; color:var(--text); font-size:14px; font-family:'DM Sans',sans-serif; outline:none; transition:border-color 0.2s; margin-bottom:14px; box-sizing:border-box; }
   .search-bar:focus { border-color:var(--accent); }
   .search-bar::placeholder { color:var(--text-dim); }
-  .search-wrap { position:relative; margin-bottom:14px; }
+  .search-wrap { position:relative; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+  .search-wrap .search-bar { margin-bottom:0; flex:1; }
   .search-icon { position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-dim); font-size:15px; pointer-events:none; }
+  .all-toggle { display:flex; align-items:center; gap:6px; padding:9px 12px; border-radius:12px; border:1px solid var(--border); background:var(--surface); color:var(--text-muted); font-size:13px; font-weight:600; font-family:'DM Sans',sans-serif; cursor:pointer; white-space:nowrap; transition:all 0.2s; flex-shrink:0; }
+  .all-toggle.active { background:rgba(124,92,252,0.15); border-color:var(--accent); color:var(--accent); }
+  .all-toggle .all-check { width:15px; height:15px; border-radius:4px; border:2px solid currentColor; display:inline-flex; align-items:center; justify-content:center; font-size:10px; transition:all 0.15s; }
+  .future-days-badge { display:inline-block; font-size:11px; padding:2px 7px; border-radius:999px; background:rgba(124,92,252,0.15); color:var(--accent); margin-left:6px; font-weight:600; vertical-align:middle; }
   body.light .search-bar { background:#fff; }
 
   /* Note field */
@@ -616,6 +621,10 @@
     <div class="search-wrap">
       <span class="search-icon">🔍</span>
       <input class="search-bar" id="task-search" placeholder="Vazifalarni qidirish..." oninput="renderTaskList()" />
+      <button class="all-toggle" id="all-toggle-btn" onclick="toggleAllTasks()" title="Barcha vazifalarni ko'rsatish">
+        <span class="all-check" id="all-check-icon"></span>
+        ALL
+      </button>
     </div>
     <!-- Chest banner: faqat hamma vazifa tugaganda chiqadi -->
     <div id="tasks-chest-banner" style="display:none;background:linear-gradient(135deg,rgba(245,166,35,0.15),rgba(245,166,35,0.05));border:1px solid rgba(245,166,35,0.4);border-radius:16px;padding:16px 18px;margin-bottom:8px;display:none;align-items:center;justify-content:space-between;gap:12px">
@@ -632,6 +641,7 @@
     <div id="chest-inline-result" style="display:none;border-radius:14px;padding:14px 16px;margin-bottom:8px;animation:slideIn 0.25s ease"></div>
     <div id="daily-section"><div class="section-title">Bugungi vazifalar</div><div class="task-list" id="daily-list"></div></div>
     <div id="once-section"><div class="section-title">Bir martalik</div><div class="task-list" id="once-list"></div></div>
+    <div id="future-section" style="display:none"><div class="section-title" style="color:rgba(124,92,252,0.85)">🔮 Kelajakdagi vazifalar</div><div class="task-list" id="future-list"></div></div>
     <div class="empty" id="empty-msg" style="display:none"><div class="empty-icon">📝</div>Hali vazifa yo'q.<br>Yuqoridagi tugma bilan boshlang!</div>
   </div>
 
@@ -948,7 +958,8 @@
             <div id="sync-avatar" style="width:36px;height:36px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;overflow:hidden"></div>
             <div>
               <div id="sync-name" style="font-size:14px;font-weight:600;color:var(--text)"></div>
-              <div style="font-size:11px;color:#34D399;margin-top:1px">✅ Sinxronlashgan</div>
+              <div id="sync-email" style="font-size:11px;color:var(--text-muted);margin-top:1px"></div>
+              <div id="sync-last-time" style="font-size:11px;color:#34D399;margin-top:1px">✅ Sinxronlashgan</div>
             </div>
           </div>
           <button onclick="signOut()" style="padding:6px 14px;border-radius:999px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:12px;cursor:pointer">Chiqish</button>
@@ -1475,7 +1486,8 @@
 </div>
 
 <script>
-const KEY = 'mytasks_v5';
+const KEY_BASE = 'mytasks_v5';
+var KEY = KEY_BASE; // login bo'lganda user.uid ga o'zgaradi
 const DAYS_UZ = ['Yakshanba','Dushanba','Seshanba','Chorshanba','Payshanba','Juma','Shanba'];
 const MONTHS_UZ = ['yanvar','fevral','mart','aprel','may','iyun','iyul','avgust','sentabr','oktabr','noyabr','dekabr'];
 const SHORT_DAYS = ['Ya','Du','Se','Ch','Pa','Ju','Sh'];
@@ -1652,14 +1664,19 @@ function load() {
         });
       }
     });
-    checkReset();
+    // MUHIM: avval recalcStreakFromLog — S.streak ni to'g'ri o'rnatadi,
+    // keyin checkReset — tayyor S.streak asosida bonus/jazo beradi (streak ni o'zgartirmaydi).
     recalcStreakFromLog();
+    checkReset();
   } catch(e) {}
 }
 
 function save() {
   S._savedAt = Date.now();
   try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {}
+  // Firebase SDK yuklanmagan bo'lsa fbSaveData o'zi qaytadi (if (!fbUser) return)
+  // Shuning uchun bu chaqiruv har doim xavfsiz — override kerak emas
+  if (typeof fbSaveData === 'function') fbSaveData();
 }
 
 function wasTaskDoneOnDate(t, dateStr) {
@@ -1725,21 +1742,28 @@ function checkReset() {
           return wasTaskDoneOnDate(t, ps) || wasTaskSkippedOnDate(t, ps);
         });
 
-        if (allDone) {
-          S.streak = (S.streak || 0) + 1;
-          if (S.streak > (S.bestStreak || 0)) S.bestStreak = S.streak;
+        // MUHIM: S.streak ni bu yerda O'ZGARTIRMAYMIZ.
+        // streak recalcStreakFromLog() tomonidan aniq hisoblanadi —
+        // checkReset() faqat coin/XP bonus va jazo beradi.
+        // Bonus/jazo faqat S.lastDate ning keyingi kuni (eng oxirgi o'tgan kun) uchun beriladi.
+        var _yesterday = new Date(todayDate.getTime() - 86400000);
+        var yesterdayStr = _yesterday.getFullYear() + '-' +
+                           String(_yesterday.getMonth()+1).padStart(2,'0') + '-' +
+                           String(_yesterday.getDate()).padStart(2,'0');
+        var isLastDay = (ps === yesterdayStr);
 
-          // Streak bonus (faqat S.lastDate ning keyingi kuni uchun, ya'ni eng oxirgi kun)
-          var _ld = new Date(todayDate.getTime() - 86400000);
-          var isLastDay = (ps === (_ld.getFullYear()+'-'+String(_ld.getMonth()+1).padStart(2,'0')+'-'+String(_ld.getDate()).padStart(2,'0')));
+        if (allDone) {
           if (isLastDay) {
-            var bonus = getStreakBonus(S.streak || 0);
+            // Streak bonus — S.streak recalcStreakFromLog dan keyin to'g'ri bo'ladi,
+            // lekin u hali chaqirilmagan. Kechagi streakni log dan hisoblaymiz.
+            var streakForBonus = (S.streak || 0) + 1; // checkReset dan oldin +1 (kecha bajarildi)
+            var bonus = getStreakBonus(streakForBonus);
             if (bonus > 0) {
               S.coins = (S.coins || 0) + bonus;
               S.totalCoins = (S.totalCoins || 0) + bonus;
-              S.pendingStreakMsg = '🔥 ' + S.streak + ' kun streak! +' + bonus + ' bonus tanga!';
+              S.pendingStreakMsg = '🔥 ' + streakForBonus + ' kun streak! +' + bonus + ' bonus tanga!';
             }
-            var xpBonus = XP_STREAK_BONUS[S.streak] || 0;
+            var xpBonus = XP_STREAK_BONUS[streakForBonus] || 0;
             if (xpBonus > 0) {
               if (!S.xp) S.xp = 0;
               var oldLv = getLevel(S.xp).level;
@@ -1751,13 +1775,8 @@ function checkReset() {
             }
           }
         } else {
-          // Bajarilmagan kun — streak sıfırlanadi
-          S.streak = 0;
-
-          // Jazo: faqat S.lastDate ning keyingi kuni uchun
-          var _ld2 = new Date(todayDate.getTime() - 86400000);
-          var isLastDay2 = (ps === (_ld2.getFullYear()+'-'+String(_ld2.getMonth()+1).padStart(2,'0')+'-'+String(_ld2.getDate()).padStart(2,'0')));
-          if (isLastDay2) {
+          // Bajarilmagan kun — jazo faqat eng oxirgi o'tgan kun uchun
+          if (isLastDay) {
             var missedTasks = dueTasks.filter(function(t) {
               return !wasTaskDoneOnDate(t, ps) && !wasTaskSkippedOnDate(t, ps);
             });
@@ -2806,13 +2825,97 @@ function render() {
 }
 
 // Qidiruv + render task list
+var showAllTasks = false;
+
+function toggleAllTasks() {
+  showAllTasks = !showAllTasks;
+  var btn  = document.getElementById('all-toggle-btn');
+  var icon = document.getElementById('all-check-icon');
+  if (showAllTasks) {
+    btn.classList.add('active');
+    icon.textContent = '✓';
+  } else {
+    btn.classList.remove('active');
+    icon.textContent = '';
+  }
+  renderTaskList();
+}
+
+// Vazifa qancha kundan keyin chiqishini hisoblaydi
+function daysUntilTask(t) {
+  var td = today();
+  if (t.repeat === 'interval' && t.nextDate && t.nextDate > td) {
+    return Math.round((new Date(t.nextDate) - new Date(td)) / 86400000);
+  }
+  if (t.repeat === 'once' && t.postponedTo && t.postponedTo > td) {
+    return Math.round((new Date(t.postponedTo) - new Date(td)) / 86400000);
+  }
+  // custom-days va weekdays: keyingi mos kunni topamiz (max 7 kun oldinga)
+  if (t.repeat === 'custom-days' || t.repeat === 'weekdays') {
+    var allowedDays;
+    if (t.repeat === 'weekdays') {
+      allowedDays = [1, 2, 3, 4, 5];
+    } else {
+      allowedDays = t.days || [];
+    }
+    for (var i = 1; i <= 7; i++) {
+      var checkDate = new Date(new Date(td + 'T00:00:00').getTime() + i * 86400000);
+      if (allowedDays.indexOf(checkDate.getDay()) !== -1) {
+        return i;
+      }
+    }
+  }
+  return 0;
+}
+
+// Vazifa bugun emas, lekin yaqin kunda chiqadimi?
+function taskIsFuture(t, td) {
+  if (t.done) return false;
+  if (t.repeat === 'interval' && t.nextDate && t.nextDate > td) return true;
+  if (t.repeat === 'once' && t.postponedTo && t.postponedTo > td) return true;
+  if (t.repeat === 'custom-days') {
+    var days = t.days || [];
+    if (!days.length) return false;
+    var todayDow = new Date(td + 'T00:00:00').getDay();
+    return days.indexOf(todayDow) === -1; // bugun emas, demak kelajakda
+  }
+  if (t.repeat === 'weekdays') {
+    var dow = new Date(td + 'T00:00:00').getDay();
+    return dow === 0 || dow === 6; // shanba yoki yakshanba
+  }
+  return false;
+}
+
+function daysBadge(days) {
+  if (days <= 0) return '';
+  if (days === 1) return '<span class="future-days-badge">ertaga</span>';
+  return '<span class="future-days-badge">' + days + ' kundan keyin</span>';
+}
+
 function renderTaskList() {
   var q = (document.getElementById('task-search')||{value:''}).value.toLowerCase().trim();
+  var td = today();
+
+  // Bugungi vazifalar
   var todayTasks = S.tasks.filter(function(t) {
-    if (t.postponedTo && t.postponedTo > today()) return false;
+    if (t.postponedTo && t.postponedTo > td) return false;
     return taskDueToday(t);
   });
-  var onceTasks = S.tasks.filter(function(t){ return t.repeat==='once' && (!t.postponedTo || t.postponedTo<=today()) && !t.done; });
+  var onceTasks = S.tasks.filter(function(t){
+    return t.repeat==='once' && (!t.postponedTo || t.postponedTo<=td) && !t.done;
+  });
+
+  // Kelajakdagi vazifalar (faqat showAllTasks=true da)
+  var futureTasks = [];
+  if (showAllTasks) {
+    futureTasks = S.tasks.filter(function(t) {
+      return taskIsFuture(t, td);
+    });
+    // Sanasi yaqinroqdan tartibda
+    futureTasks.sort(function(a, b) {
+      return daysUntilTask(a) - daysUntilTask(b);
+    });
+  }
 
   function applySearch(arr) {
     if (!q) return arr;
@@ -2821,9 +2924,10 @@ function renderTaskList() {
     });
   }
 
-  var recurringTasks = todayTasks.filter(function(t){ return t.repeat!=='once'; });
+  var recurringTasks  = todayTasks.filter(function(t){ return t.repeat!=='once'; });
   var filteredRecurring = applySearch(recurringTasks);
-  var filteredOnce = applySearch(onceTasks);
+  var filteredOnce    = applySearch(onceTasks);
+  var filteredFuture  = applySearch(futureTasks);
 
   function sortByOrder(arr) {
     if (!S.taskOrder || S.taskOrder.length === 0) return arr;
@@ -2834,26 +2938,54 @@ function renderTaskList() {
   }
 
   var dList=document.getElementById('daily-list'); dList.innerHTML='';
-  var oList=document.getElementById('once-list'); oList.innerHTML='';
+  var oList=document.getElementById('once-list');  oList.innerHTML='';
+  var fList=document.getElementById('future-list'); fList.innerHTML='';
 
   if (q) {
     sortByOrder(filteredRecurring).forEach(function(t){ dList.appendChild(makeTaskEl(t)); });
     filteredOnce.forEach(function(t){ oList.appendChild(makeTaskEl(t)); });
   } else {
-    var active=sortByOrder(filteredRecurring.filter(function(t){return !t.done&&!t.skipped;}));
-    var skipped=sortByOrder(filteredRecurring.filter(function(t){return t.skipped&&!t.done;}));
+    var active  = sortByOrder(filteredRecurring.filter(function(t){return !t.done&&!t.skipped;}));
+    var skipped = sortByOrder(filteredRecurring.filter(function(t){return t.skipped&&!t.done;}));
     active.forEach(function(t){dList.appendChild(makeTaskEl(t));});
     if(skipped.length){
-      var s=document.createElement('div');s.style.cssText='font-size:11px;color:var(--text-dim);letter-spacing:0.06em;text-transform:uppercase;padding:8px 2px 4px;';s.textContent="O'tkazildi";dList.appendChild(s);
+      var s=document.createElement('div');
+      s.style.cssText='font-size:11px;color:var(--text-dim);letter-spacing:0.06em;text-transform:uppercase;padding:8px 2px 4px;';
+      s.textContent="O'tkazildi";
+      dList.appendChild(s);
       skipped.forEach(function(t){dList.appendChild(makeTaskEl(t));});
     }
-    filteredOnce.forEach(function(t){oList.appendChild(makeTaskEl(t));});
+    filteredOnce.forEach(function(t){ oList.appendChild(makeTaskEl(t)); });
   }
 
-  document.getElementById('daily-section').style.display=filteredRecurring.length?'':'none';
-  document.getElementById('once-section').style.display=filteredOnce.length?'':'none';
+  // Kelajakdagi vazifalar ro'yxati
+  if (showAllTasks && filteredFuture.length) {
+    filteredFuture.forEach(function(t) {
+      var el = makeTaskEl(t);
+      // "nechi kundan keyin" badge qo'shamiz task-sub qismiga
+      var days = daysUntilTask(t);
+      var subEl = el.querySelector('.task-sub');
+      if (subEl) {
+        subEl.innerHTML = subEl.innerHTML + daysBadge(days);
+      } else {
+        var taskInfo = el.querySelector('.task-info');
+        if (taskInfo) {
+          var newSub = document.createElement('div');
+          newSub.className = 'task-sub';
+          newSub.innerHTML = daysBadge(days);
+          taskInfo.appendChild(newSub);
+        }
+      }
+      fList.appendChild(el);
+    });
+  }
+
+  document.getElementById('daily-section').style.display = filteredRecurring.length ? '' : 'none';
+  document.getElementById('once-section').style.display  = filteredOnce.length ? '' : 'none';
+  document.getElementById('future-section').style.display = (showAllTasks && filteredFuture.length) ? '' : 'none';
+
   var emptyMsg = document.getElementById('empty-msg');
-  if (emptyMsg) emptyMsg.style.display=(filteredRecurring.length===0&&filteredOnce.length===0)?'':'none';
+  if (emptyMsg) emptyMsg.style.display = (filteredRecurring.length===0 && filteredOnce.length===0) ? '' : 'none';
 }
 
 load();
@@ -3601,14 +3733,29 @@ function confirmRestart() {
   document.body.appendChild(ov);
   document.getElementById('restart-cancel').onclick = function(){ ov.remove(); };
   document.getElementById('restart-confirm').onclick = function(){
-    // Clear all app data
+    // localStorage tozalash
     try { localStorage.removeItem(KEY); } catch(e) {}
-    // Reset state to defaults
+    // State ni default ga qaytarish (secretHabit ham tozalanadi)
     S = {
       tasks:[], taskOrder:[], rewards:JSON.parse(JSON.stringify(defaultRewards)),
       coins:0, totalCoins:0, streak:0, lastDate:null, nextId:200, nextRid:20,
+      secretHabit: {log:{}, pin:DEFAULT_PIN},
     };
-    save(); render();
+    // Firestore dan ham o'chirish — aks holda reload da eski data qaytib keladi
+    if (fbUser && fbDb) {
+      fbDb.collection('users').doc(fbUser.uid).delete()
+        .then(function() {
+          // O'chirilgandan keyin yangi bo'sh state ni yozamiz (login saqlansin)
+          save();
+        })
+        .catch(function(err) {
+          console.log('Firestore delete error:', err);
+          save(); // xato bo'lsa ham localStorage dagi yangi state saqlanadi
+        });
+    } else {
+      save();
+    }
+    render();
     ov.remove();
     toast('✅ Akkaunt qayta boshlandi!');
     showTab('tasks');
@@ -3619,17 +3766,30 @@ function confirmRestart() {
 
 
 // ========= SECRET HABIT TRACKER =========
-var SECRET_PIN = '1009'; // default PIN — o'zgartirish mumkin
+var DEFAULT_PIN = '1009'; // default PIN — bitta konstanta, barcha kod shu yerdan oladi
+var SECRET_PIN = DEFAULT_PIN;
 var _pinBuffer = '';
 var _secretUnlocked = false;
 var SECRET_KEY = 'secret_habit_v1';
 
 function getSecretData() {
-  try { var d = localStorage.getItem(SECRET_KEY); return d ? JSON.parse(d) : {log:{},pin:'1009'}; }
-  catch(e) { return {log:{},pin:'1234'}; }
+  // S.secretHabit — asosiy manba (Firebase bilan sync bo'ladi)
+  // Eski localStorage da data bo'lsa — S ga ko'chiramiz (bir martalik migration)
+  if (!S.secretHabit) {
+    try {
+      var legacy = localStorage.getItem(SECRET_KEY);
+      S.secretHabit = legacy ? JSON.parse(legacy) : {log:{}, pin:DEFAULT_PIN};
+      localStorage.removeItem(SECRET_KEY); // eski kalitni o'chirish
+    } catch(e) {
+      S.secretHabit = {log:{}, pin:DEFAULT_PIN};
+    }
+  }
+  return S.secretHabit;
 }
 function saveSecretData(d) {
-  try { localStorage.setItem(SECRET_KEY, JSON.stringify(d)); } catch(e){}
+  // S ichiga yozib, keyin save() orqali Firebase ga ham yuboriladi
+  S.secretHabit = d;
+  save();
 }
 
 function openSecretTab() {
@@ -3643,7 +3803,7 @@ function openSecretTab() {
 
 function pinKey(k) {
   var d = getSecretData();
-  var correctPin = d.pin || '1234';
+  var correctPin = d.pin || DEFAULT_PIN;
   if(k === 'del') {
     _pinBuffer = _pinBuffer.slice(0,-1);
   } else if(k === 'ok') {
@@ -3719,7 +3879,7 @@ function chpinKey(k) {
   }
   var d = getSecretData();
   if (_chpinStep === 'old') {
-    var correctPin = d.pin || '1009';
+    var correctPin = d.pin || DEFAULT_PIN;
     if (_chpinBuf === correctPin) {
       _chpinStep = 'new'; _chpinBuf = '';
       document.getElementById('chpin-step-label').textContent = 'Yangi PIN ni kiriting';
@@ -6742,6 +6902,8 @@ var fbDb   = null;
 var fbUser = null;
 var fbSyncTimer = null;
 var fbInitAttempts = 0;
+var fbUnsubscribe = null;  // global — signOut() va fbLoadData() ikkovi ham ko'radi
+var fbFirstLoad = true;
 
 function tryInitFirebase() {
   fbInitAttempts++;
@@ -6761,6 +6923,16 @@ function tryInitFirebase() {
     }
     fbAuth = firebase.auth();
     fbDb   = firebase.firestore();
+    // Offline persistence — internet yo'q bo'lganda ham ishlaydi, qayta ulananda sync bo'ladi
+    fbDb.enablePersistence({ synchronizeTabs: true }).catch(function(err) {
+      if (err.code === 'failed-precondition') {
+        // Bir nechta tab ochiq — faqat bitta tab persistence ishlatadi, bu normal
+        console.log('Persistence: bir nechta tab ochiq');
+      } else if (err.code === 'unimplemented') {
+        // Brauzer qo'llab-quvvatlamaydi (eski Safari)
+        console.log('Persistence qollab-quvvatlanmaydi');
+      }
+    });
     fbInitDone();
   } catch(e) {
     console.log('Firebase init error:', e);
@@ -6833,7 +7005,7 @@ function openIeltsResultModal() {
   document.getElementById('ielts-band-row').style.display = 'none';
   // reset section button opacity
   ['ielts-sec-l','ielts-sec-r','ielts-sec-w','ielts-sec-s'].forEach(function(id){
-    var b = document.getElementById(id); if(b) b.style.opacity='1'; b.style.transform='scale(1)';
+    var b = document.getElementById(id); if(b) { b.style.opacity='1'; b.style.transform='scale(1)'; }
   });
   document.getElementById('ielts-result-modal').style.display = 'flex';
 }
@@ -6949,7 +7121,15 @@ function renderProfileIeltsSummary() {
     el.innerHTML = '<div style="text-align:center;padding:12px 0;color:var(--text-dim);font-size:13px">Hali natija kiritilmagan<br><span style="font-size:11px;opacity:0.6">+ Yangi tugmasi bilan qoshing</span></div>';
     return;
   }
-  var latest = results[0];
+  // Har bir section uchun alohida eng yangi yozuvni topamiz
+  // (results[0] bitta entry — u barcha sectionlarni emas, faqat bittasini ifodalaydi)
+  var latestBySection = {};
+  results.forEach(function(r) {
+    if (r.section && !latestBySection[r.section]) {
+      latestBySection[r.section] = r; // results saralanган bo'lsa birinchisi eng yangi
+    }
+  });
+
   var sections = [
     { key:'listening', label:'🎧 L', color:'#60A5FA' },
     { key:'reading',   label:'📖 R', color:'#34D399' },
@@ -6957,11 +7137,12 @@ function renderProfileIeltsSummary() {
     { key:'speaking',  label:'🗣️ S', color:'#F87171' }
   ];
   var cards = sections.map(function(s) {
-    var val = latest[s.key];
+    var entry = latestBySection[s.key];
     var top = '—', bot = '';
-    if (val !== null && val !== undefined) {
-      if (typeof val === 'object') { top = val.raw+'/40'; bot = val.band.toFixed(1); }
-      else { top = val.toFixed(1); bot = 'band'; }
+    if (entry) {
+      if (entry.raw !== undefined) { top = entry.raw + '/40'; }
+      if (entry.band !== undefined) { bot = entry.band.toFixed(1); }
+      else if (entry.raw === undefined && entry.band !== undefined) { top = entry.band.toFixed(1); }
     }
     return '<div style="flex:1;text-align:center;background:var(--surface2);border-radius:10px;padding:8px 4px">'+
       '<div style="font-size:10px;color:'+s.color+';margin-bottom:4px">'+s.label+'</div>'+
@@ -6970,11 +7151,19 @@ function renderProfileIeltsSummary() {
     '</div>';
   }).join('');
 
-  var overallHtml = latest.overall !== undefined
+  // Overall: barcha 4 sectiondan eng yangilarining o'rtachasi (mavjud bo'lsa)
+  var availableBands = sections.map(function(s) {
+    return latestBySection[s.key] ? latestBySection[s.key].band : null;
+  }).filter(function(b) { return b !== null && b !== undefined; });
+  var overallBand = availableBands.length === 4
+    ? (availableBands.reduce(function(a,b){return a+b;}, 0) / 4)
+    : null;
+  var latestDate = results[0] ? results[0].date : '';
+  var overallHtml = overallBand !== null
     ? '<div style="text-align:center;margin-top:10px;padding:8px;background:rgba(124,92,252,0.1);border-radius:10px">'+
         '<span style="font-size:11px;color:#B48EFF">Overall: </span>'+
-        '<span style="font-size:18px;font-weight:700;color:#B48EFF;font-family:Syne,sans-serif">'+latest.overall.toFixed(1)+'</span>'+
-        '<span style="font-size:11px;color:var(--text-dim);margin-left:8px">'+latest.date+'</span>'+
+        '<span style="font-size:18px;font-weight:700;color:#B48EFF;font-family:Syne,sans-serif">'+overallBand.toFixed(1)+'</span>'+
+        '<span style="font-size:11px;color:var(--text-dim);margin-left:8px">'+latestDate+'</span>'+
       '</div>'
     : '';
 
@@ -7005,13 +7194,23 @@ function signInWithGoogle() {
   }
   document.getElementById('fb-login-status').textContent = 'Kirilmoqda...';
   var provider = new firebase.auth.GoogleAuthProvider();
+  // Har safar akkaunt tanlash oynasini ochadi — bir nechta Gmail bo'lsa ham tanlab kirish mumkin
+  provider.setCustomParameters({ prompt: 'select_account' });
   fbAuth.signInWithPopup(provider).catch(function(err) {
     document.getElementById('fb-login-status').textContent = 'Xato: ' + err.message;
   });
 }
 
 function signOut() {
-  if (fbAuth) fbAuth.signOut();
+  if (!fbAuth) return;
+  // Listenerni to'xtatamiz
+  if (typeof fbUnsubscribe === 'function') { fbUnsubscribe(); fbUnsubscribe = null; }
+  fbUser = null;
+  KEY = KEY_BASE;
+  fbAuth.signOut().then(function() {
+    // Sahifani tozalaymiz — yangi akkount uchun fresh start
+    window.location.reload();
+  });
 }
 
 function fbInitDone() {
@@ -7022,12 +7221,17 @@ fbAuth.onAuthStateChanged(function(user) {
   var loggedIn  = document.getElementById('sync-logged-in');
   if (user) {
     fbUser = user;
+    // Har bir user o'z localStorage key ga ega
+    KEY = KEY_BASE + '_' + user.uid;
+
     if (loggedOut) loggedOut.style.display = 'none';
     if (loggedIn)  loggedIn.style.display  = 'block';
     // Show user info
     var nameEl   = document.getElementById('sync-name');
+    var emailEl  = document.getElementById('sync-email');
     var avatarEl = document.getElementById('sync-avatar');
     if (nameEl)   nameEl.textContent = user.displayName || user.email || '';
+    if (emailEl)  emailEl.textContent = user.email || '';
     if (avatarEl) {
       if (user.photoURL) {
         avatarEl.innerHTML = '<img src="'+user.photoURL+'" style="width:100%;height:100%;object-fit:cover" />';
@@ -7035,85 +7239,276 @@ fbAuth.onAuthStateChanged(function(user) {
         avatarEl.textContent = (user.displayName||'U').charAt(0).toUpperCase();
       }
     }
-    // Load data from Firestore
+    // Shu userning localStorage cache ni yuklaymiz (agar bor bo'lsa)
+    try {
+      var cached = localStorage.getItem(KEY);
+      if (cached) {
+        // Bu user uchun saqlangan data bor — yuklaymiz
+        var cachedS = JSON.parse(cached);
+        S = Object.assign({
+          tasks:[], taskOrder:[], rewards:JSON.parse(JSON.stringify(defaultRewards)),
+          coins:0, totalCoins:0, streak:0, lastDate:null, nextId:200, nextRid:20,
+        }, cachedS);
+        checkReset();
+        recalcStreakFromLog();
+        render();
+      } else {
+        // Bu user uchun local data yo'q — S ni tozalaymiz (Firestore dan keladi yoki 0 dan boshlanadi)
+        S = {
+          tasks:[], taskOrder:[], rewards:JSON.parse(JSON.stringify(defaultRewards)),
+          coins:0, totalCoins:0, streak:0, lastDate:null, nextId:200, nextRid:20,
+        };
+        render();
+      }
+    } catch(e) {}
+    // Keyin Firestore dan real-time yuklaymiz (Firestore ustunlik qiladi)
     fbLoadData();
   } else {
     fbUser = null;
+    KEY = KEY_BASE;
     if (loggedOut) loggedOut.style.display = 'block';
     if (loggedIn)  loggedIn.style.display  = 'none';
   }
 });
 
-// Load from Firestore
+// Real-time listener — har qanday qurilmadan o'zgarish bo'lsa, darhol yangilanadi
+// (fbUnsubscribe va fbFirstLoad global e'lon qilingan — signOut() ham ko'rishi uchun)
+
+// Bir nechta qurilmadagi o'zgarishlarni yo'qotmaslik uchun massivlarni id bo'yicha birlashtiramiz.
+// Soat farqi sababli "kim yangiroq" degan qaror noto'g'ri bo'lsa ham,
+// ikkala tomondagi yozuvlar saqlanib qoladi (ustma-ust tushganda esa yangiroq tomon g'olib).
+function mergeStateArrays(localS, remoteS) {
+  var merged = Object.assign({}, localS, remoteS);
+  var remoteWins = (remoteS._savedAt || 0) >= (localS._savedAt || 0);
+  ['tasks', 'goals', 'ieltsResults'].forEach(function(key) {
+    var a = localS[key] || [];
+    var b = remoteS[key] || [];
+    if (!a.length && !b.length) return;
+    var winnerArr = remoteWins ? b : a;
+    var loserArr  = remoteWins ? a : b;
+    var map = {};
+    var order = [];
+    winnerArr.forEach(function(item) {
+      if (item && item.id != null) {
+        map[item.id] = item;
+        order.push(item.id);
+      }
+    });
+    loserArr.forEach(function(item) {
+      if (item && item.id != null && !(item.id in map)) {
+        map[item.id] = item;
+        order.push(item.id);
+      }
+    });
+    merged[key] = order.map(function(id) { return map[id]; });
+  });
+  // secretHabit.log ni ham birlashtirish — ikkala qurilmadagi yozuvlar saqlansin
+  // PIN: yangiroq tomon g'olib (Object.assign allaqachon remoteWins tomonini olgan)
+  var localHabit  = localS.secretHabit  || {log:{}, pin:DEFAULT_PIN};
+  var remoteHabit = remoteS.secretHabit || {log:{}, pin:DEFAULT_PIN};
+  var mergedLog = Object.assign({}, localHabit.log || {}, remoteHabit.log || {});
+  // Ikki tomonda ham mavjud kun bo'lsa — yangiroq tomon g'olib
+  Object.keys(localHabit.log  || {}).forEach(function(day) {
+    if (remoteHabit.log && remoteHabit.log[day] !== undefined) {
+      mergedLog[day] = remoteWins ? remoteHabit.log[day] : localHabit.log[day];
+    }
+  });
+  merged.secretHabit = {
+    log: mergedLog,
+    pin: remoteWins ? (remoteHabit.pin || DEFAULT_PIN) : (localHabit.pin || DEFAULT_PIN),
+  };
+  return merged;
+}
+
+function applyRemoteState(remoteS) {
+  S = mergeStateArrays(S, remoteS);
+  // Migrate goals
+  (S.goals||[]).forEach(function(g) {
+    if (!g.daysCoinsGiven) {
+      g.daysCoinsGiven = {};
+      Object.keys(g.daysChecked||{}).forEach(function(d) {
+        g.daysCoinsGiven[d] = 1;
+      });
+    }
+  });
+  // MUHIM: avval recalcStreakFromLog — S.streak ni to'g'ri o'rnatadi,
+  // keyin checkReset — tayyor S.streak asosida bonus/jazo beradi (streak ni o'zgartirmaydi).
+  recalcStreakFromLog();
+  checkReset();
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {}
+  render();
+  if (typeof renderGoals === 'function') renderGoals();
+}
+
 function fbLoadData() {
   if (!fbUser) return;
-  fbDb.collection('users').doc(fbUser.uid).get().then(function(doc) {
+  fbFirstLoad = true;
+  // Eski listenerni to'xtatamiz (agar bor bo'lsa)
+  if (fbUnsubscribe) { fbUnsubscribe(); fbUnsubscribe = null; }
+
+  fbUnsubscribe = fbDb.collection('users').doc(fbUser.uid).onSnapshot(function(doc) {
     if (doc.exists) {
       var data = doc.data();
       if (data.state) {
         try {
           var remoteS = JSON.parse(data.state);
-          // Timestamp-based merge: yangroq versiya g'alaba qiladi
           var localTs  = S._savedAt  || 0;
           var remoteTs = remoteS._savedAt || 0;
-          if (remoteTs >= localTs) {
-            // Remote yangroq yoki teng — remote bilan yangilaymiz
-            S = Object.assign(S, remoteS);
+
+          if (fbFirstLoad) {
+            // Sahifa birinchi ochilganda: Firestore DOIM to'g'ri manba
+            // LocalStorage eski bo'lishi mumkin — uni ustidan Firestore yozadi
+            fbFirstLoad = false;
+            applyRemoteState(remoteS);
           } else {
-            // Local yangroq — local ma'lumotni Firestore ga yuklaymiz
-            fbSaveData();
+            // Real-time update: boshqa qurilmadan o'zgarish keldi
+            // DOIM merge qilamiz — timestamp kim katta bo'lishidan qat'i nazar,
+            // ikkala qurilmadagi yangi elementlar (tasks/goals/ieltsResults) saqlanib qoladi.
+            // mergeStateArrays() ichida yangiroq tomon skaljar maydonlarda g'olib bo'ladi,
+            // lekin massiv elementlari id bo'yicha birlashtirilib, hech biri yo'qolmaydi.
+            applyRemoteState(remoteS);
           }
-          // Migrate goals
-          (S.goals||[]).forEach(function(g) {
-            if (!g.daysCoinsGiven) {
-              g.daysCoinsGiven = {};
-              Object.keys(g.daysChecked||{}).forEach(function(d) {
-                g.daysCoinsGiven[d] = 1;
-              });
-            }
-          });
-          checkReset();
-          recalcStreakFromLog();
-          // Also save to localStorage as cache
-          try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {}
-          render();
-          if (typeof renderGoals === 'function') renderGoals();
-        } catch(e) {}
+        } catch(e) { console.log('fbLoadData parse error:', e); }
       }
     } else {
-      // First time — upload localStorage data
+      // Birinchi marta — local ma'lumotni Firestore ga yuklaymiz
+      fbFirstLoad = false;
       fbSaveData();
     }
-  }).catch(function(err) {
-    console.log('Firestore load error:', err);
+  }, function(err) {
+    console.log('Firestore onSnapshot error:', err);
   });
 }
 
-// Save to Firestore (debounced)
+// Save to Firestore (debounced, with retry on failure)
+var fbRetryTimer = null;
+var fbRetryCount = 0;
+
 function fbSaveData() {
   if (!fbUser) return;
   if (fbSyncTimer) clearTimeout(fbSyncTimer);
+  if (fbRetryTimer) { clearTimeout(fbRetryTimer); fbRetryTimer = null; }
   var statusEl = document.getElementById('fb-sync-status');
-  if (statusEl) { statusEl.style.display = 'block'; }
+  if (statusEl) { statusEl.style.display = 'block'; statusEl.textContent = '⟳ Saqlanmoqda...'; }
   fbSyncTimer = setTimeout(function() {
-    fbDb.collection('users').doc(fbUser.uid).set({
-      state: JSON.stringify(S),
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(function() {
-      if (statusEl) statusEl.style.display = 'none';
-    }).catch(function(err) {
-      if (statusEl) { statusEl.textContent = '❌ Xato'; setTimeout(function(){ statusEl.style.display='none'; statusEl.textContent='Saqlanmoqda...'; }, 3000); }
-      console.log('Save error:', err);
-    });
+    fbDoSave();
   }, 1500);
 }
 
-// Override save() to also sync to Firebase
-  var _origSave = save;
-  save = function() {
-    _origSave();
-    fbSaveData();
-  };
+// Darhol saqlash (debounce'siz) — sahifa yopilayotganda yoki internet qaytganda ishlatiladi
+function fbSaveDataNow() {
+  if (!fbUser) return;
+  if (fbSyncTimer) { clearTimeout(fbSyncTimer); fbSyncTimer = null; }
+  fbDoSave();
+}
+
+// Yil o'tgan loglarni tozalaydi — Firestore 1MB limitiga tushmaslik uchun
+// Har safar saqlaganda ishga tushadi, lekin faqat 1 yildan eski yozuvlarni o'chiradi
+function trimStateBeforeSave(s) {
+  var trimmed = Object.assign({}, s);
+  var oneYearAgo = new Date();
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+  var cutoffDate = oneYearAgo.toISOString().slice(0, 10); // "YYYY-MM-DD"
+
+  // taskDoneLog — har bir task uchun 1 yildan eski sanalarni o'chirish
+  if (trimmed.taskDoneLog) {
+    var tl = {};
+    Object.keys(trimmed.taskDoneLog).forEach(function(id) {
+      var filtered = (trimmed.taskDoneLog[id] || []).filter(function(d) {
+        return d >= cutoffDate;
+      });
+      if (filtered.length > 0) tl[id] = filtered;
+    });
+    trimmed.taskDoneLog = tl;
+  }
+
+  // taskSkipLog — xuddi shunday
+  if (trimmed.taskSkipLog) {
+    var sl = {};
+    Object.keys(trimmed.taskSkipLog).forEach(function(id) {
+      var filtered = (trimmed.taskSkipLog[id] || []).filter(function(d) {
+        return d >= cutoffDate;
+      });
+      if (filtered.length > 0) sl[id] = filtered;
+    });
+    trimmed.taskSkipLog = sl;
+  }
+
+  // ieltsResults — sana maydoni "date" bo'lgan yozuvlar
+  if (trimmed.ieltsResults) {
+    trimmed.ieltsResults = trimmed.ieltsResults.filter(function(r) {
+      return r && r.date && r.date >= cutoffDate;
+    });
+  }
+
+  // tarixLog — sana maydoni "date" yoki "ts" (timestamp) bo'lishi mumkin
+  if (trimmed.tarixLog) {
+    trimmed.tarixLog = trimmed.tarixLog.filter(function(r) {
+      if (!r) return false;
+      var d = r.date || (r.ts ? new Date(r.ts).toISOString().slice(0, 10) : null);
+      return d && d >= cutoffDate;
+    });
+  }
+
+  // secretHabit.log — kalitlar "YYYY-MM-DD" sana formatida
+  if (trimmed.secretHabit && trimmed.secretHabit.log) {
+    var newLog = {};
+    Object.keys(trimmed.secretHabit.log).forEach(function(day) {
+      if (day >= cutoffDate) newLog[day] = trimmed.secretHabit.log[day];
+    });
+    trimmed.secretHabit = Object.assign({}, trimmed.secretHabit, { log: newLog });
+  }
+
+  return trimmed;
+}
+
+function fbDoSave() {
+  if (!fbUser) return;
+  var statusEl = document.getElementById('fb-sync-status');
+  var safeState = trimStateBeforeSave(S);
+  fbDb.collection('users').doc(fbUser.uid).set({
+    state: JSON.stringify(safeState),
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(function() {
+    fbRetryCount = 0;
+    if (statusEl) statusEl.style.display = 'none';
+    // Oxirgi sync vaqtini profile da ko'rsatamiz
+    var syncTimeEl = document.getElementById('sync-last-time');
+    if (syncTimeEl) {
+      var now = new Date();
+      syncTimeEl.textContent = '✅ ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ' da saqlandi';
+    }
+  }).catch(function(err) {
+    console.log('Save error:', err);
+    if (statusEl) { statusEl.style.display = 'block'; statusEl.textContent = '❌ Xato, qayta urinilmoqda...'; }
+    // Eksponensial qayta urinish: 3s, 6s, 12s... maksimal 60s, internet qaytguncha
+    fbRetryCount++;
+    var delay = Math.min(3000 * Math.pow(2, fbRetryCount - 1), 60000);
+    fbRetryTimer = setTimeout(function() {
+      fbDoSave();
+    }, delay);
+  });
+}
+
+// Internet qaytganda darhol qayta urinish
+window.addEventListener('online', function() {
+  if (fbUser) fbSaveDataNow();
+});
+
+// Sahifa yopilayotganda / fonga o'tayotganda kutilayotgan o'zgarishni darhol yuborish
+window.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'hidden' && fbUser && fbSyncTimer) {
+    fbSaveDataNow();
+  }
+});
+window.addEventListener('beforeunload', function() {
+  if (fbUser && fbSyncTimer) {
+    fbSaveDataNow();
+  }
+});
+
+// save() already calls fbSaveData() internally — override endi kerak emas.
+  // (save() funksiyasi boshidanoq fbSaveData ni chaqiradi, fbUser null bo'lsa u o'zi qaytadi)
 
   // Show user name if logged in
   setTimeout(function() {
