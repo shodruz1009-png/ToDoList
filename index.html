@@ -731,53 +731,11 @@ if ('serviceWorker' in navigator) {
       </div>
     </div>
 
-    <!-- Vazifa tanlash (accordion) -->
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden">
-      <div onclick="togglePomoTaskPicker()" style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;cursor:pointer;user-select:none">
-        <div style="font-size:11px;color:var(--text-dim);letter-spacing:0.06em;text-transform:uppercase">Vazifa tanlash</div>
-        <span id="pomo-picker-arrow" style="color:var(--text-dim);font-size:14px;transition:transform 0.25s">&#9654;</span>
-      </div>
-      <div id="pomo-picker-body" style="display:none;padding:0 18px 14px">
-        <div id="pomo-task-picker" style="display:flex;flex-direction:column;gap:7px"></div>
-        <div id="pomo-task-picker-empty" style="text-align:center;padding:20px;color:var(--text-dim);font-size:13px">Bugungi vazifalar yo'q</div>
-      </div>
-    </div>
-
-    <!-- Daily Goal Tracker -->
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-top:12px">
-      <div style="font-size:11px;color:var(--text-dim);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:12px">&#128197; Kunlik Dars Maqsadi</div>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-        <span style="font-size:13px;color:var(--text-muted)">Kunlik maqsad:</span>
-        <select id="dg-goal-select" onchange="dgSaveGoal()" style="padding:6px 10px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;cursor:pointer">
-          <option value="2">2 soat</option><option value="3">3 soat</option><option value="4">4 soat</option>
-          <option value="5">5 soat</option><option value="6" selected>6 soat</option><option value="7">7 soat</option>
-          <option value="8">8 soat</option><option value="10">10 soat</option><option value="12">12 soat</option>
-        </select>
-      </div>
-      <div style="margin-bottom:14px">
-        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-bottom:5px">
-          <span id="dg-elapsed-label">0 soat 0 daqiqa</span>
-          <span id="dg-goal-label">Maqsad: 6 soat (0%)</span>
-        </div>
-        <div style="background:var(--surface2);border-radius:999px;height:8px;overflow:hidden">
-          <div id="dg-progress-bar" style="height:100%;width:0%;background:var(--accent);border-radius:999px;transition:width 0.5s"></div>
-        </div>
-      </div>
-      <div style="display:flex;gap:8px">
-        <button id="dg-start-btn" onclick="dgStart()" style="flex:2;padding:11px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">&#9654; Boshlash</button>
-        <button id="dg-pause-btn" onclick="dgPause()" style="flex:1;padding:11px;border-radius:12px;border:none;background:var(--surface2);color:var(--text-muted);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;display:none">&#9646;&#9646; Pauza</button>
-        <button onclick="dgStop()" style="flex:1;padding:11px;border-radius:12px;border:none;background:rgba(255,80,80,0.12);color:#ff6b6b;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif">&#9632; Stop</button>
-      </div>
-    </div>
-
-    <!-- Kunlik Tarix -->
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-top:12px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <div style="font-size:11px;color:var(--text-dim);letter-spacing:0.06em;text-transform:uppercase">&#128203; Kunlik Tarix</div>
-        <button onclick="dgClearHistory()" style="font-size:11px;color:var(--text-dim);background:none;border:none;cursor:pointer;padding:2px 6px">&#128465; Tozalash</button>
-      </div>
-      <div id="dg-history-list" style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto"></div>
-      <div id="dg-history-empty" style="text-align:center;padding:16px;color:var(--text-dim);font-size:13px">Hali tarix yo'q</div>
+    <!-- Vazifa tanlash -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px">
+      <div style="font-size:11px;color:var(--text-dim);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:10px">Vazifa tanlash</div>
+      <div id="pomo-task-picker" style="display:flex;flex-direction:column;gap:7px"></div>
+      <div id="pomo-task-picker-empty" style="text-align:center;padding:20px;color:var(--text-dim);font-size:13px">Bugungi vazifalar yo'q</div>
     </div>
   </div>
 
@@ -7242,8 +7200,8 @@ function calcIeltsBandLive() {
 }
 
 function rawToBand(raw, sec) {
-  var lTable = [0,2.5,3,3,3.5,3.5,4,4,4.5,4.5,5,5,5.5,5.5,6,6,6,6.5,6.5,7,7,7,7.5,7.5,8,8,8,8.5,8.5,8.5,9,9,9,9,9,9,9,9,9,9,9];
-  var rTable = [0,2.5,3,3,3.5,4,4,4.5,5,5,5,5.5,5.5,6,6,6,6.5,6.5,7,7,7,7.5,7.5,8,8,8,8.5,8.5,9,9,9,9,9,9,9,9,9,9,9,9,9];
+  var lTable = [0,0,0,0,0,0,0,0,0,0,4,4,4,4.5,4.5,4.5,5,5,5.5,5.5,5.5,5.5,5.5,6,6,6,6.5,6.5,6.5,6.5,7,7,7.5,7.5,7.5,8,8,8.5,8.5,9,9];
+  var rTable = [0,0,0,0,0,0,0,0,0,0,4,4,4,4.5,4.5,5,5,5,5,5.5,5.5,5.5,5.5,6,6,6,6,6.5,6.5,6.5,7,7,7,7.5,7.5,8,8,8.5,8.5,9,9];
   if (sec === 'listening') return lTable[Math.min(raw, 40)] || 0;
   if (sec === 'reading') return rTable[Math.min(raw, 40)] || 0;
   return null;
@@ -7320,145 +7278,6 @@ function deleteIeltsResult(id) {
   save();
   renderIeltsTab();
 }
-// ================================================
-function togglePomoTaskPicker() {
-  var body = document.getElementById('pomo-picker-body');
-  var arrow = document.getElementById('pomo-picker-arrow');
-  if (!body) return;
-  var open = body.style.display !== 'none';
-  body.style.display = open ? 'none' : 'block';
-  arrow.style.transform = open ? '' : 'rotate(90deg)';
-}
-// ================================================
-// DAILY GOAL TRACKER
-// ================================================
-var dgTimer=null,dgRunning=false,dgPaused=false,dgElapsedToday=0,dgSessionStart=null;
-
-function dgTodayKey(){var d=new Date();return 'dg_day_'+d.getFullYear()+'_'+(d.getMonth()+1)+'_'+d.getDate();}
-
-function dgLoad(){
-  var saved=localStorage.getItem(dgTodayKey());
-  dgElapsedToday=saved?parseInt(saved):0;
-  var goal=localStorage.getItem('dg_goal_hours')||'6';
-  var sel=document.getElementById('dg-goal-select');
-  if(sel) sel.value=goal;
-  dgUpdateUI();dgRenderHistory();
-}
-
-function dgSaveGoal(){
-  var sel=document.getElementById('dg-goal-select');
-  localStorage.setItem('dg_goal_hours',sel.value);
-  dgUpdateUI();
-}
-
-function dgStart(){
-  if(dgRunning)return;
-  dgRunning=true;dgPaused=false;dgSessionStart=Date.now();
-  document.getElementById('dg-start-btn').style.display='none';
-  document.getElementById('dg-pause-btn').style.display='';
-  dgTimer=setInterval(dgTick,1000);
-}
-
-function dgPause(){
-  if(!dgRunning)return;
-  if(!dgPaused){
-    dgPaused=true;clearInterval(dgTimer);dgTimer=null;
-    dgElapsedToday+=Math.floor((Date.now()-dgSessionStart)/1000);
-    localStorage.setItem(dgTodayKey(),dgElapsedToday);dgSessionStart=null;
-    document.getElementById('dg-pause-btn').textContent='\u25B6 Davom';
-  } else {
-    dgPaused=false;dgSessionStart=Date.now();
-    dgTimer=setInterval(dgTick,1000);
-    document.getElementById('dg-pause-btn').textContent='\u23F8 Pauza';
-  }
-}
-
-function dgStop(){
-  if(dgRunning&&dgSessionStart) dgElapsedToday+=Math.floor((Date.now()-dgSessionStart)/1000);
-  clearInterval(dgTimer);dgTimer=null;dgRunning=false;dgPaused=false;dgSessionStart=null;
-  localStorage.setItem(dgTodayKey(),dgElapsedToday);
-  dgSaveToHistory();dgUpdateUI();dgRenderHistory();
-  document.getElementById('dg-start-btn').style.display='';
-  var pb=document.getElementById('dg-pause-btn');
-  pb.style.display='none';pb.textContent='\u23F8 Pauza';
-}
-
-function dgTick(){
-  var cur=dgElapsedToday+Math.floor((Date.now()-dgSessionStart)/1000);
-  localStorage.setItem(dgTodayKey(),cur);dgUpdateUI(cur);
-}
-
-function dgUpdateUI(total){
-  if(total===undefined)total=dgElapsedToday;
-  var goalH=parseInt((document.getElementById('dg-goal-select')||{value:'6'}).value)||6;
-  var pct=Math.min(100,Math.round(total/(goalH*3600)*100));
-  var h=Math.floor(total/3600),m=Math.floor((total%3600)/60);
-  var el=document.getElementById('dg-elapsed-label');
-  var gl=document.getElementById('dg-goal-label');
-  var pb=document.getElementById('dg-progress-bar');
-  if(el)el.textContent=h+' soat '+m+' daqiqa';
-  if(gl)gl.textContent='Maqsad: '+goalH+' soat ('+pct+'%)';
-  if(pb)pb.style.width=pct+'%';
-}
-
-function dgSaveToHistory(){
-  var d=new Date();
-  var months=['Yan','Fev','Mar','Apr','May','Iyun','Iyul','Avg','Sen','Okt','Noy','Dek'];
-  var label=d.getDate()+'-'+months[d.getMonth()];
-  var key='dg_hist_'+d.getFullYear()+'_'+(d.getMonth()+1)+'_'+d.getDate();
-  localStorage.setItem(key,JSON.stringify({label:label,secs:dgElapsedToday}));
-  var idx=JSON.parse(localStorage.getItem('dg_hist_idx')||'[]');
-  if(idx.indexOf(key)===-1)idx.push(key);
-  if(idx.length>30)idx=idx.slice(idx.length-30);
-  localStorage.setItem('dg_hist_idx',JSON.stringify(idx));
-}
-
-function dgRenderHistory(){
-  var idx=JSON.parse(localStorage.getItem('dg_hist_idx')||'[]');
-  var list=document.getElementById('dg-history-list');
-  var empty=document.getElementById('dg-history-empty');
-  if(!list)return;
-  list.innerHTML='';
-  var items=idx.slice().reverse();
-  if(!items.length){if(empty)empty.style.display='';return;}
-  if(empty)empty.style.display='none';
-  var goalH=parseInt(localStorage.getItem('dg_goal_hours')||'6');
-  items.forEach(function(key){
-    var rec=JSON.parse(localStorage.getItem(key)||'null');
-    if(!rec)return;
-    var h=Math.floor(rec.secs/3600),m=Math.floor((rec.secs%3600)/60);
-    var pct=Math.min(100,Math.round(rec.secs/(goalH*3600)*100));
-    var div=document.createElement('div');
-    div.style.cssText='padding:10px 12px;background:var(--surface2);border-radius:10px;border:1px solid var(--border)';
-    div.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;color:var(--text);font-weight:600">'+rec.label+'</span><span style="font-size:13px;color:var(--accent);font-weight:700">'+h+' soat '+m+' daqiqa</span></div><div style="height:4px;background:var(--surface);border-radius:999px;margin-top:6px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:var(--accent);border-radius:999px"></div></div>';
-    list.appendChild(div);
-  });
-}
-
-function dgClearHistory(){
-  if(!confirm("Barcha tarixni o'chirishni xohlaysizmi?"))return;
-  var idx=JSON.parse(localStorage.getItem('dg_hist_idx')||'[]');
-  idx.forEach(function(k){localStorage.removeItem(k);});
-  localStorage.removeItem('dg_hist_idx');
-  localStorage.removeItem(dgTodayKey());
-  dgElapsedToday=0;
-  if(dgTimer){clearInterval(dgTimer);dgTimer=null;}
-  dgRunning=false;dgPaused=false;dgSessionStart=null;
-  var sb=document.getElementById('dg-start-btn');
-  var pb=document.getElementById('dg-pause-btn');
-  if(sb)sb.style.display='';
-  if(pb){pb.style.display='none';pb.textContent='\u23F8 Pauza';}
-  dgUpdateUI(0);dgRenderHistory();
-}
-
-// Pomo tabiga o'tilganda avtomatik yuklash
-(function(){
-  var _orig=window.showTab;
-  window.showTab=function(tab){
-    if(_orig)_orig(tab);
-    if(tab==='pomo')setTimeout(dgLoad,60);
-  };
-})();
 // ================================================
 </script>
 
