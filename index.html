@@ -7874,9 +7874,11 @@ setTimeout(function(){ updateMoodBtn(); }, 100);
 
   <!-- IELTS Result Modal -->
   <div id="ielts-result-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:300;align-items:center;justify-content:center;padding:20px">
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:24px;width:100%;max-width:360px">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:24px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto">
       <div style="font-family:Syne,sans-serif;font-size:18px;font-weight:700;margin-bottom:6px" data-i18n="ielts_modal_title">📊 IELTS Natija</div>
       <div style="font-size:12px;color:var(--text-muted);margin-bottom:18px" data-i18n="ielts_modal_sub">Bitta section natijasini kiriting</div>
+
+      <!-- STEP 1: Section tanlash -->
       <div style="margin-bottom:14px">
         <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:8px" data-i18n="ielts_select_section">Section tanlang</label>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
@@ -7886,22 +7888,39 @@ setTimeout(function(){ updateMoodBtn(); }, 100);
           <button id="ielts-sec-s" onclick="selectIeltsSection('speaking')"  style="padding:10px;border-radius:10px;border:2px solid rgba(248,113,113,0.3);background:rgba(248,113,113,0.06);color:#F87171;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s" data-i18n="ielts_sec_speaking">🗣️ Speaking</button>
         </div>
       </div>
+
+      <!-- STEP 2: Sub-section (Listening yoki Reading uchun) -->
+      <div id="ielts-subsec-row" style="display:none;margin-bottom:14px">
+        <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:8px" id="ielts-subsec-label">Qismni tanlang</label>
+        <div id="ielts-subsec-btns" style="display:flex;gap:7px;flex-wrap:wrap"></div>
+      </div>
+
+      <!-- Sana -->
       <div style="margin-bottom:14px">
         <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px" data-i18n="ielts_date_label">Sana</label>
         <input type="date" id="ielts-res-date" style="width:100%;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:DM Sans,sans-serif;outline:none;box-sizing:border-box" />
       </div>
+
+      <!-- Raw score (Listening / Reading) -->
       <div id="ielts-raw-row" style="display:none;margin-bottom:14px">
-        <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px" data-i18n="ielts_raw_label">Raw score (0-40)</label>
+        <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px" id="ielts-raw-label">Raw score (0-40)</label>
         <div style="display:flex;gap:10px;align-items:center">
-          <input type="number" id="ielts-res-raw" min="0" max="40" placeholder="masalan: 19" data-i18n-ph="ielts_raw_ph" oninput="calcIeltsBandLive()" style="flex:1;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:DM Sans,sans-serif;outline:none" />
+          <input type="number" id="ielts-res-raw" min="0" max="40" placeholder="masalan: 19"
+            oninput="calcIeltsBandLive()"
+            style="flex:1;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:DM Sans,sans-serif;outline:none" />
           <div style="font-size:13px;color:var(--text-muted)">&#8594;</div>
           <div id="ielts-res-band-preview" style="min-width:64px;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;font-size:16px;font-weight:700;text-align:center;color:var(--text)">—</div>
         </div>
+        <div id="ielts-raw-max-hint" style="font-size:11px;color:var(--text-dim);margin-top:5px"></div>
       </div>
+
+      <!-- Band score (Writing / Speaking) -->
       <div id="ielts-band-row" style="display:none;margin-bottom:14px">
         <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px" data-i18n="ielts_band_label">Band score (0-9, masalan: 6.5)</label>
-        <input type="number" id="ielts-res-band" min="0" max="9" step="0.5" placeholder="masalan: 6.5" data-i18n-ph="ielts_band_ph" style="width:100%;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:DM Sans,sans-serif;outline:none;box-sizing:border-box" />
+        <input type="number" id="ielts-res-band" min="0" max="9" step="0.5" placeholder="masalan: 6.5"
+          style="width:100%;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:DM Sans,sans-serif;outline:none;box-sizing:border-box" />
       </div>
+
       <div style="display:flex;gap:10px">
         <button onclick="closeIeltsResultModal()" style="flex:1;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:14px;cursor:pointer" data-i18n="btn_cancel">Bekor</button>
         <button onclick="saveIeltsResult()" style="flex:2;padding:12px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer" data-i18n="btn_save_disk">💾 Saqlash</button>
@@ -7993,6 +8012,30 @@ function closeTaskSheet() {
 
 // ============ IELTS RESULT FUNCTIONS ============
 var _ieltsSection = null;
+var _ieltsSubSection = null; // 'all' | 'part1'..'part4' | 'passage1'..'passage3'
+
+// Sub-section config
+var IELTS_SUBSEC = {
+  listening: {
+    label: 'Qaysi part?',
+    items: [
+      { key: 'part1', label: '1-part',  max: 10 },
+      { key: 'part2', label: '2-part',  max: 10 },
+      { key: 'part3', label: '3-part',  max: 10 },
+      { key: 'part4', label: '4-part',  max: 10 },
+      { key: 'all',   label: 'All (0-40)', max: 40 }
+    ]
+  },
+  reading: {
+    label: 'Qaysi passage?',
+    items: [
+      { key: 'passage1', label: '1-passage', max: 13 },
+      { key: 'passage2', label: '2-passage', max: 13 },
+      { key: 'passage3', label: '3-passage', max: 14 },
+      { key: 'all',      label: 'All (0-40)', max: 40 }
+    ]
+  }
+};
 
 function openIeltsResultModal() {
   var examType = getExamType();
@@ -8000,30 +8043,38 @@ function openIeltsResultModal() {
     openSatResultModal();
     return;
   }
-
   var modal = document.getElementById('ielts-result-modal');
   if (!modal) return;
   var satModal = document.getElementById('sat-result-modal');
   if (satModal) satModal.style.display = 'none';
+
   _ieltsSection = null;
+  _ieltsSubSection = null;
 
-  var rawRow  = document.getElementById('ielts-raw-row');
-  var bandRow = document.getElementById('ielts-band-row');
-  var rawInp   = document.getElementById('ielts-res-raw');
-  var bandInp  = document.getElementById('ielts-res-band');
-
+  // Reset inputs
   var dateInput = document.getElementById('ielts-res-date');
+  var rawInp    = document.getElementById('ielts-res-raw');
+  var bandInp   = document.getElementById('ielts-res-band');
+  var preview   = document.getElementById('ielts-res-band-preview');
+  var hint      = document.getElementById('ielts-raw-max-hint');
   if (dateInput) dateInput.value = today();
-  if (rawInp)  rawInp.value  = '';
-  if (bandInp) bandInp.value = '';
-  var preview2 = document.getElementById('ielts-res-band-preview');
-  if (preview2) preview2.textContent = '—';
-  if (rawRow)  rawRow.style.display  = 'none';
-  if (bandRow) bandRow.style.display = 'none';
+  if (rawInp)    rawInp.value   = '';
+  if (bandInp)   bandInp.value  = '';
+  if (preview)   preview.textContent = '—';
+  if (hint)      hint.textContent    = '';
+
+  // Hide score rows & subsection
+  ['ielts-raw-row','ielts-band-row','ielts-subsec-row'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+
+  // Reset section buttons opacity
   ['l','r','w','s'].forEach(function(k) {
     var btn = document.getElementById('ielts-sec-'+k);
     if (btn) btn.style.opacity = '1';
   });
+
   modal.style.display = 'flex';
 }
 
@@ -8033,16 +8084,10 @@ function closeIeltsResultModal() {
 }
 
 function selectIeltsSection(sec) {
-  _ieltsSection = sec;
-  var rawRow = document.getElementById('ielts-raw-row');
-  var bandRow = document.getElementById('ielts-band-row');
-  if (sec === 'listening' || sec === 'reading') {
-    if (rawRow) rawRow.style.display = 'block';
-    if (bandRow) bandRow.style.display = 'none';
-  } else {
-    if (rawRow) rawRow.style.display = 'none';
-    if (bandRow) bandRow.style.display = 'block';
-  }
+  _ieltsSection    = sec;
+  _ieltsSubSection = null;
+
+  // Highlight selected section button
   ['l','r','w','s'].forEach(function(k) {
     var btn = document.getElementById('ielts-sec-'+k);
     if (btn) btn.style.opacity = '0.4';
@@ -8050,48 +8095,283 @@ function selectIeltsSection(sec) {
   var map = {listening:'l', reading:'r', writing:'w', speaking:'s'};
   var active = document.getElementById('ielts-sec-' + map[sec]);
   if (active) active.style.opacity = '1';
+
+  var rawRow    = document.getElementById('ielts-raw-row');
+  var bandRow   = document.getElementById('ielts-band-row');
+  var subsecRow = document.getElementById('ielts-subsec-row');
+  var rawInp    = document.getElementById('ielts-res-raw');
+  var bandInp   = document.getElementById('ielts-res-band');
+  var preview   = document.getElementById('ielts-res-band-preview');
+  var hint      = document.getElementById('ielts-raw-max-hint');
+
+  // Reset inputs
+  if (rawInp)   rawInp.value   = '';
+  if (bandInp)  bandInp.value  = '';
+  if (preview)  preview.textContent = '—';
+  if (hint)     hint.textContent    = '';
+
+  if (sec === 'listening' || sec === 'reading') {
+    // Show sub-section row
+    var cfg = IELTS_SUBSEC[sec];
+    var labelEl = document.getElementById('ielts-subsec-label');
+    if (labelEl) labelEl.textContent = cfg.label;
+
+    var btnsEl = document.getElementById('ielts-subsec-btns');
+    if (btnsEl) {
+      btnsEl.innerHTML = cfg.items.map(function(item) {
+        var isAll = item.key === 'all';
+        return '<button id="ielts-sub-' + item.key + '" onclick="selectIeltsSubSection(\'' + item.key + '\')" style="' +
+          'padding:7px 12px;border-radius:999px;border:1px solid ' + (isAll ? 'rgba(124,92,252,0.35)' : 'var(--border)') + ';' +
+          'background:' + (isAll ? 'rgba(124,92,252,0.06)' : 'var(--surface2)') + ';' +
+          'color:' + (isAll ? '#B48EFF' : 'var(--text-muted)') + ';' +
+          'font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:DM Sans,sans-serif">' +
+          item.label + '</button>';
+      }).join('');
+    }
+
+    if (subsecRow) subsecRow.style.display = 'block';
+    if (rawRow)    rawRow.style.display    = 'none';
+    if (bandRow)   bandRow.style.display   = 'none';
+  } else {
+    // Writing / Speaking → faqat band score
+    if (subsecRow) subsecRow.style.display = 'none';
+    if (rawRow)    rawRow.style.display    = 'none';
+    if (bandRow)   bandRow.style.display   = 'block';
+  }
+}
+
+function selectIeltsSubSection(subKey) {
+  _ieltsSubSection = subKey;
+  var sec = _ieltsSection;
+  var cfg = IELTS_SUBSEC[sec];
+  var item = cfg.items.find(function(i){ return i.key === subKey; });
+  if (!item) return;
+
+  // Highlight sub-button
+  cfg.items.forEach(function(i) {
+    var btn = document.getElementById('ielts-sub-' + i.key);
+    if (!btn) return;
+    var isAll = i.key === 'all';
+    if (i.key === subKey) {
+      btn.style.background = 'var(--accent)';
+      btn.style.borderColor = 'transparent';
+      btn.style.color = '#fff';
+    } else {
+      btn.style.background = isAll ? 'rgba(124,92,252,0.06)' : 'var(--surface2)';
+      btn.style.borderColor = isAll ? 'rgba(124,92,252,0.35)' : 'var(--border)';
+      btn.style.color = isAll ? '#B48EFF' : 'var(--text-muted)';
+    }
+  });
+
+  // Update raw input max
+  var rawInp  = document.getElementById('ielts-res-raw');
+  var hint    = document.getElementById('ielts-raw-max-hint');
+  var rawRow  = document.getElementById('ielts-raw-row');
+  var rawLbl  = document.getElementById('ielts-raw-label');
+  if (rawInp) {
+    rawInp.max = item.max;
+    rawInp.value = '';
+  }
+  var preview = document.getElementById('ielts-res-band-preview');
+  if (preview) preview.textContent = '—';
+
+  if (hint) {
+    if (subKey === 'all') {
+      hint.textContent = 'Maksimal: 40 ta to\'g\'ri javob';
+    } else if (sec === 'reading' && subKey === 'passage3') {
+      hint.textContent = 'Maksimal: 14 ta to\'g\'ri javob';
+    } else {
+      hint.textContent = 'Maksimal: ' + item.max + ' ta to\'g\'ri javob';
+    }
+  }
+  if (rawLbl) {
+    rawLbl.textContent = 'Raw score (0-' + item.max + ')';
+  }
+  if (rawRow) rawRow.style.display = 'block';
 }
 
 function calcIeltsBandLive() {
-  var rawVal = parseInt(document.getElementById('ielts-res-raw').value);
+  var rawVal  = parseInt(document.getElementById('ielts-res-raw').value);
   var preview = document.getElementById('ielts-res-band-preview');
   if (!preview) return;
-  if (isNaN(rawVal) || rawVal < 0 || rawVal > 40) { preview.textContent = '—'; return; }
+  if (isNaN(rawVal)) { preview.textContent = '—'; return; }
+
+  // For sub-section (part/passage), show count preview (no band conversion)
+  if (_ieltsSubSection && _ieltsSubSection !== 'all') {
+    var cfg  = IELTS_SUBSEC[_ieltsSection];
+    var item = cfg && cfg.items.find(function(i){ return i.key === _ieltsSubSection; });
+    if (item) {
+      if (rawVal < 0 || rawVal > item.max) { preview.textContent = '!'; return; }
+      preview.textContent = rawVal + '/' + item.max;
+    }
+    return;
+  }
+
+  // Full section (all): convert to band
+  if (rawVal < 0 || rawVal > 40) { preview.textContent = '—'; return; }
   var band = rawToBand(rawVal, _ieltsSection);
   preview.textContent = band !== null ? band : '—';
 }
 
 function rawToBand(raw, sec) {
-  // Rasmiy IELTS Listening / Academic Reading band jadvaliga mos (rasmdagidek)
+  // Rasmiy IELTS Listening / Academic Reading jadval (0-40 → 1-9)
   var table = [1,1,2,2,2.5,2.5,3,3,3.5,3.5,4,4,4,4.5,4.5,4.5,5,5,5.5,5.5,5.5,5.5,5.5,6,6,6,6.5,6.5,6.5,6.5,7,7,7.5,7.5,7.5,8,8,8.5,8.5,9,9];
   if (sec === 'listening' || sec === 'reading') return table[Math.min(Math.max(raw,0), 40)];
   return null;
+}
+
+// Partial scores ni to'liq ball ga aylantirish (Listening parts)
+function partsToFullRaw(sec, partScores) {
+  // partScores = { part1:7, part2:8, ... }
+  var cfg = IELTS_SUBSEC[sec];
+  if (!cfg) return null;
+  var total = 0;
+  var filled = 0;
+  cfg.items.forEach(function(item) {
+    if (item.key === 'all') return;
+    if (partScores[item.key] !== undefined) {
+      total += partScores[item.key];
+      filled++;
+    }
+  });
+  return { total: total, filled: filled };
 }
 
 function saveIeltsResult() {
   if (!_ieltsSection) { toast(t('ielts_select_section_toast')); return; }
   var dateVal = document.getElementById('ielts-res-date').value;
   if (!dateVal) { toast(t('ielts_enter_date_toast')); return; }
-  var band = null;
+
+  var band   = null;
   var rawVal = null;
+  var subKey = _ieltsSubSection;
 
   if (_ieltsSection === 'listening' || _ieltsSection === 'reading') {
-    var raw = parseInt(document.getElementById('ielts-res-raw').value);
-    if (isNaN(raw) || raw < 0 || raw > 40) { toast(t('ielts_enter_raw_toast')); return; }
-    band = rawToBand(raw, _ieltsSection);
+    if (!subKey) { toast('❗ Qismni tanlang (part / passage yoki All)!'); return; }
+
+    var cfg  = IELTS_SUBSEC[_ieltsSection];
+    var item = cfg.items.find(function(i){ return i.key === subKey; });
+    var raw  = parseInt(document.getElementById('ielts-res-raw').value);
+
+    if (isNaN(raw) || raw < 0 || raw > item.max) {
+      toast('❗ Raw score 0-' + item.max + ' oralig\'ida bo\'lishi kerak!');
+      return;
+    }
     rawVal = raw;
+
+    if (subKey === 'all') {
+      // To'liq section → band hisoblash
+      band = rawToBand(raw, _ieltsSection);
+    } else {
+      // Qisman → band null (keyinroq jamlash kerak bo'lsa hisoblanadi)
+      band = null;
+    }
   } else {
+    // Writing / Speaking
     band = parseFloat(document.getElementById('ielts-res-band').value);
     if (isNaN(band) || band < 0 || band > 9) { toast(t('ielts_enter_band_toast')); return; }
+    subKey = null;
   }
+
   if (!S.ieltsResults) S.ieltsResults = [];
-  S.ieltsResults.push({ section: _ieltsSection, band: band, raw: rawVal, date: dateVal, id: Date.now() });
+  S.ieltsResults.push({
+    section:    _ieltsSection,
+    subSection: subKey || null,
+    band:       band,
+    raw:        rawVal,
+    date:       dateVal,
+    id:         Date.now()
+  });
   save();
   closeIeltsResultModal();
   renderIeltsTab();
   toast(t('ielts_result_saved_toast'));
 }
 
+// Sectionning band ballini to'g'ri hisoblash
+function calcSectionBandFromParts(sec, results) {
+  // Writing / Speaking: IELTS_SUBSEC da yo'q, to'g'ridan band kiritiladi
+  var cfg = IELTS_SUBSEC[sec];
+  if (!cfg) {
+    var wEntries = results.filter(function(r) {
+      return r.section === sec && r.band !== null && !isNaN(Number(r.band));
+    });
+    if (wEntries.length === 0) return null;
+    var wSum = wEntries.reduce(function(s, r) { return s + Number(r.band); }, 0);
+    var wAvg = wSum / wEntries.length;
+    return Math.round(wAvg * 2) / 2;
+  }
+
+  // Listening / Reading
+
+  // 1) "all" natija bormi?
+  var fullEntries = results.filter(function(r) {
+    return r.section === sec &&
+           (r.subSection === 'all' || !r.subSection) &&
+           r.band !== null && !isNaN(Number(r.band));
+  });
+  if (fullEntries.length > 0) {
+    return fullEntries[fullEntries.length - 1].band;
+  }
+
+  // 2) Part / Passage raw score'laridan hisoblash:
+  //    Har bir part uchun tarixdagi BARCHA raw'larni o'rtachalaymiz,
+  //    so'ng shu o'rtachalarni YIGAMIZ => umumiy Raw Score (0-40)
+  //    => rawToBand() orqali Band Score
+  var parts = cfg.items.filter(function(i) { return i.key !== 'all'; });
+
+  var partAvgRaws = {};
+  parts.forEach(function(p) {
+    var matching = results.filter(function(r) {
+      return r.section === sec &&
+             r.subSection === p.key &&
+             r.raw !== null && !isNaN(Number(r.raw));
+    });
+    if (matching.length > 0) {
+      var sum = matching.reduce(function(s, r) { return s + Number(r.raw); }, 0);
+      partAvgRaws[p.key] = sum / matching.length;
+    }
+  });
+
+  var filledKeys = Object.keys(partAvgRaws);
+  if (filledKeys.length === 0) return null;
+
+  var totalRaw = filledKeys.reduce(function(s, k) { return s + partAvgRaws[k]; }, 0);
+
+  if (filledKeys.length === parts.length) {
+    // Barcha partlar kiritilgan: aniq hisob
+    return rawToBand(Math.min(Math.round(totalRaw), 40), sec);
+  }
+
+  // Qisman: ekstrapolyatsiya
+  var avgPerPart = totalRaw / filledKeys.length;
+  var extrapolated = Math.min(Math.round(avgPerPart * parts.length), 40);
+  return rawToBand(extrapolated, sec);
+}
+
+// Listening/Reading uchun umumiy raw yig'indisi (UI info uchun)
+function calcSectionRawTotal(sec, results) {
+  var cfg = IELTS_SUBSEC[sec];
+  if (!cfg) return null;
+  var fullEntry = results.filter(function(r) {
+    return r.section === sec && (r.subSection === 'all' || !r.subSection) && r.raw !== null;
+  });
+  if (fullEntry.length > 0) return fullEntry[fullEntry.length - 1].raw;
+  var parts = cfg.items.filter(function(i) { return i.key !== 'all'; });
+  var total = 0; var count = 0;
+  parts.forEach(function(p) {
+    var matching = results.filter(function(r) {
+      return r.section === sec && r.subSection === p.key && r.raw !== null;
+    });
+    if (matching.length > 0) {
+      var sum = matching.reduce(function(s, r) { return s + Number(r.raw); }, 0);
+      total += sum / matching.length;
+      count++;
+    }
+  });
+  if (count === 0) return null;
+  return Math.round(total);
+}
 function renderIeltsTab() {
   var examType = getExamType();
   if (examType === 'sat') {
@@ -8099,60 +8379,125 @@ function renderIeltsTab() {
     return;
   }
 
-  var list = document.getElementById('ielts-history-list');
-  var empty = document.getElementById('ielts-history-empty');
+  var list        = document.getElementById('ielts-history-list');
+  var empty       = document.getElementById('ielts-history-empty');
   var overallCard = document.getElementById('ielts-overall-card');
   if (!list) return;
   var results = S.ieltsResults || [];
 
-  // Overall card label
   var overallLabel = document.getElementById('ielts-overall-label');
-  if (overallLabel) { overallLabel.setAttribute('data-i18n', 'ielts_overall_avg'); overallLabel.textContent = t('ielts_overall_avg'); }
+  if (overallLabel) { overallLabel.textContent = t('ielts_overall_avg'); }
 
   if (results.length === 0) {
     list.innerHTML = '';
-    if (empty) empty.style.display = 'block';
-    if (overallCard) overallCard.style.display = 'none';
+    if (empty)       empty.style.display       = 'block';
+    if (overallCard) overallCard.style.display  = 'none';
     return;
   }
   if (empty) empty.style.display = 'none';
 
-  // IELTS mantiq
-  var secs = ['listening','reading','writing','speaking'];
+  // ===== OVERALL HISOBLASH =====
+  // 1. Har bir section uchun band topamiz (calcSectionBandFromParts)
+  //    - Listening/Reading: part o'rtachalari yig'indisi -> rawToBand()
+  //    - Writing/Speaking:  kiritilgan band ballar o'rtachasi
+  // 2. Mavjud sectionlar band'larini ko'rsatamiz
+  // 3. Barcha 4 ta bo'lsa -> Overall = ularning o'rtachasi (0.5 ga yaxlitlash)
+
+  var secs     = ['listening','reading','writing','speaking'];
   var secBands = {};
   secs.forEach(function(s) {
-    var arr = results.filter(function(r){ return r.section === s; });
-    if (arr.length > 0) secBands[s] = arr[arr.length-1].band;
+    var b = calcSectionBandFromParts(s, results);
+    if (b !== null && !isNaN(b)) secBands[s] = b;
   });
-  var vals = Object.values(secBands);
-  if (vals.length === 4 && overallCard) {
-    var overall = Math.round(vals.reduce(function(a,b){return a+b;},0) / 4 * 2) / 2;
+
+  // Raw yig'indisi (Listening va Reading uchun, info uchun)
+  var secRaws = {};
+  ['listening','reading'].forEach(function(sec) {
+    var r = calcSectionRawTotal(sec, results);
+    if (r !== null) secRaws[sec] = r;
+  });
+
+  var secKeys = Object.keys(secBands);
+  if (secKeys.length > 0 && overallCard) {
     overallCard.style.display = 'block';
     var valEl = document.getElementById('ielts-overall-val');
     var subEl = document.getElementById('ielts-overall-sub');
-    if (valEl) { valEl.textContent = overall; valEl.style.fontSize = '52px'; }
-    if (subEl) subEl.textContent = 'L:'+secBands.listening+' R:'+secBands.reading+' W:'+secBands.writing+' S:'+secBands.speaking;
+
+    var subParts = [];
+    ['listening','reading','writing','speaking'].forEach(function(s) {
+      if (secBands[s] !== undefined) {
+        var short = {listening:'L', reading:'R', writing:'W', speaking:'S'}[s];
+        subParts.push(short + ':' + secBands[s]);
+      }
+    });
+
+    if (secKeys.length === 4) {
+      // Barcha 4 section bor -> Overall hisoblash
+      var sum = secKeys.reduce(function(acc, k) { return acc + secBands[k]; }, 0);
+      // IELTS rasmiy yaxlitlash: eng yaqin 0.5 ga
+      var overall = Math.round(sum / 4 * 2) / 2;
+      if (valEl) { valEl.textContent = overall; valEl.style.fontSize = '52px'; }
+    } else {
+      // Qisman: nechtasi bo'lsa o'shalarni ko'rsatamiz
+      if (valEl) { valEl.textContent = '—'; valEl.style.fontSize = '52px'; }
+    }
+
+    // Raw info (Listening va Reading uchun)
+    var rawParts = [];
+    if (secRaws.listening !== undefined) rawParts.push('L raw:' + secRaws.listening + '/40');
+    if (secRaws.reading   !== undefined) rawParts.push('R raw:' + secRaws.reading   + '/40');
+
+    if (subEl) {
+      var subText = subParts.join(' ');
+      if (rawParts.length > 0) subText += ' · ' + rawParts.join(' · ');
+      subEl.textContent = subText;
+    }
   } else {
     if (overallCard) overallCard.style.display = 'none';
   }
+
+
   var secColors = {listening:'#60A5FA', reading:'#34D399', writing:'#F5A623', speaking:'#F87171'};
-  var secEmoji = {listening:'\u{1F3A7}', reading:'\u{1F4D6}', writing:'\u{270D}\u{FE0F}', speaking:'\u{1F5E3}\u{FE0F}'};
-  var secNames = {listening:'Listening', reading:'Reading', writing:'Writing', speaking:'Speaking'};
+  var secEmoji  = {listening:'🎧', reading:'📖', writing:'✍️', speaking:'🗣️'};
+  var secNames  = {listening:'Listening', reading:'Reading', writing:'Writing', speaking:'Speaking'};
+
+  // Sub-section label helper
+  function subLabel(r) {
+    if (!r.subSection || r.subSection === 'all') return '';
+    var cfg  = IELTS_SUBSEC[r.section];
+    if (!cfg) return r.subSection;
+    var item = cfg.items.find(function(i){ return i.key === r.subSection; });
+    return item ? item.label : r.subSection;
+  }
+
   var sorted = results.slice().sort(function(a,b){ return b.id - a.id; });
   list.innerHTML = sorted.map(function(r) {
-    var rawStr = (r.raw !== null && r.raw !== undefined) ? ('<div style="font-size:11px;color:var(--text-dim);margin-top:2px">' + r.raw + '/40' + t('ielts_raw_correct_suffix') + '</div>') : '';
+    var sub    = subLabel(r);
+    var isPartial = r.subSection && r.subSection !== 'all';
+    var bandStr = (r.band !== null && r.band !== undefined)
+      ? '<div style="font-size:24px;font-weight:700;color:' + (secColors[r.section]||'var(--accent)') + ';font-family:Syne,sans-serif;line-height:1">' + r.band + '</div>'
+      : '';
+    var rawStr  = (r.raw !== null && r.raw !== undefined)
+      ? ('<div style="font-size:11px;color:var(--text-dim);margin-top:2px">' +
+          r.raw + (isPartial ? ('/' + (IELTS_SUBSEC[r.section] && IELTS_SUBSEC[r.section].items.find(function(i){return i.key===r.subSection;}) ? IELTS_SUBSEC[r.section].items.find(function(i){return i.key===r.subSection;}).max : '?')) : '/40') +
+          ' to\'g\'ri</div>')
+      : '';
+    var subBadge = sub
+      ? '<span style="font-size:10px;padding:2px 7px;border-radius:999px;background:rgba(124,92,252,0.12);color:#B48EFF;border:1px solid rgba(124,92,252,0.2);margin-left:4px">' + sub + '</span>'
+      : '';
     return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between">' +
       '<div style="display:flex;align-items:center;gap:10px">' +
-      '<span style="font-size:20px">' + (secEmoji[r.section]||'\u{1F4CA}') + '</span>' +
-      '<div><div style="font-size:13px;font-weight:600;color:var(--text)">' + (secNames[r.section]||r.section) + '</div>' +
-      '<div style="font-size:11px;color:var(--text-muted)">' + r.date + '</div></div></div>' +
-      '<div style="display:flex;align-items:center;gap:10px">' +
-      '<div style="text-align:right">' +
-      '<div style="font-size:24px;font-weight:700;color:' + (secColors[r.section]||'var(--accent)') + ';font-family:Syne,sans-serif;line-height:1">' + r.band + '</div>' +
-      rawStr +
+      '<span style="font-size:20px">' + (secEmoji[r.section]||'📊') + '</span>' +
+      '<div>' +
+        '<div style="font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;flex-wrap:wrap;gap:3px">' + (secNames[r.section]||r.section) + subBadge + '</div>' +
+        '<div style="font-size:11px;color:var(--text-muted)">' + r.date + '</div>' +
       '</div>' +
-      '<button onclick="deleteIeltsResult(' + r.id + ')" style="background:none;border:none;color:var(--text-dim);font-size:16px;cursor:pointer;padding:4px">\u{1F5D1}\u{FE0F}</button>' +
-      '</div></div>';
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:10px">' +
+        '<div style="text-align:right">' + bandStr + rawStr + '</div>' +
+        '<button onclick="deleteIeltsResult(' + r.id + ')" style="background:none;border:none;color:var(--text-dim);font-size:16px;cursor:pointer;padding:4px">🗑️</button>' +
+      '</div>' +
+      '</div>';
   }).join('');
 }
 
