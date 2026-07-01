@@ -10,46 +10,21 @@
 // 11 va 12-qatorlarni mana bunday to'ldiring:
 const SUPABASE_URL = "https://bskvildvqcelsxbluboe.supabase.co"; 
 const SUPABASE_KEY = "sb_publishable_xWsjS4VmlqX138HebYAdPA_D32G5lq0";
-const USER_EMAIL = "shodruz1009@gmail.com";
-const USER_PASSWORD = "Shodruz281009";
 
 // 17-qatorni aynan mana shunday qiling:
 const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
 });
 
-let currentUser = null;
+let currentUser = "11111111-1111-1111-1111-111111111111";
 let S = { tasks: [] };   // ilovaning asosiy holati (state) — kerakli maydonlarni o'zingiz kengaytiring
 let _saveTimer = null;
 let _realtimeChannel = null;
 
 // ============================================================
-// 1) AVTOMATIK LOGIN (fon rejimida, foydalanuvchidan hech narsa so'ramaydi)
-// ============================================================
 async function autoLogin() {
-  // Avval — brauzerda saqlangan mavjud sessiya bormi, tekshiramiz
-  // (Supabase SDK buni o'zi boshqaradi, biz faqat natijasini o'qiymiz)
-  const { data: { session } } = await sbClient.auth.getSession();
-  if (session) {
-    currentUser = session.user;
-    console.log("Mavjud sessiya topildi:", currentUser.email);
-    return true;
-  }
-
-  // Sessiya yo'q bo'lsa — kod ichidagi email/parol bilan avtomatik kiramiz
-  const { data, error } = await sbClient.auth.signInWithPassword({
-    email: USER_EMAIL,
-    password: USER_PASSWORD
-  });
-
-  if (error) {
-    console.error("Avtomatik login xatosi:", error.message);
-    return false;
-  }
-
-  currentUser = data.user;
-  console.log("Avtomatik login muvaffaqiyatli:", currentUser.email);
-  return true;
+    // Login-parolsiz to'g'ridan-to'g'ri bazadan ma'lumotlarni yuklash
+    await loadData();
 }
 
 // ============================================================
@@ -186,11 +161,8 @@ function startRealtimeSync() {
 // 7) ILOVANI ISHGA TUSHIRISH
 // ============================================================
 (async function init() {
-  const ok = await autoLogin();
-  if (!ok) {
-    console.error("Tizimga avtomatik kirib bo'lmadi — SUPABASE_URL/KEY yoki EMAIL/PASSWORD ni tekshiring.");
-    return;
-  }
-  await loadData();
+  // Avtomatik yuklashni boshlash
+  await autoLogin();
+  // Realtime sinxronizatsiyani yoqish
   startRealtimeSync();
 })();
