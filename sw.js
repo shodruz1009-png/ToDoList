@@ -14,7 +14,7 @@ const USER_EMAIL = "YOUR_EMAIL";
 const USER_PASSWORD = "YOUR_PASSWORD";
 
 // Supabase klienti — sessiyani o'zi saqlaydi va tokenni avtomatik yangilaydi
-const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
 });
 
