@@ -7,14 +7,14 @@
 //   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 //   <script src="script.js"></script>
 // ============================================================
+// 11 va 12-qatorlarni mana bunday to'ldiring:
+const SUPABASE_URL = "https://bskvildvqcelsxbluboe.supabase.co"; 
+const SUPABASE_KEY = "sb_publishable_xWsjS4VmlqX138HebYAdPA_D32G5lq0";
+const USER_EMAIL = "shodruz1009@gmail.com";
+const USER_PASSWORD = "Shodruz281009";
 
-const SUPABASE_URL = "YOUR_SUPABASE_URL";
-const SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY";
-const USER_EMAIL = "YOUR_EMAIL";
-const USER_PASSWORD = "YOUR_PASSWORD";
-
-// Supabase klienti — sessiyani o'zi saqlaydi va tokenni avtomatik yangilaydi
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// 17-qatorni aynan mana shunday qiling:
+const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
 });
 
