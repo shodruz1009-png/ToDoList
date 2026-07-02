@@ -3137,21 +3137,43 @@ function recalcStreakFromLog() {
   if (streak > (S.bestStreak||0)) S.bestStreak = streak;
 }
 
-// ============ SUPABASE CONFIG (Authentication + Database) ============
-const SUPABASE_URL = 'https://bxifqgzmtxwpgdfgyyzu.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_wC9prq5vpxF70j1YHj5Phg_zF9XfgY8';
-// supabase-js klienti — sessiyani o'zi avtomatik saqlaydi va tokenni yangilab turadi,
-// shu bilan "brauzer har ochilganda avtomatik login" ishlaydi.
+// ============ SUPABASE CONFIG (Shared Account + Realtime Database) ============
+// MUHIM: Bu ilova endi "bitta umumiy akkkaunt" arxitekturasida ishlaydi.
+// Alohida login/parol shart emas — barcha foydalanuvchilar bitta umumiy
+// ma'lumotlar bazasiga ulanadi va har qanday qurilmadagi o'zgarish
+// Supabase Realtime orqali darhol boshqa barcha qurilmalarga uzatiladi.
+const SUPABASE_URL = 'https://bskvildvqcelsxbluboe.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_xWsjS4VmlqX138HebYAdPA_D32G5lq0';
 const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
+  auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
 });
 
-var currentUser = null;       // hozir tizimga kirgan foydalanuvchi
-var _realtimeChannel = null;
-var _lastProcessedAt = null;
-var _pendingSaveAt = null;    // save() chaqirilgan vaqt — realtime o'z signalimizni qaytarmasligi uchun
+// Umumiy (shared) akkaunt identifikatori — hamma qurilmalar shu bitta qatordan
+// asosiy (tasks bo'lmagan) ma'lumotlarni o'qiydi/yozadi.
+const SHARED_ACCOUNT_ID = 'shared-account';
 
-// ---------------- AUTH UI HELPERLARI ----------------
+var _todosChannel = null;      // 'todos' jadvali uchun realtime kanal
+var _stateChannel = null;      // 'app_state' (umumiy holat) jadvali uchun realtime kanal
+var _lastSyncedTasks = {};     // id -> oxirgi Supabasega yuborilgan task JSON (keraksiz qayta yozishni oldini olish)
+var _pendingSaveIds = {};      // hozir yozilayotgan task id'lari — o'zimiz yuborgan realtime signalni e'tiborsiz qoldirish uchun
+var _pendingStateSave = false; // app_state yozilayotganini bildiradi
+
+// ---------------- XSS HIMOYASI ----------------
+// Foydalanuvchi kiritgan har qanday matn ekranga chiqarishdan oldin shu
+// funksiya orqali o'tkaziladi — HTML/skript in'ektsiyasining oldini oladi.
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+// Eski kod bazasida ishlatilgan qisqa nom — endi to'liq XSS-xavfsiz versiyaga ishora qiladi.
+function esc(s){ return escapeHtml(s); }
+
+// ---------------- AUTH UI HELPERLARI (moslik uchun saqlangan, endi ishlatilmaydi) ----------------
 function authShowError(msg) {
   var el = document.getElementById('auth-error');
   if (el) el.textContent = msg || '';
@@ -3164,153 +3186,189 @@ function authSetLoading(isLoading) {
   if (loginBtn) loginBtn.disabled = isLoading;
   if (signupBtn) signupBtn.disabled = isLoading;
 }
-function mapAuthError(error) {
-  var m = (error && error.message) || '';
-  if (/Invalid login credentials/i.test(m)) return "❌ Email yoki parol noto'g'ri";
-  if (/User already registered/i.test(m)) return '❌ Bu email allaqachon ro\'yxatdan o\'tgan';
-  if (/Email not confirmed/i.test(m)) return '❌ Avval emailingizni tasdiqlang';
-  return '❌ ' + (m || 'Xatolik yuz berdi. Internetni tekshiring.');
-}
+// Bitta umumiy akkaunt arxitekturasida alohida login/signup/logout shart emas —
+// bu funksiyalar hech kimni bloklamasligi uchun to'g'ridan-to'g'ri ilovaga kiritadi.
+async function authLogin() { document.getElementById('auth-gate').style.display = 'none'; await bootSharedApp(); }
+async function authSignup() { await authLogin(); }
+async function authLogout() { location.reload(); }
 
-async function authLogin() {
-  authShowError('');
-  var email = (document.getElementById('auth-email').value || '').trim();
-  var password = document.getElementById('auth-password').value || '';
-  if (!email || !password) { authShowError('Email va parolni kiriting'); return; }
-  authSetLoading(true);
-  const { data, error } = await sbClient.auth.signInWithPassword({ email: email, password: password });
-  authSetLoading(false);
-  if (error) { authShowError(mapAuthError(error)); return; }
-  await onAuthenticated(data.session);
-}
-
-async function authSignup() {
-  authShowError('');
-  var email = (document.getElementById('auth-email').value || '').trim();
-  var password = document.getElementById('auth-password').value || '';
-  if (!email || !password) { authShowError('Email va parolni kiriting'); return; }
-  if (password.length < 6) { authShowError("Parol kamida 6 ta belgidan iborat bo'lishi kerak"); return; }
-  authSetLoading(true);
-  const { data, error } = await sbClient.auth.signUp({ email: email, password: password });
-  authSetLoading(false);
-  if (error) { authShowError(mapAuthError(error)); return; }
-  if (data.session) {
-    await onAuthenticated(data.session);
-  } else {
-    authShowError("✅ Ro'yxatdan o'tdingiz! Emailga yuborilgan havolani tasdiqlang, so'ng shu yerdan kiring.");
-  }
-}
-
-async function authLogout() {
-  try { if (_realtimeChannel) { sbClient.removeChannel(_realtimeChannel); _realtimeChannel = null; } } catch(e) {}
-  await sbClient.auth.signOut();
-  currentUser = null;
-  S = { tasks:[], taskOrder:[], rewards:JSON.parse(JSON.stringify(defaultRewards)), coins:0, totalCoins:0, streak:0, lastDate:null, nextId:200, nextRid:20 };
-  var emailEl = document.getElementById('auth-email'), passEl = document.getElementById('auth-password');
-  if (emailEl) emailEl.value = '';
-  if (passEl) passEl.value = '';
-  authShowError('');
-  document.getElementById('auth-gate').style.display = 'flex';
-}
-
-// Autentifikatsiyadan so'ng — asosiy dastur ma'lumotlarini Supabasedan yuklaymiz
-async function onAuthenticated(session) {
-  currentUser = session.user;
-  authShowError('');
-  document.getElementById('auth-gate').style.display = 'none';
-  await loadUserDataAndInit();
-  startRealtimeSync();
-}
-
-// Sahifa ochilganda: avvalgi sessiya bormi tekshiramiz (avtomatik login)
-(async function initAuth() {
+// ============ TODOS JADVALI — CRUD + REALTIME ============
+// 'todos' jadvali: id (bigint, task.id bilan bir xil), task (jsonb — to'liq vazifa
+// obyekti), order_index (tartib), updated_at. Har bir qo'shish/o'zgartirish/o'chirish
+// shu jadvalda haqiqiy INSERT / UPDATE / DELETE sifatida bajariladi, shuning uchun
+// barcha qurilmalar Supabase Realtime orqali darhol xabardor bo'ladi.
+async function upsertTodoRow(task, orderIndex) {
+  const json = JSON.stringify(task);
+  if (_lastSyncedTasks[task.id] === json) return; // o'zgarish yo'q — tarmoqqa chiqmaymiz
+  _pendingSaveIds[task.id] = true;
   try {
-    const { data: { session } } = await sbClient.auth.getSession();
-    if (session) {
-      await onAuthenticated(session);
+    const { error } = await sbClient
+      .from('todos')
+      .upsert({ id: task.id, task: task, order_index: orderIndex, updated_at: new Date().toISOString() }, { onConflict: 'id' });
+    if (!error) {
+      _lastSyncedTasks[task.id] = json;
     } else {
-      var l = document.getElementById('auth-loading');
-      // login ekrani ko'rinib turaveradi
+      console.warn('todos upsert xatosi:', error);
     }
   } catch(e) {
-    console.warn('Auth init xatosi:', e);
+    console.warn('todos upsert xatosi:', e);
+  } finally {
+    setTimeout(function(){ delete _pendingSaveIds[task.id]; }, 400);
   }
-  // Boshqa oyna/qurilmada logout bo'lsa yoki token muddati tugasa shu yerda ilg'aymiz
-  sbClient.auth.onAuthStateChange(function(event, session) {
-    if (event === 'SIGNED_OUT') {
-      currentUser = null;
-      document.getElementById('auth-gate').style.display = 'flex';
-    }
-  });
-})();
-// ======================================================================
+}
 
-async function saveToSupabase(state) {
-  if (!currentUser) return;
+async function deleteTodoRow(id) {
+  _pendingSaveIds[id] = true;
+  try {
+    const { error } = await sbClient.from('todos').delete().eq('id', id);
+    if (error) console.warn('todos o\'chirish xatosi:', error);
+  } catch(e) {
+    console.warn('todos o\'chirish xatosi:', e);
+  } finally {
+    delete _lastSyncedTasks[id];
+    setTimeout(function(){ delete _pendingSaveIds[id]; }, 400);
+  }
+}
+
+async function loadAllTodos() {
   try {
     const { data, error } = await sbClient
-      .from('app_data')
-      .upsert({ user_id: currentUser.id, data: state, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })
+      .from('todos')
+      .select('id,task,order_index')
+      .order('order_index', { ascending: true });
+    if (error) { console.warn('todos yuklash xatosi:', error); return []; }
+    return data || [];
+  } catch(e) {
+    console.warn('todos yuklash xatosi:', e);
+    return [];
+  }
+}
+
+// S.tasks massivini 'todos' jadvali bilan solishtirib, farqlarni (qo'shilgan,
+// o'zgargan, o'chirilgan) aniqlaydi va faqat o'zgarganlarini serverga yuboradi.
+async function syncTasksToSupabase() {
+  const currentIds = {};
+  (S.tasks || []).forEach(function(task, idx) {
+    currentIds[task.id] = true;
+    upsertTodoRow(task, idx);
+  });
+  Object.keys(_lastSyncedTasks).forEach(function(idStr) {
+    const id = Number(idStr);
+    if (!currentIds[id]) deleteTodoRow(id);
+  });
+}
+
+// ============ APP_STATE JADVALI — qolgan umumiy holat (tanga, mukofotlar,
+// maqsadlar, IELTS, o'quv taymeri, sirli odat, statistika va h.k.) ============
+async function saveToSupabase(state) {
+  _pendingStateSave = true;
+  try {
+    const clone = Object.assign({}, state);
+    delete clone.tasks;      // tasks alohida 'todos' jadvalida saqlanadi
+    delete clone.taskOrder;  // tartib order_index orqali saqlanadi
+    const { data, error } = await sbClient
+      .from('app_state')
+      .upsert({ id: SHARED_ACCOUNT_ID, data: clone, updated_at: new Date().toISOString() }, { onConflict: 'id' })
       .select('updated_at')
       .single();
     if (!error && data && data.updated_at) {
-      // Server tomonidan belgilangan vaqtni saqlaymiz — keyingi taqqoslash uchun
       S._serverSavedAt = data.updated_at;
-      _pendingSaveAt = null; // endi realtime event kelsa xavfsiz taqqoslash mumkin
     } else if (error) {
-      console.warn('Supabase saqlash xatosi:', error);
+      console.warn('app_state saqlash xatosi:', error);
     }
   } catch(e) {
-    console.warn('Supabase saqlash xatosi:', e);
+    console.warn('app_state saqlash xatosi:', e);
+  } finally {
+    setTimeout(function(){ _pendingStateSave = false; }, 400);
   }
+  // Vazifalar ro'yxatini ham 'todos' jadvaliga (haqiqiy INSERT/UPDATE/DELETE bilan) yuboramiz
+  syncTasksToSupabase();
 }
 
 async function loadFromSupabase() {
-  if (!currentUser) return null;
   try {
     const { data, error } = await sbClient
-      .from('app_data')
+      .from('app_state')
       .select('data,updated_at')
-      .eq('user_id', currentUser.id)
+      .eq('id', SHARED_ACCOUNT_ID)
       .maybeSingle();
     if (!error && data && data.data) {
       return { data: data.data, updatedAt: data.updated_at };
     }
   } catch(e) {
-    console.warn('Supabase yuklash xatosi:', e);
+    console.warn('app_state yuklash xatosi:', e);
   }
   return null;
 }
 // =========================================
 
-// ============ SUPABASE REALTIME ============
-function startRealtimeSync() {
-  if (!currentUser) return;
-  if (_realtimeChannel) { try { sbClient.removeChannel(_realtimeChannel); } catch(e) {} _realtimeChannel = null; }
-  _realtimeChannel = sbClient
-    .channel('app_data_changes_' + currentUser.id)
+// ============ SUPABASE REALTIME — 'todos' jadvali (INSERT/UPDATE/DELETE) ============
+function startTodosRealtime() {
+  if (_todosChannel) { try { sbClient.removeChannel(_todosChannel); } catch(e) {} _todosChannel = null; }
+  _todosChannel = sbClient
+    .channel('todos-realtime-changes')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'todos' }, function(payload) {
+      handleTodoRemoteChange('INSERT', payload);
+    })
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'todos' }, function(payload) {
+      handleTodoRemoteChange('UPDATE', payload);
+    })
+    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'todos' }, function(payload) {
+      handleTodoRemoteChange('DELETE', payload);
+    })
+    .subscribe();
+}
+
+function handleTodoRemoteChange(kind, payload) {
+  try {
+    if (kind === 'DELETE') {
+      const oldId = payload.old && payload.old.id;
+      if (oldId === undefined || oldId === null) return;
+      if (_pendingSaveIds[oldId]) return; // o'zimiz o'chirgan edik
+      S.tasks = (S.tasks || []).filter(function(x){ return x.id !== oldId; });
+      delete _lastSyncedTasks[oldId];
+    } else {
+      const row = payload.new;
+      if (!row || !row.task) return;
+      if (_pendingSaveIds[row.id]) return; // o'zimiz yuborgan yozuv — qayta ishlamaymiz
+      const json = JSON.stringify(row.task);
+      if (_lastSyncedTasks[row.id] === json) return; // hech narsa o'zgarmagan
+      _lastSyncedTasks[row.id] = json;
+      const idx = (S.tasks || []).findIndex(function(x){ return x.id === row.id; });
+      if (idx === -1) { S.tasks.push(row.task); } else { S.tasks[idx] = row.task; }
+    }
+    // Vazifalarni order_index bo'yicha qayta tartiblash uchun taskOrder ham yangilanadi
+    S.taskOrder = (S.tasks || []).map(function(x){ return x.id; });
+    recalcStreakFromLog();
+    render();
+    refreshAllModulesFromState();
+    toast(t('realtime_updated_toast'));
+  } catch(ex) { console.warn('realtime todos ishlov xatosi:', ex); }
+}
+// ==========================================
+
+// ============ SUPABASE REALTIME — 'app_state' jadvali (qolgan umumiy holat) ============
+function startStateRealtime() {
+  if (_stateChannel) { try { sbClient.removeChannel(_stateChannel); } catch(e) {} _stateChannel = null; }
+  _stateChannel = sbClient
+    .channel('app_state_changes_' + SHARED_ACCOUNT_ID)
     .on('postgres_changes', {
-      event: '*',
+      event: 'UPDATE',
       schema: 'public',
-      table: 'app_data',
-      filter: 'user_id=eq.' + currentUser.id
+      table: 'app_state',
+      filter: 'id=eq.' + SHARED_ACCOUNT_ID
     }, function(payload) {
       try {
+        if (_pendingStateSave) return; // o'zimiz yozgan o'zgarish
         var rec = payload.new;
         if (!rec || !rec.data) return;
-        var newData = rec.data;
         var newUpdatedAt = rec.updated_at;
-        // O'zimiz yozgan o'zgarishni qayta yuklamaslik
         if (newUpdatedAt && newUpdatedAt === S._serverSavedAt) return;
-        if (_lastProcessedAt && newUpdatedAt === _lastProcessedAt) return;
-        if (_pendingSaveAt) return;
-        var currentLocal = S._localUpdatedAt || S._serverSavedAt || '1970-01-01';
-        if (newUpdatedAt && newUpdatedAt <= currentLocal) return;
-        _lastProcessedAt = newUpdatedAt;
-        // Boshqa qurilmadan kelgan yangilanish — qabul qilamiz
+        var newData = Object.assign({}, rec.data);
+        // tasks/taskOrder har doim 'todos' jadvalidan boshqariladi — app_state'dan kelganini e'tiborsiz qoldiramiz
+        delete newData.tasks; delete newData.taskOrder;
         S = Object.assign({}, S, newData);
         S._serverSavedAt = newUpdatedAt;
-        S._localUpdatedAt = newUpdatedAt;
         (S.goals||[]).forEach(function(g) {
           if (!g.daysCoinsGiven) {
             g.daysCoinsGiven = {};
@@ -3327,6 +3385,22 @@ function startRealtimeSync() {
 }
 // ==========================================
 
+function startRealtimeSync() {
+  startTodosRealtime();
+  startStateRealtime();
+}
+
+// Sahifa ochilganda — login talab qilinmaydi, to'g'ridan-to'g'ri umumiy
+// (shared) ma'lumotlar bazasiga ulanamiz.
+async function bootSharedApp() {
+  var gate = document.getElementById('auth-gate');
+  if (gate) gate.style.display = 'none';
+  await loadUserDataAndInit();
+  startRealtimeSync();
+}
+bootSharedApp();
+// ======================================================================
+
 function load() {
   // Ma'lumotlar endi faqat Supabasedan (loadUserDataAndInit orqali) yuklanadi.
   // Bu funksiya eski chaqiruvlar bilan moslik uchun bo'sh saqlab qolindi.
@@ -3335,7 +3409,6 @@ function load() {
 function save() {
   S._savedAt = Date.now();
   S._localUpdatedAt = new Date().toISOString();
-  _pendingSaveAt = S._localUpdatedAt; // realtime o'z signalimizni e'tiborsiz qoldiradi
   saveToSupabase(S);
 }
 
@@ -4692,12 +4765,16 @@ function renderTaskList() {
   if (emptyMsg) emptyMsg.style.display = (filteredRecurring.length===0 && filteredOnce.length===0) ? '' : 'none';
 }
 
-// Foydalanuvchi tizimga kirgach (login yoki avtomatik sessiya tiklanganda) chaqiriladi.
-// Barcha ma'lumotlar FAQAT Supabasedan (shu foydalanuvchining user_id satridan) yuklanadi.
+// Ilova ochilganda chaqiriladi (bootSharedApp orqali).
+// Barcha ma'lumotlar UMUMIY (shared) Supabase bazasidan yuklanadi:
+//  - 'app_state' jadvalidan — tanga, mukofotlar, maqsadlar, IELTS va h.k.
+//  - 'todos' jadvalidan — vazifalar ro'yxati (har biri alohida qator)
 async function loadUserDataAndInit() {
   load(); // moslik uchun (hech narsa qilmaydi)
 
   const remote = await loadFromSupabase();
+  const todoRows = await loadAllTodos();
+
   if (remote) {
     const remoteState = remote.data;
     const remoteUpdatedAt = remote.updatedAt || '1970-01-01';
@@ -4713,8 +4790,19 @@ async function loadUserDataAndInit() {
     recalcStreakFromLog();
     checkReset();
   } else {
-    // Supabaseda bu foydalanuvchi uchun hali hech narsa yo'q — birinchi marta, boshlang'ich holatni yuboramiz
+    // Supabaseda hali umumiy holat yo'q — birinchi marta, boshlang'ich holatni yuboramiz
     saveToSupabase(S);
+  }
+
+  // Vazifalar har doim 'todos' jadvalidan (haqiqiy qatorlardan) tiklanadi
+  if (todoRows && todoRows.length) {
+    S.tasks = todoRows.map(function(r){ return r.task; });
+    S.taskOrder = todoRows.map(function(r){ return r.id; });
+    todoRows.forEach(function(r){ _lastSyncedTasks[r.id] = JSON.stringify(r.task); });
+  } else if (S.tasks && S.tasks.length) {
+    // 'todos' jadvali hali bo'sh, lekin app_state ichida eski uslubdagi tasks bor —
+    // ularni bir martalik migratsiya sifatida 'todos' jadvaliga yuboramiz.
+    syncTasksToSupabase();
   }
 
   render();
