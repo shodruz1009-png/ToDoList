@@ -160,20 +160,21 @@ function startRealtimeSync() {
 // ============================================================
 // 7) ILOVANI ISHGA TUSHIRISH
 // ============================================================
-(async function init() {
-  // Login oynasini HTML'dan butunlay o'chirib, yashirib tashlash
-  const loginCard = document.querySelector('.login-card') || document.getElementById('login-section');
+// Dasturni faqat HTML to'liq yuklangandan keyin ishga tushiramiz
+document.addEventListener("DOMContentLoaded", async () => {
+  // Login oynasini darhol qidirib yashiramiz
+  const loginCard = document.querySelector('.login-card') || document.getElementById('login-section') || document.querySelector('form');
   if (loginCard) {
     loginCard.style.display = 'none';
   }
 
-  // Asosiy To-Do containerini ekranga chiqarish
-  const todoContainer = document.querySelector('.todo-container') || document.getElementById('todo-section');
-  if (todoContainer) {
+  // To-Do asosiy qismini ko'rsatamiz
+  const todoContainer = document.querySelector('.todo-container') || document.getElementById('todo-section') || document.body;
+  if (todoContainer && todoContainer !== document.body) {
     todoContainer.style.display = 'block';
   }
 
-  // Ma'lumotlarni yuklash va sinxronizatsiya
+  // Ma'lumotlarni bazadan tortish va sinxronizatsiya
   await autoLogin();
   startRealtimeSync();
-})();
+});
