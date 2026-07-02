@@ -517,22 +517,6 @@ if ('serviceWorker' in navigator) {
 </head>
 <body>
 
-<!-- ============ AUTH GATE (Login/Register ekrani) ============ -->
-<div id="auth-gate" style="position:fixed;inset:0;z-index:99999;background:#0f0f14;display:flex;align-items:center;justify-content:center;padding:20px;">
-  <div style="width:100%;max-width:360px;background:#1C1C25;border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:30px 24px;box-shadow:0 20px 60px rgba(0,0,0,0.4)">
-    <div style="text-align:center;font-size:38px;margin-bottom:8px">🔐</div>
-    <div style="font-family:Syne,sans-serif;font-size:20px;font-weight:700;color:#fff;margin-bottom:6px;text-align:center">ToDoList</div>
-    <div id="auth-subtitle" style="font-size:13px;color:#9c9cae;margin-bottom:22px;text-align:center">Ma'lumotlaringizni barcha qurilmalarda sinxronlash uchun tizimga kiring</div>
-    <input id="auth-email" type="email" placeholder="Email" autocomplete="username" style="width:100%;padding:13px 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.12);background:#26262f;color:#fff;font-size:14px;margin-bottom:10px;box-sizing:border-box;font-family:'DM Sans',sans-serif;outline:none">
-    <input id="auth-password" type="password" placeholder="Parol" autocomplete="current-password" onkeydown="if(event.key==='Enter')authLogin()" style="width:100%;padding:13px 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.12);background:#26262f;color:#fff;font-size:14px;margin-bottom:18px;box-sizing:border-box;font-family:'DM Sans',sans-serif;outline:none">
-    <button id="auth-login-btn" onclick="authLogin()" style="width:100%;padding:13px;border-radius:12px;border:none;background:#7C5CFC;color:#fff;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:10px;font-family:'DM Sans',sans-serif">Kirish</button>
-    <button id="auth-signup-btn" onclick="authSignup()" style="width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:#c9c9d6;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif">Ro'yxatdan o'tish</button>
-    <div id="auth-error" style="color:#F87171;font-size:13px;margin-top:14px;text-align:center;min-height:16px;line-height:1.5"></div>
-    <div id="auth-loading" style="color:#9c9cae;font-size:13px;margin-top:14px;text-align:center;display:none">⏳ Yuklanmoqda...</div>
-  </div>
-</div>
-<!-- ============================================================ -->
-
 <div class="wrapper">
   <div class="header">
     <div class="header-left">
@@ -3173,24 +3157,10 @@ function escapeHtml(str) {
 // Eski kod bazasida ishlatilgan qisqa nom — endi to'liq XSS-xavfsiz versiyaga ishora qiladi.
 function esc(s){ return escapeHtml(s); }
 
-// ---------------- AUTH UI HELPERLARI (moslik uchun saqlangan, endi ishlatilmaydi) ----------------
-function authShowError(msg) {
-  var el = document.getElementById('auth-error');
-  if (el) el.textContent = msg || '';
-}
-function authSetLoading(isLoading) {
-  var l = document.getElementById('auth-loading');
-  var loginBtn = document.getElementById('auth-login-btn');
-  var signupBtn = document.getElementById('auth-signup-btn');
-  if (l) l.style.display = isLoading ? 'block' : 'none';
-  if (loginBtn) loginBtn.disabled = isLoading;
-  if (signupBtn) signupBtn.disabled = isLoading;
-}
-// Bitta umumiy akkaunt arxitekturasida alohida login/signup/logout shart emas —
-// bu funksiyalar hech kimni bloklamasligi uchun to'g'ridan-to'g'ri ilovaga kiritadi.
-async function authLogin() { document.getElementById('auth-gate').style.display = 'none'; await bootSharedApp(); }
-async function authSignup() { await authLogin(); }
-async function authLogout() { location.reload(); }
+// ---------------- AUTH olib tashlandi ----------------
+// Bitta umumiy (shared) akkaunt arxitekturasida login/parol ekrani shart emas.
+// Dastur ma'lumotlarni qayta yuklash uchun sahifani shunchaki qayta yuklaydi.
+function authLogout() { location.reload(); }
 
 // ============ TODOS JADVALI — CRUD + REALTIME ============
 // 'todos' jadvali: id (bigint, task.id bilan bir xil), task (jsonb — to'liq vazifa
@@ -3393,8 +3363,6 @@ function startRealtimeSync() {
 // Sahifa ochilganda — login talab qilinmaydi, to'g'ridan-to'g'ri umumiy
 // (shared) ma'lumotlar bazasiga ulanamiz.
 async function bootSharedApp() {
-  var gate = document.getElementById('auth-gate');
-  if (gate) gate.style.display = 'none';
   await loadUserDataAndInit();
   startRealtimeSync();
 }
