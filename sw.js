@@ -16,8 +16,8 @@ const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
 });
 
-let currentUser = "11111111-1111-1111-1111-111111111111";
-let S = { tasks: [] };   // ilovaning asosiy holati (state) — kerakli maydonlarni o'zingiz kengaytiring
+let currentUser = { id: "11111111-1111-1111-1111-111111111111" };
+let S = { tasks: [] };
 let _saveTimer = null;
 let _realtimeChannel = null;
 
@@ -161,8 +161,19 @@ function startRealtimeSync() {
 // 7) ILOVANI ISHGA TUSHIRISH
 // ============================================================
 (async function init() {
-  // Avtomatik yuklashni boshlash
+  // Login oynasini HTML'dan butunlay o'chirib, yashirib tashlash
+  const loginCard = document.querySelector('.login-card') || document.getElementById('login-section');
+  if (loginCard) {
+    loginCard.style.display = 'none';
+  }
+
+  // Asosiy To-Do containerini ekranga chiqarish
+  const todoContainer = document.querySelector('.todo-container') || document.getElementById('todo-section');
+  if (todoContainer) {
+    todoContainer.style.display = 'block';
+  }
+
+  // Ma'lumotlarni yuklash va sinxronizatsiya
   await autoLogin();
-  // Realtime sinxronizatsiyani yoqish
   startRealtimeSync();
 })();
