@@ -296,21 +296,22 @@
   /* Drag & drop */
   .task-card.dragging { opacity:0.4; border:2px dashed var(--accent); }
   .task-card.drag-over { border-color:var(--accent); background:rgba(124,92,252,0.08); transform:scale(1.01); }
-  .drag-handle { cursor:grab; color:var(--text-dim); padding:0 4px; font-size:16px; flex-shrink:0; touch-action:none; }
+  /* Ixcham vertikal blok: tepa strelka + 6-nuqta tutqich + past strelka bitta "pilul"da */
+  .handle-stack { display:flex; flex-direction:column; align-items:center; justify-content:center; width:18px; flex-shrink:0; }
+  .drag-handle { cursor:grab; color:var(--text-dim); font-size:13px; line-height:1; touch-action:none; padding:2px 0; }
   .drag-handle:active { cursor:grabbing; }
-  /* Reorder up/down buttons */
-  .reorder-btns { opacity:0; transition:opacity 0.18s; }
-  .task-card:hover .reorder-btns, .task-card:focus-within .reorder-btns { opacity:1; }
+  /* Reorder up/down buttons - tutqich ustida/ostida, faqat hover'da ko'rinadi */
   .reorder-btn {
     display:flex; align-items:center; justify-content:center;
-    width:22px; height:18px; border-radius:5px; border:1px solid var(--border);
-    background:var(--surface2); color:var(--text-muted); font-size:9px;
-    cursor:pointer; transition:all 0.15s; padding:0; line-height:1;
+    width:100%; height:12px; border:none; background:transparent;
+    color:var(--text-muted); font-size:8px; cursor:pointer; padding:0; line-height:1;
+    opacity:0; transition:opacity 0.18s, color 0.15s, transform 0.15s;
   }
-  .reorder-btn:hover { background:var(--accent); border-color:var(--accent); color:#fff; transform:scale(1.12); }
-  .reorder-btn:active { transform:scale(0.95); }
-  body.light .reorder-btn { background:#EEEDF8; border-color:rgba(0,0,0,0.12); }
-  body.light .reorder-btn:hover { background:var(--accent); color:#fff; }
+  .task-card:hover .reorder-btn, .task-card:focus-within .reorder-btn { opacity:1; }
+  .reorder-btn:hover { color:var(--accent); transform:scale(1.25); }
+  .reorder-btn:active { transform:scale(0.9); }
+  body.light .reorder-btn { color:var(--text-muted); }
+  body.light .reorder-btn:hover { color:var(--accent); }
   .toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:var(--surface2); border:1px solid var(--border-hover); color:var(--text); padding:12px 24px; border-radius:999px; font-size:14px; z-index:9999; opacity:0; transition:all 0.3s; pointer-events:none; white-space:nowrap; box-shadow:0 8px 32px rgba(0,0,0,0.4); }
   .toast.show { opacity:1; transform:translateX(-50%) translateY(-4px); }
   .confetti-dot { position:fixed; width:8px; height:8px; border-radius:2px; pointer-events:none; z-index:9998; animation:confettiFall 0.9s ease-in forwards; }
@@ -3121,7 +3122,12 @@ function esc(s){ return escapeHtml(s); }
 // JSON massiv sifatida saqlanadi. Har bir qo'shish/o'zgartirish/o'chirishdan
 // so'ng shu funksiyalar chaqiriladi va ma'lumot darhol diskka yoziladi, shuning
 // uchun sahifa yangilansa ham hech narsa yo'qolmaydi.
+// QO'SHIMCHA ISHONCHLILIK: asosiy kalitdan tashqari, xuddi shu massiv oddiy
+// 'tasks' kaliti ostida ham parallel saqlanadi (localStorage.setItem('tasks', ...)).
+// Bu ikkinchi, mustaqil zaxira nusxa — asosiy kalit biror sababdan (xatolik,
+// kesh muammosi va h.k.) o'qib bo'lmasa ham, vazifalar shu yerdan tiklanadi.
 const LOCAL_TASKS_BACKUP_KEY = 'todolist_tasks_backup'; // asosiy kalit bo'shab/shikastlanib qolsa shu yerdan tiklanadi
+const PLAIN_TASKS_KEY = 'tasks'; // oddiy, to'g'ridan-to'g'ri kalit — qo'shimcha zaxira
 
 function readLocalTasks() {
   try {
@@ -3149,6 +3155,22 @@ function readLocalTasks() {
   } catch(e) {
     console.warn('todolist_tasks backup o\'qish xatosi:', e);
   }
+  // Ikkalasi ham bo'sh/shikastlangan bo'lsa — oddiy 'tasks' kalitidan (eng
+  // so'nggi qo'shimcha zaxira) tiklashga urinamiz.
+  try {
+    const plainRaw = localStorage.getItem(PLAIN_TASKS_KEY);
+    if (plainRaw) {
+      const plainParsed = JSON.parse(plainRaw);
+      if (Array.isArray(plainParsed) && plainParsed.length) {
+        console.warn('todolist_tasks "tasks" kalitidan tiklandi:', plainParsed.length, 'ta vazifa');
+        localStorage.setItem(LOCAL_TASKS_KEY, plainRaw);
+        localStorage.setItem(LOCAL_TASKS_BACKUP_KEY, plainRaw);
+        return plainParsed;
+      }
+    }
+  } catch(e) {
+    console.warn('"tasks" kalitini o\'qish xatosi:', e);
+  }
   return [];
 }
 
@@ -3170,7 +3192,14 @@ function writeLocalTasks(tasksArr) {
   } catch(e) {
     console.warn('todolist_tasks yozish xatosi:', e);
   }
+  // Qo'shimcha, mustaqil zaxira: oddiy 'tasks' kaliti (talab qilingan aniq format).
+  try {
+    localStorage.setItem(PLAIN_TASKS_KEY, json);
+  } catch(e) {
+    console.warn('"tasks" kalitiga yozish xatosi:', e);
+  }
 }
+
 
 async function upsertTodoRow(task, orderIndex) {
   // LocalStorage'da alohida qatorlar yo'q — faqat ichki keshni yangilaymiz,
@@ -3561,6 +3590,40 @@ async function bootSharedApp() {
   await loadUserDataAndInit();
 }
 bootSharedApp();
+
+// ============ QO'SHIMCHA XAVFSIZLIK TO'RI: sahifa yuklanganda tasklarni
+// oddiy 'tasks' kalitidan tekshirib chiqish ============
+// bootSharedApp() yuqorida allaqachon barcha vazifalarni to'liq tizim orqali
+// tiklaydi. Lekin har ehtimolga qarshi (masalan sahifa juda tez yuklanib,
+// asosiy tizim biror sababdan vazifalarni bo'sh qoldirsa), DOMContentLoaded
+// hodisasida yana bir bor 'tasks' kalitini tekshiramiz — agar u yerda
+// ma'lumot bor-u, ekranda hozircha hech narsa ko'rinmasa, shu yerdan tiklab,
+// qayta render qilamiz. Bu hech qachon yaxshi holatga zarar keltirmaydi,
+// chunki S.tasks allaqachon to'ldirilgan bo'lsa, bu blok hech narsa qilmaydi.
+function _restoreTasksFromPlainKeyIfNeeded() {
+  try {
+    if (S.tasks && S.tasks.length > 0) return; // allaqachon to'ldirilgan, tegmaymiz
+    var raw = localStorage.getItem('tasks');
+    if (!raw) return;
+    var parsed = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.length > 0 && (!S.tasks || S.tasks.length === 0)) {
+      console.warn('DOMContentLoaded: vazifalar "tasks" kalitidan qo\u2019shimcha tiklandi:', parsed.length);
+      S.tasks = parsed;
+      S.taskOrder = parsed.map(function(t){ return t.id; });
+      render();
+    }
+  } catch(e) {
+    console.warn('"tasks" kalitidan qo\u2019shimcha tiklashda xatolik:', e);
+  }
+}
+document.addEventListener('DOMContentLoaded', function() {
+  // Asosiy tizim (bootSharedApp) allaqachon ishga tushirilgan bo'lishi mumkin —
+  // biroz kutib, keyin tekshiramiz, race-condition bo'lmasin.
+  setTimeout(_restoreTasksFromPlainKeyIfNeeded, 400);
+});
+window.addEventListener('load', function() {
+  setTimeout(_restoreTasksFromPlainKeyIfNeeded, 700);
+});
 // ======================================================================
 
 function load() {
@@ -3877,51 +3940,51 @@ function saveTask() {
 
 // ---- Task actions ----
 function toggleTask(id) {
-  const t = S.tasks.find(x=>x.id===id); if(!t) return;
-  t.done = !t.done;
-  if (t.done) {
-    t.doneDate = today(); t.skipped=false; t.skippedDate=null;
-    if (t.repeat==='interval') { t.lastDoneDate=today(); t.nextDate=addDays(today(),t.interval); }
+  const tsk = S.tasks.find(x=>x.id===id); if(!tsk) return;
+  tsk.done = !tsk.done;
+  if (tsk.done) {
+    tsk.doneDate = today(); tsk.skipped=false; tsk.skippedDate=null;
+    if (tsk.repeat==='interval') { tsk.lastDoneDate=today(); tsk.nextDate=addDays(today(),tsk.interval); }
     // Streak uchun kun tarixi — reset bo'lganda ham yo'qolmaydi
     if (!S.taskDoneLog) S.taskDoneLog = {};
-    if (!S.taskDoneLog[t.id]) S.taskDoneLog[t.id] = [];
+    if (!S.taskDoneLog[tsk.id]) S.taskDoneLog[tsk.id] = [];
     var td0 = today();
-    if (S.taskDoneLog[t.id].indexOf(td0) === -1) S.taskDoneLog[t.id].push(td0);
+    if (S.taskDoneLog[tsk.id].indexOf(td0) === -1) S.taskDoneLog[tsk.id].push(td0);
     // Soat bo'yicha tracking (eng samarali soat uchun)
     var doneHour = new Date().getHours();
     if (!S.taskDoneHourLog) S.taskDoneHourLog = {};
     S.taskDoneHourLog[doneHour] = (S.taskDoneHourLog[doneHour]||0) + 1;
     // Har safar bajarilganda alohida counter (streak log sanasi emas)
     if (!S.taskDoneCount) S.taskDoneCount = {};
-    S.taskDoneCount[t.id] = (S.taskDoneCount[t.id]||0) + 1;
-    S.coins += t.coins;
+    S.taskDoneCount[tsk.id] = (S.taskDoneCount[tsk.id]||0) + 1;
+    S.coins += tsk.coins;
     if(!S.totalTasksDone) S.totalTasksDone=0; S.totalTasksDone++;
     // Haftalik haqiqiy counter (log emas, har bajarilganda +1)
     if(!S.weekDoneLog) S.weekDoneLog={};
     var wk = today();
     S.weekDoneLog[wk] = (S.weekDoneLog[wk]||0) + 1;
-    if(t.diff===3){ if(!S.hardTasksDone) S.hardTasksDone=0; S.hardTasksDone++; }
-    if(!S.totalCoins) S.totalCoins=0; S.totalCoins+=t.coins;
-    addTarixLog('in', t.name, t.coins);
+    if(tsk.diff===3){ if(!S.hardTasksDone) S.hardTasksDone=0; S.hardTasksDone++; }
+    if(!S.totalCoins) S.totalCoins=0; S.totalCoins+=tsk.coins;
+    addTarixLog('in', tsk.name, tsk.coins);
     // XP qo'shish
-    var xpGain = t.diff===3 ? XP_PER_TASK_HARD : t.diff===2 ? XP_PER_TASK_MED : XP_PER_TASK_EASY;
-    addXP(xpGain, t.name);
-    toast(t('task_done_xp_toast').replace('{coins}', t.coins).replace('{xp}', xpGain)); confetti();
+    var xpGain = tsk.diff===3 ? XP_PER_TASK_HARD : tsk.diff===2 ? XP_PER_TASK_MED : XP_PER_TASK_EASY;
+    addXP(xpGain, tsk.name);
+    toast(t('task_done_xp_toast').replace('{coins}', tsk.coins).replace('{xp}', xpGain)); confetti();
     // Kunlik 100% tekshiruvi (kechiktirib)
     setTimeout(checkDailyComplete, 300);
   } else {
-    t.doneDate=null;
-    if (t.repeat==='interval') { t.nextDate=today(); }
+    tsk.doneDate=null;
+    if (tsk.repeat==='interval') { tsk.nextDate=today(); }
     // Streak log dan ham olib tashlash
-    if (S.taskDoneLog && S.taskDoneLog[t.id]) {
+    if (S.taskDoneLog && S.taskDoneLog[tsk.id]) {
       var td1 = today();
-      S.taskDoneLog[t.id] = S.taskDoneLog[t.id].filter(function(d){ return d !== td1; });
+      S.taskDoneLog[tsk.id] = S.taskDoneLog[tsk.id].filter(function(d){ return d !== td1; });
     }
-    S.coins -= t.coins;
+    S.coins -= tsk.coins;
     if(S.totalTasksDone>0) S.totalTasksDone--;
     if(S.weekDoneLog && S.weekDoneLog[today()] > 0) S.weekDoneLog[today()]--;
-    if(t.diff===3 && S.hardTasksDone>0) S.hardTasksDone--;
-    if(S.totalCoins>0) S.totalCoins -= t.coins;
+    if(tsk.diff===3 && S.hardTasksDone>0) S.hardTasksDone--;
+    if(S.totalCoins>0) S.totalCoins -= tsk.coins;
   }
   save(); render();
 }
@@ -4468,9 +4531,9 @@ function makeTaskEl(t) {
   const canPostpone = !t.done && !t.skipped && (t.repeat==='interval'||t.repeat==='once');
 
   d.innerHTML=`
-    <span class="drag-handle" title="Ushlab suring">⋮⋮</span>
-    <div class="reorder-btns" style="display:flex;flex-direction:column;gap:2px;flex-shrink:0">
+    <div class="handle-stack">
       <button class="reorder-btn" onclick="moveTask(${t.id},-1)" title="Yuqoriga">&#9650;</button>
+      <span class="drag-handle" title="Ushlab suring">⋮⋮</span>
       <button class="reorder-btn" onclick="moveTask(${t.id},1)"  title="Pastga">&#9660;</button>
     </div>
     ${t.label ? `<span class="task-label-dot" style="background:${t.label}"></span>` : ''}
@@ -4992,14 +5055,19 @@ async function loadUserDataAndInit() {
         Object.keys(g.daysChecked||{}).forEach(function(d) { g.daysCoinsGiven[d] = 1; });
       }
     });
-    recalcStreakFromLog();
-    checkReset();
   } else {
     // LocalStorage'da hali holat yo'q — birinchi marta, boshlang'ich holatni saqlaymiz
     saveToLocalStorage(S);
   }
 
-  // Vazifalar har doim 'todolist_tasks' kalitidan tiklanadi
+  // MUHIM (BUG TUZATILDI): Vazifalar 'todolist_tasks' kalitidan MANA SHU YERDA,
+  // recalcStreakFromLog()/checkReset() chaqirilishidan OLDIN tiklanishi SHART.
+  // Sabab: checkReset() oxirida har doim save() ni chaqiradi, va agar shu payt
+  // S.tasks hali bo'sh boshlang'ich massiv (`[]`) bo'lsa, save() aynan shu bo'sh
+  // massivni localStorage'ga yozib, mavjud (haqiqiy) vazifalarni butunlay
+  // o'chirib yuborardi — sahifa birinchi marta ochilganda ekranda hali ko'rinardi
+  // (chunki xotiradagi o'zgaruvchi hali to'g'ri edi), lekin KEYINGI F5'da localStorage
+  // allaqachon bo'sh bo'lgani uchun tasklar butunlay yo'qolib qolardi.
   var lastKnownTaskCount = (remote && remote.data && typeof remote.data._lastTaskCount === 'number') ? remote.data._lastTaskCount : 0;
   if (todoRows && todoRows.length) {
     S.tasks = todoRows.map(function(r){ return r.task; });
@@ -5014,6 +5082,14 @@ async function loadUserDataAndInit() {
     // topilmadi — bu haqiqiy "bo'sh ro'yxat" emas, ma'lumot yo'qolishi belgisi.
     console.warn('Ogohlantirish: oldin', lastKnownTaskCount, 'ta vazifa bor edi, lekin hech qanday manbada topilmadi.');
     setTimeout(function(){ toast('⚠️ Vazifalar topilmadi — zaxira nusxadan tiklab bo\u2019lmadi'); }, 500);
+  }
+
+  // S.tasks endi to'liq tiklangan bo'lgani uchun, streak/kun almashinuvi
+  // hisob-kitoblarini FAQAT shundan keyin bajaramiz — shu holatda checkReset()
+  // ichidagi save() chaqiruvi tasklarni endi to'g'ri, to'liq holatda yozadi.
+  if (remote) {
+    recalcStreakFromLog();
+    checkReset();
   }
 
   render();
