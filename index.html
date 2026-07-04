@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ToDoListOrginal</title>
-<link rel="icon" type="image/png" href="icon.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -297,21 +296,17 @@
   /* Drag & drop */
   .task-card.dragging { opacity:0.4; border:2px dashed var(--accent); }
   .task-card.drag-over { border-color:var(--accent); background:rgba(124,92,252,0.08); transform:scale(1.01); }
-  .drag-handle { cursor:grab; color:var(--text-dim); padding:1px 0; font-size:13px; line-height:0.7; flex-shrink:0; touch-action:none; text-align:center; }
+  .drag-handle { cursor:grab; color:var(--text-dim); padding:0 4px; font-size:16px; flex-shrink:0; touch-action:none; }
   .drag-handle:active { cursor:grabbing; }
-  /* Reorder block: up arrow, drag dots, down arrow stacked vertically to save width */
-  .reorder-block {
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    gap:1px; flex-shrink:0;
-  }
+  /* Reorder up/down buttons */
+  .reorder-btns { opacity:0; transition:opacity 0.18s; }
+  .task-card:hover .reorder-btns, .task-card:focus-within .reorder-btns { opacity:1; }
   .reorder-btn {
     display:flex; align-items:center; justify-content:center;
-    width:16px; height:12px; border-radius:4px; border:1px solid var(--border);
-    background:var(--surface2); color:var(--text-muted); font-size:7px;
-    cursor:pointer; padding:0; line-height:1;
-    opacity:0; transition:opacity 0.18s, background 0.15s, transform 0.15s;
+    width:22px; height:18px; border-radius:5px; border:1px solid var(--border);
+    background:var(--surface2); color:var(--text-muted); font-size:9px;
+    cursor:pointer; transition:all 0.15s; padding:0; line-height:1;
   }
-  .task-card:hover .reorder-btn, .task-card:focus-within .reorder-btn { opacity:1; }
   .reorder-btn:hover { background:var(--accent); border-color:var(--accent); color:#fff; transform:scale(1.12); }
   .reorder-btn:active { transform:scale(0.95); }
   body.light .reorder-btn { background:#EEEDF8; border-color:rgba(0,0,0,0.12); }
@@ -3041,11 +3036,9 @@ function today() {
 }
 
 function addDays(dateStr, n) {
-  // MUHIM: "YYYY-MM-DD" formatidagi sana vaqtsiz berilsa, brauzer uni
-  // UTC yarim tuni sifatida talqin qiladi. Bu noutbuk va telefon turli
-  // vaqt zonasida bo'lganda 1 kunlik siljishga (interval vazifalar
-  // yo'qolishi yoki noto'g'ri chiqishiga) sabab bo'lardi. Shu sababli
-  // har doim mahalliy vaqt bilan (T00:00:00) ochiq talqin qilamiz.
+  // MUHIM: "YYYY-MM-DD" vaqtsiz berilsa, brauzer buni UTC yarim tuni deb
+  // talqin qiladi — noutbuk va telefon vaqt zonasi farqida 1 kunlik
+  // siljishga (vazifalar noto'g'ri filtrlanishiga) sabab bo'lardi.
   const d = new Date(dateStr + 'T00:00:00'); d.setDate(d.getDate()+n);
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
@@ -3128,7 +3121,7 @@ function esc(s){ return escapeHtml(s); }
 // JSON massiv sifatida saqlanadi. Har bir qo'shish/o'zgartirish/o'chirishdan
 // so'ng shu funksiyalar chaqiriladi va ma'lumot darhol diskka yoziladi, shuning
 // uchun sahifa yangilansa ham hech narsa yo'qolmaydi.
-const LOCAL_TASKS_BACKUP_KEY = 'todolist_tasks_backup'; // asosiy kalit shikastlansa/bo'shab qolsa shu yerdan tiklanadi
+const LOCAL_TASKS_BACKUP_KEY = 'todolist_tasks_backup'; // asosiy kalit bo'shab/shikastlanib qolsa shu yerdan tiklanadi
 
 function readLocalTasks() {
   try {
@@ -3141,15 +3134,15 @@ function readLocalTasks() {
   } catch(e) {
     console.warn('todolist_tasks o\'qish xatosi, backup dan tiklanmoqda:', e);
   }
-  // Asosiy kalit bo'sh yoki shikastlangan bo'lsa — zaxira nusxadan tiklashga urinamiz,
-  // shu bilan vazifalar ro'yxati sababsiz butunlay yo'qolib qolmaydi.
+  // Asosiy kalit bo'sh yoki shikastlangan bo'lsa — zaxira nusxadan tiklashga
+  // urinamiz, shunda vazifalar sababsiz butunlay yo'qolib qolmaydi.
   try {
     const backupRaw = localStorage.getItem(LOCAL_TASKS_BACKUP_KEY);
     if (backupRaw) {
       const backupParsed = JSON.parse(backupRaw);
       if (Array.isArray(backupParsed) && backupParsed.length) {
         console.warn('todolist_tasks backup dan tiklandi:', backupParsed.length, 'ta vazifa');
-        localStorage.setItem(LOCAL_TASKS_KEY, backupRaw); // asosiy kalitni ham tuzatib qo'yamiz
+        localStorage.setItem(LOCAL_TASKS_KEY, backupRaw);
         return backupParsed;
       }
     }
@@ -3164,16 +3157,15 @@ function writeLocalTasks(tasksArr) {
   const json = JSON.stringify(arr);
   try {
     localStorage.setItem(LOCAL_TASKS_KEY, json);
-    // Yozuv haqiqatan ham diskka tushganini darhol tekshiramiz (ba'zi mobil
-    // brauzerlarda vaqtinchalik kesh/xotira xatolari sababli yozuv "yutilib"
-    // qolishi mumkin). Agar mos kelmasa — bir marta qayta urinamiz.
+    // Yozuv haqiqatan ham diskka tushganini darhol tekshiramiz — ba'zi mobil
+    // brauzerlarda vaqtinchalik xotira/kesh xatolari sababli yozuv "yutilib"
+    // qolishi mumkin. Mos kelmasa — bir marta qayta urinamiz.
     const verify = localStorage.getItem(LOCAL_TASKS_KEY);
     if (verify !== json) {
       console.warn('todolist_tasks yozuvi tasdiqlanmadi, qayta urinilmoqda...');
       localStorage.setItem(LOCAL_TASKS_KEY, json);
     }
-    // Zaxira nusxani ham yangilaymiz — asosiy kalit qandaydir sababdan
-    // tozalanib qolsa, keyingi ochilishda shu yerdan tiklanadi.
+    // Zaxira nusxani ham yangilaymiz.
     localStorage.setItem(LOCAL_TASKS_BACKUP_KEY, json);
   } catch(e) {
     console.warn('todolist_tasks yozish xatosi:', e);
@@ -3395,42 +3387,46 @@ function applyImportedBackup(backup, hasNewFormat) {
     toRemove.forEach(function(k){ localStorage.removeItem(k); });
 
     // 2) Backup'dagi kalitlarni yozish
-    var expectedTaskCount = null;
+    var expectedTaskCount = 0;
+    var importedTasks = [];
     if (hasNewFormat) {
       Object.keys(backup.keys).forEach(function(k){
         if (k.indexOf(BACKUP_KEY_PREFIX) === 0 && k !== LOCAL_TASKS_KEY) {
           localStorage.setItem(k, backup.keys[k]);
         }
       });
-      // Vazifalar har doim writeLocalTasks() orqali yoziladi — shunda zaxira
-      // nusxa ('todolist_tasks_backup') ham avtomatik yaratiladi va yozuv
-      // darhol tasdiqlanadi.
       var importedTasksRaw = backup.keys[LOCAL_TASKS_KEY];
-      var importedTasks = [];
       try { importedTasks = importedTasksRaw ? JSON.parse(importedTasksRaw) : []; } catch(e) { importedTasks = []; }
       if (!Array.isArray(importedTasks)) importedTasks = [];
       expectedTaskCount = (backup.meta && typeof backup.meta.taskCount === 'number') ? backup.meta.taskCount : importedTasks.length;
-      writeLocalTasks(importedTasks);
     } else {
       // Eski format bilan orqaga moslik (faqat tasks + state bo'lgan eksportlar)
-      var oldTasks = Array.isArray(backup.tasks) ? backup.tasks : [];
-      expectedTaskCount = oldTasks.length;
-      writeLocalTasks(oldTasks);
+      importedTasks = Array.isArray(backup.tasks) ? backup.tasks : [];
+      expectedTaskCount = importedTasks.length;
       if (backup.state) {
         localStorage.setItem(LOCAL_STATE_KEY, JSON.stringify(backup.state));
       }
     }
 
+    // Vazifalar HAR DOIM writeLocalTasks() orqali yoziladi — shu funksiya
+    // yozuvni darhol tasdiqlaydi va zaxira nusxa ('todolist_tasks_backup')
+    // ni ham avtomatik yaratadi.
+    writeLocalTasks(importedTasks);
+
     // 3) YOZUVNI TASDIQLASH: qayta o'qib, kutilgan sondagi vazifalar
-    // haqiqatan ham diskka tushganini tekshiramiz. Aks holda foydalanuvchiga
-    // "muvaffaqiyatli" deb yolg'on xabar berib, keyin bo'sh ro'yxatga
-    // qayta yuklamaymiz — bu xuddi shu muammoning oldini oladi.
+    // haqiqatan ham diskka tushganini tekshiramiz.
     var verifyTasks = readLocalTasks();
     if (expectedTaskCount > 0 && verifyTasks.length !== expectedTaskCount) {
       console.warn('Import tekshiruvi mos kelmadi: kutilgan', expectedTaskCount, 'topilgan', verifyTasks.length);
       toast(t('data_import_error'));
-      return; // sahifani qayta yuklamaymiz — foydalanuvchi qayta urinib ko'rishi mumkin
+      return; // sahifani qayta yuklamaymiz — muvaffaqiyatsiz importdan keyin bo'sh holatga tushib qolmaslik uchun
     }
+
+    // 4) Ichki holatni ham darhol yangilab, ekranni bir zumda qayta chizamiz
+    // (reload kutmasdan) — shunda import qilingan vazifalar zudlik bilan ko'rinadi.
+    S.tasks = verifyTasks;
+    S.taskOrder = verifyTasks.map(function(x){ return x.id; });
+    try { render(); } catch(e) {}
 
     toast(t('data_import_success'));
     // Toast ko'rinishi uchun ozgina kutib, so'ng butun ilovani qayta yuklaymiz —
@@ -4472,9 +4468,9 @@ function makeTaskEl(t) {
   const canPostpone = !t.done && !t.skipped && (t.repeat==='interval'||t.repeat==='once');
 
   d.innerHTML=`
-    <div class="reorder-block">
+    <span class="drag-handle" title="Ushlab suring">⋮⋮</span>
+    <div class="reorder-btns" style="display:flex;flex-direction:column;gap:2px;flex-shrink:0">
       <button class="reorder-btn" onclick="moveTask(${t.id},-1)" title="Yuqoriga">&#9650;</button>
-      <span class="drag-handle" title="Ushlab suring">⋮⋮</span>
       <button class="reorder-btn" onclick="moveTask(${t.id},1)"  title="Pastga">&#9660;</button>
     </div>
     ${t.label ? `<span class="task-label-dot" style="background:${t.label}"></span>` : ''}
@@ -5014,10 +5010,8 @@ async function loadUserDataAndInit() {
     // ularni bir martalik migratsiya sifatida LocalStorage'ga yozamiz.
     syncTasksToLocalStorage();
   } else if (lastKnownTaskCount > 0) {
-    // Oldin vazifalar bor edi (masalan noutbukda 14 ta), lekin hozir na asosiy,
-    // na zaxira kalitda topilmadi — bu haqiqiy "bo'sh ro'yxat" emas, balki
-    // ma'lumot yo'qolishi belgisi. Foydalanuvchini ogohlantiramiz, shunda
-    // sukut bilan "No tasks yet" ko'rsatib chalg'itmaymiz.
+    // Oldin vazifalar bor edi, lekin hozir na asosiy, na zaxira kalitda
+    // topilmadi — bu haqiqiy "bo'sh ro'yxat" emas, ma'lumot yo'qolishi belgisi.
     console.warn('Ogohlantirish: oldin', lastKnownTaskCount, 'ta vazifa bor edi, lekin hech qanday manbada topilmadi.');
     setTimeout(function(){ toast('⚠️ Vazifalar topilmadi — zaxira nusxadan tiklab bo\u2019lmadi'); }, 500);
   }
@@ -8875,31 +8869,38 @@ function saveIeltsResult() {
 }
 
 // Sectionning band ballini to'g'ri hisoblash
-// Tartib (Listening/Reading):
-//  - Har bir part/passage uchun: OXIRGI 5 ta natijaning o'rtachasi (raw/max)
-//  - "All" (to'liq test) uchun: ENG OXIRGI 1 ta natija (raw/40)
-//  - Yuqoridagilarning barchasi (mavjud bo'lganlari) TENG VAZNDA
-//    foiz ko'rinishida o'rtachalanadi, so'ng 40 ballik shkalaga
-//    qo'llanib rawToBand() orqali band'ga aylantiriladi.
-// "All" endi partlarni butunlay bekor qilmaydi — barchasi birga qo'shilib hisoblanadi.
+// Tartib (Listening/Reading) — ANIQ QOIDA, extrapolatsiyasiz:
+//  1) Har bir part/passage uchun: OXIRGI 5 ta natijaning RAW o'rtachasi.
+//     Agar shu part umuman kiritilmagan bo'lsa — 0 deb olinadi.
+//  2) Barcha partlarning o'rtachalari qo'shiladi (bu 0-40 oralig'idagi
+//     "partlar yig'indisi"ni beradi, chunki part max'lari yig'indisi 40).
+//  3) Tarixdagi eng oxirgi 1 ta "All" (to'liq test) natijasi olinadi
+//     (agar mavjud bo'lsa).
+//  4) Yakuniy raw = (partlar yig'indisi + oxirgi "All") / 2 — FAQAT ikkalasi
+//     ham mavjud bo'lsa. Agar faqat biri mavjud bo'lsa, o'sha yagona
+//     qiymat ishlatiladi (yo'q ma'lumot bilan sun'iy o'rtachalanmaydi).
+//  5) Shu raw (0-40) rasmiy jadval orqali Band Score'ga o'giriladi.
+// Writing/Speaking: FAQAT oxirgi 3 ta kiritilgan band ballarning
+// o'rtachasi olinadi, standart 0.5 ga yaxlitlanadi.
 function calcSectionBandFromParts(sec, results) {
   // Writing / Speaking: IELTS_SUBSEC da yo'q, to'g'ridan band kiritiladi
   var cfg = IELTS_SUBSEC[sec];
   if (!cfg) {
     var wEntries = results.filter(function(r) {
       return r.section === sec && r.band !== null && !isNaN(Number(r.band));
-    });
+    }).sort(_ieltsSortByTimeAsc);
     if (wEntries.length === 0) return null;
-    var wSum = wEntries.reduce(function(s, r) { return s + Number(r.band); }, 0);
-    var wAvg = wSum / wEntries.length;
-    return Math.round(wAvg * 2) / 2;
+    var last3 = wEntries.slice(-3);
+    var wSum = last3.reduce(function(s, r) { return s + Number(r.band); }, 0);
+    var wAvg = wSum / last3.length;
+    return Math.round(wAvg * 2) / 2; // IELTS standart yaxlitlash: eng yaqin 0.5
   }
 
   // Listening / Reading
-  var percent = calcSectionAvgPercent(sec, results);
-  if (percent === null) return null;
-  var finalRaw = Math.min(Math.max(Math.round(percent * 40), 0), 40);
-  return rawToBand(finalRaw, sec);
+  var finalRaw = calcSectionRawScore(sec, results);
+  if (finalRaw === null) return null;
+  var raw = Math.min(Math.max(Math.round(finalRaw), 0), 40);
+  return rawToBand(raw, sec);
 }
 
 // Yordamchi: eski->yangi tartibda saralash (date, keyin id bo'yicha)
@@ -8910,16 +8911,21 @@ function _ieltsSortByTimeAsc(a, b) {
   return (a.id || 0) - (b.id || 0);
 }
 
-// Yordamchi: Listening/Reading uchun TENG VAZNLI o'rtacha FOIZni hisoblaydi.
-//  - Har bir part/passage: oxirgi 5 ta natijaning o'rtachasi (raw/max)
-//  - "All": eng oxirgi 1 ta natija (raw/40)
-// Faqat mavjud (kiritilgan) guruhlar hisobga olinadi.
-function calcSectionAvgPercent(sec, results) {
+// Listening/Reading uchun YAKUNIY XOM BALLNI (0-40) hisoblaydi.
+// Extrapolatsiya qilinmaydi: kiritilmagan part/passage — 0, kiritilmagan
+// "All" — hisobga umuman olinmaydi (sun'iy pasaytirilmaydi).
+// QAT'IY SHART: Listening uchun 4 ta partning (part1-part4), Reading uchun
+// 3 ta passage'ning (passage1-passage3) HAMMASI kiritilgan bo'lishi shart —
+// aks holda (masalan faqat Part 2 kiritilgan bo'lsa) natija HISOBLANMAYDI
+// (null qaytariladi), toki foydalanuvchi noto'g'ri/chala o'rtacha ko'rmasin.
+// "All" (to'liq test) natijasi bo'lsa, bu shartdan qat'iy nazar hisoblanadi.
+function calcSectionRawScore(sec, results) {
   var cfg = IELTS_SUBSEC[sec];
   if (!cfg) return null;
   var parts = cfg.items.filter(function(i) { return i.key !== 'all'; });
 
-  var groups = [];
+  var filledCount = 0;
+  var partsSum = 0;
 
   parts.forEach(function(p) {
     var matching = results.filter(function(r) {
@@ -8928,32 +8934,55 @@ function calcSectionAvgPercent(sec, results) {
              r.raw !== null && !isNaN(Number(r.raw));
     }).sort(_ieltsSortByTimeAsc);
     if (matching.length > 0) {
-      var last5 = matching.slice(-5);
+      filledCount++;
+      var last5 = matching.slice(-5); // oxirgi 5 ta natija (kam bo'lsa — borining o'rtachasi)
       var sum = last5.reduce(function(s, r) { return s + Number(r.raw); }, 0);
-      groups.push((sum / last5.length) / p.max);
+      partsSum += sum / last5.length;
     }
+    // aks holda hech narsa qo'shilmaydi -> shu part uchun 0 deb olingan bilan barobar
   });
+
+  // Barcha partlar (Listening: 4 ta, Reading: 3 ta) kiritilganmi?
+  var allPartsFilled = (filledCount === parts.length);
 
   var allEntries = results.filter(function(r) {
     return r.section === sec &&
            (r.subSection === 'all' || !r.subSection) &&
            r.raw !== null && !isNaN(Number(r.raw));
   }).sort(_ieltsSortByTimeAsc);
-  if (allEntries.length > 0) {
-    var lastAll = allEntries[allEntries.length - 1];
-    groups.push(Number(lastAll.raw) / 40);
-  }
+  var hasAll = allEntries.length > 0;
+  var lastAllRaw = hasAll ? Number(allEntries[allEntries.length - 1].raw) : null;
 
-  if (groups.length === 0) return null;
-  return groups.reduce(function(s, g) { return s + g; }, 0) / groups.length;
+  // QAT'IY TEKSHIRUV: kamida 1 ta "All" natija BOR bo'lishi kerak,
+  // YOKI barcha partlar/passage'lar to'liq kiritilgan bo'lishi kerak.
+  // Aks holda (masalan faqat 1-2 ta part bo'lsa) — hisoblanmaydi (null).
+  if (!hasAll && !allPartsFilled) return null;
+
+  if (allPartsFilled && hasAll) {
+    return (partsSum + lastAllRaw) / 2;
+  }
+  if (allPartsFilled) {
+    return partsSum;
+  }
+  return lastAllRaw;
+}
+
+// Biror section bo'yicha kamida 1 ta raw natija kiritilganmi (to'liq yoki
+// qisman)? — bu faqat "L: —" / "R: —" ko'rsatish kerakmi-yo'qmi ekanini
+// aniqlash uchun ishlatiladi (agar umuman kiritilmagan bo'lsa, hech narsa
+// ko'rsatilmaydi — chiziqcha ham chiqarilmaydi).
+function _ieltsHasAnyRawEntries(sec, results) {
+  return results.some(function(r) {
+    return r.section === sec && r.raw !== null && !isNaN(Number(r.raw));
+  });
 }
 
 // Listening/Reading uchun umumiy raw ko'rsatkichi (UI info uchun),
 // band hisobi bilan bir xil metodologiyaga asoslangan (izchillik uchun)
 function calcSectionRawTotal(sec, results) {
-  var percent = calcSectionAvgPercent(sec, results);
-  if (percent === null) return null;
-  return Math.round(percent * 40);
+  var finalRaw = calcSectionRawScore(sec, results);
+  if (finalRaw === null) return null;
+  return Math.min(Math.max(Math.round(finalRaw), 0), 40);
 }
 function renderIeltsTab() {
   var examType = getExamType();
@@ -9001,16 +9030,23 @@ function renderIeltsTab() {
   });
 
   var secKeys = Object.keys(secBands);
-  if (secKeys.length > 0 && overallCard) {
+  // results.length > 0 shu yergacha kelib yetgan bo'lsa allaqachon kafolatlangan
+  // (yuqorida bo'sh tarix uchun early-return bor), shu sabab kartani doim
+  // ko'rsatamiz — Listening/Reading chala kiritilgan bo'lsa ham "—" bilan.
+  if (results.length > 0 && overallCard) {
     overallCard.style.display = 'block';
     var valEl = document.getElementById('ielts-overall-val');
     var subEl = document.getElementById('ielts-overall-sub');
 
     var subParts = [];
     ['listening','reading','writing','speaking'].forEach(function(s) {
+      var short = {listening:'L', reading:'R', writing:'W', speaking:'S'}[s];
       if (secBands[s] !== undefined) {
-        var short = {listening:'L', reading:'R', writing:'W', speaking:'S'}[s];
         subParts.push(short + ':' + secBands[s]);
+      } else if ((s === 'listening' || s === 'reading') && _ieltsHasAnyRawEntries(s, results)) {
+        // Ba'zi part/passage natijalari kiritilgan, lekin shart (barcha
+        // partlar yoki "All") bajarilmagan -> chiziqcha ko'rsatiladi
+        subParts.push(short + ': —');
       }
     });
 
