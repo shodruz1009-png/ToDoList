@@ -3094,6 +3094,19 @@ function recalcStreakFromLog() {
 // yoki brauzer qayta ochilsa ham ma'lumotlar shu yerdan tiklanadi.
 const LOCAL_TASKS_KEY = 'todolist_tasks';       // vazifalar ro'yxati shu kalit ostida saqlanadi
 const LOCAL_STATE_KEY = 'todolist_app_state';   // qolgan umumiy holat (tanga, mukofotlar va h.k.)
+// PWA/iOS'da brauzer localStorage'ni "foydalanilmayapti" deb avtomatik
+// tozalab yubormasligi uchun "persistent storage" so'raymiz. Bu shart emas
+// (ba'zi brauzerlar qo'llab-quvvatlamaydi), lekin qo'llab-quvvatlasa, iOS
+// Safari'ning 7 kunlik ITP tozalashi kabi holatlarning oldini oladi.
+(function requestPersistentStorage() {
+  try {
+    if (navigator.storage && navigator.storage.persist) {
+      navigator.storage.persist().then(function(granted) {
+        console.log(granted ? 'Persistent storage berildi — ma\u2019lumotlar avtomatik tozalanmaydi.' : 'Persistent storage berilmadi (brauzer siyosati).');
+      });
+    }
+  } catch(e) { /* eski brauzerlarda API yo'q — jim o'tkazamiz */ }
+})();
 
 var _lastSyncedTasks = {};     // id -> oxirgi saqlangan task JSON (keraksiz qayta yozishni oldini olish)
 var _pendingSaveIds = {};      // moslik uchun saqlab qolindi (LocalStorage sinxron ishlaydi, kerak emas)
@@ -3122,12 +3135,17 @@ function esc(s){ return escapeHtml(s); }
 // JSON massiv sifatida saqlanadi. Har bir qo'shish/o'zgartirish/o'chirishdan
 // so'ng shu funksiyalar chaqiriladi va ma'lumot darhol diskka yoziladi, shuning
 // uchun sahifa yangilansa ham hech narsa yo'qolmaydi.
-// QO'SHIMCHA ISHONCHLILIK: asosiy kalitdan tashqari, xuddi shu massiv oddiy
-// 'tasks' kaliti ostida ham parallel saqlanadi (localStorage.setItem('tasks', ...)).
-// Bu ikkinchi, mustaqil zaxira nusxa — asosiy kalit biror sababdan (xatolik,
-// kesh muammosi va h.k.) o'qib bo'lmasa ham, vazifalar shu yerdan tiklanadi.
+// MUHIM (2-versiyada tuzatildi): avval 4 xil kalitda (asosiy+3 zaxira) saqlangan,
+// lekin bu xotirani 4 barobar tezroq to'ldirib, aynan "5MB limit to'lib, faqat
+// tasklar yozilmay qolish" muammosiga sabab bo'lgan (state kichikroq bo'lgani
+// uchun yozilib ulguradi, tasklar esa yo'q). Endi FAQAT 2 nusxa saqlanadi —
+// bu yetarli xavfsizlik beradi va joyni behuda ikki barobar ko'p yemaydi.
 const LOCAL_TASKS_BACKUP_KEY = 'todolist_tasks_backup'; // asosiy kalit bo'shab/shikastlanib qolsa shu yerdan tiklanadi
-const PLAIN_TASKS_KEY = 'tasks'; // oddiy, to'g'ridan-to'g'ri kalit — qo'shimcha zaxira
+// Eski versiyalarda ishlatilgan qo'shimcha kalitlar — endi yozilmaydi, lekin
+// eski foydalanuvchilarda hali mavjud bo'lishi mumkin, shu sabab o'qishda
+// hamon tekshiramiz (keyin bo'shatib, joy ozod qilamiz).
+const PLAIN_TASKS_KEY = 'tasks';
+const SECURE_TASKS_KEY_LEGACY = 'todolist_tasks_secure';
 
 function readLocalTasks() {
   try {
@@ -3155,28 +3173,62 @@ function readLocalTasks() {
   } catch(e) {
     console.warn('todolist_tasks backup o\'qish xatosi:', e);
   }
-  // Ikkalasi ham bo'sh/shikastlangan bo'lsa — oddiy 'tasks' kalitidan (eng
-  // so'nggi qo'shimcha zaxira) tiklashga urinamiz.
+  // Eski versiyadan qolgan qo'shimcha kalitlar (agar mavjud bo'lsa) — oxirgi chora.
   try {
     const plainRaw = localStorage.getItem(PLAIN_TASKS_KEY);
     if (plainRaw) {
       const plainParsed = JSON.parse(plainRaw);
       if (Array.isArray(plainParsed) && plainParsed.length) {
-        console.warn('todolist_tasks "tasks" kalitidan tiklandi:', plainParsed.length, 'ta vazifa');
+        console.warn('todolist_tasks eski "tasks" kalitidan tiklandi:', plainParsed.length, 'ta vazifa');
         localStorage.setItem(LOCAL_TASKS_KEY, plainRaw);
         localStorage.setItem(LOCAL_TASKS_BACKUP_KEY, plainRaw);
         return plainParsed;
       }
     }
   } catch(e) {
-    console.warn('"tasks" kalitini o\'qish xatosi:', e);
+    console.warn('eski "tasks" kalitini o\'qish xatosi:', e);
+  }
+  try {
+    const secureRaw = localStorage.getItem(SECURE_TASKS_KEY_LEGACY);
+    if (secureRaw) {
+      const secureParsed = JSON.parse(secureRaw);
+      if (Array.isArray(secureParsed) && secureParsed.length) {
+        console.warn('todolist_tasks eski "todolist_tasks_secure" kalitidan tiklandi:', secureParsed.length, 'ta vazifa');
+        localStorage.setItem(LOCAL_TASKS_KEY, secureRaw);
+        localStorage.setItem(LOCAL_TASKS_BACKUP_KEY, secureRaw);
+        return secureParsed;
+      }
+    }
+  } catch(e) {
+    console.warn('eski "todolist_tasks_secure" kalitini o\'qish xatosi:', e);
   }
   return [];
+}
+
+// Xotira to'lib qolganda (QuotaExceededError) foydalanuvchiga ANIQ va KO'RINADIGAN
+// ogohlantirish beramiz — ilgari bu faqat console.warn edi, shuning uchun
+// foydalanuvchi muammoni sezmasdan tasklar "sababsiz" yo'qolayotgandek ko'rinardi.
+function _isQuotaError(e) {
+  return e && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || e.code === 22);
+}
+var _quotaWarningShown = false;
+function _warnQuotaExceeded() {
+  if (_quotaWarningShown) return; // bir marta ko'rsatamiz, spam qilmaymiz
+  _quotaWarningShown = true;
+  try {
+    // Eski, endi ishlatilmaydigan zaxira kalitlarni o'chirib, biroz joy ozod qilamiz.
+    localStorage.removeItem(PLAIN_TASKS_KEY);
+    localStorage.removeItem(SECURE_TASKS_KEY_LEGACY);
+  } catch(e) {}
+  setTimeout(function(){
+    toast('⚠️ Xotira (5MB) to\'lib qoldi! Tasklar saqlanmasligi mumkin — Sozlamalar > Zaxira orqali eksport qiling va eski tarixni tozalang.');
+  }, 300);
 }
 
 function writeLocalTasks(tasksArr) {
   const arr = tasksArr || [];
   const json = JSON.stringify(arr);
+  let primaryOk = false;
   try {
     localStorage.setItem(LOCAL_TASKS_KEY, json);
     // Yozuv haqiqatan ham diskka tushganini darhol tekshiramiz — ba'zi mobil
@@ -3187,16 +3239,17 @@ function writeLocalTasks(tasksArr) {
       console.warn('todolist_tasks yozuvi tasdiqlanmadi, qayta urinilmoqda...');
       localStorage.setItem(LOCAL_TASKS_KEY, json);
     }
+    primaryOk = true;
     // Zaxira nusxani ham yangilaymiz.
     localStorage.setItem(LOCAL_TASKS_BACKUP_KEY, json);
   } catch(e) {
     console.warn('todolist_tasks yozish xatosi:', e);
+    if (_isQuotaError(e)) _warnQuotaExceeded();
   }
-  // Qo'shimcha, mustaqil zaxira: oddiy 'tasks' kaliti (talab qilingan aniq format).
-  try {
-    localStorage.setItem(PLAIN_TASKS_KEY, json);
-  } catch(e) {
-    console.warn('"tasks" kalitiga yozish xatosi:', e);
+  if (!primaryOk) {
+    // Asosiy yozuv muvaffaqiyatsiz bo'lsa — sababi deyarli har doim xotira
+    // to'lib qolgani (quota). Foydalanuvchiga ko'rinadigan ogohlantirish beramiz.
+    _warnQuotaExceeded();
   }
 }
 
@@ -3591,6 +3644,75 @@ async function bootSharedApp() {
 }
 bootSharedApp();
 
+// ============ KO'P-OYNA SINXRONIZATSIYASI (multi-tab/PWA race fix) ============
+// MUAMMO: agar ilova bir vaqtda 2 xil joyda ochiq bo'lsa (masalan uy ekranidagi
+// PWA ikonkasi VA brauzerning oddiy tab'i) — har birining o'z xotirasidagi
+// (S o'zgaruvchisi) nusxasi bor. Bittasida task qo'shilsa, u to'g'ri saqlanadi,
+// lekin ikkinchisi hali ESKI (task qo'shilishidan oldingi) holatni ushlab turadi.
+// Keyinroq o'sha eski oynada ISTALGAN harakat (checkbox, mavzu almashtirish va
+// h.k.) save()ni chaqirsa — u o'zining eskirgan, kamroq tasklik nusxasini
+// yozib, yangi qo'shilgan taskni USTIDAN BOSIB YUBORADI. Bu xotira to'lishi
+// bilan bog'liq emas — ikki oyna bir-birining ustidan yozib yuborishi.
+//
+// YECHIM: 'storage' eventi — bitta tab boshqa tab/oynada localStorage
+// o'zgarganda avtomatik xabar oladi (faqat BOSHQA tab uchun ishlaydi, xuddi
+// shu tab o'zgartirganda emas). Shu orqali xotiradagi S ni darhol yangilaymiz,
+// natijada keyingi save() chaqiruvi endi ESKI emas, ENG YANGI holatni yozadi.
+window.addEventListener('storage', function(e) {
+  if (!e.key) return; // ba'zi brauzerlarda localStorage.clear() da key=null keladi
+
+  if (e.key === LOCAL_TASKS_KEY) {
+    try {
+      const fresh = e.newValue ? JSON.parse(e.newValue) : [];
+      if (Array.isArray(fresh)) {
+        console.log('🔄 Boshqa oynada tasklar o\'zgardi — sinxronlanmoqda (' + fresh.length + ' ta).');
+        S.tasks = fresh;
+        S.taskOrder = fresh.map(function(t){ return t.id; });
+        _lastSyncedTasks = {};
+        fresh.forEach(function(t){ _lastSyncedTasks[t.id] = JSON.stringify(t); });
+        render();
+      }
+    } catch(err) { console.warn('Boshqa oynadan tasklarni sinxronlashda xatolik:', err); }
+  }
+
+  if (e.key === LOCAL_STATE_KEY) {
+    try {
+      const parsed = e.newValue ? JSON.parse(e.newValue) : null;
+      if (parsed && parsed.data) {
+        console.log('🔄 Boshqa oynada umumiy holat (tanga, streak va h.k.) o\'zgardi — sinxronlanmoqda.');
+        const savedTasks = S.tasks, savedOrder = S.taskOrder; // tasks alohida sinxronlanadi, bu yerda saqlab qolamiz
+        S = Object.assign({}, S, parsed.data);
+        S.tasks = savedTasks; S.taskOrder = savedOrder;
+        render();
+        refreshAllModulesFromState();
+      }
+    } catch(err) { console.warn('Boshqa oynadan holatni sinxronlashda xatolik:', err); }
+  }
+});
+
+// QO'SHIMCHA XAVFSIZLIK: ba'zi brauzerlarda (ayniqsa PWA standalone rejimi
+// bilan oddiy tab orasida) 'storage' eventi ishonchli kelmasligi mumkin.
+// Shu sabab, oyna qayta faollashganda (foydalanuvchi shu tab/oynaga qaytganda)
+// ham xotiradagi tasklarni diskdagi eng so'nggi nusxa bilan qo'lda solishtirib,
+// zarur bo'lsa yangilaymiz — bu "eskirgan oyna ustidan yozib yuborish"
+// xavfini yanada kamaytiradi.
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden) return;
+  try {
+    const fresh = readLocalTasks();
+    const freshJson = JSON.stringify(fresh);
+    const mineJson = JSON.stringify(S.tasks || []);
+    if (freshJson !== mineJson && fresh.length >= (S.tasks || []).length) {
+      // Diskdagi nusxa bizniki bilan farq qiladi va kamida bizniki kabi to'liq —
+      // demak boshqa oynada yangilanish bo'lgan, o'shani olamiz.
+      console.log('🔄 Oyna faollashdi — tasklar diskdagi so\'nggi nusxa bilan sinxronlandi.');
+      S.tasks = fresh;
+      S.taskOrder = fresh.map(function(t){ return t.id; });
+      render();
+    }
+  } catch(err) { console.warn('Faollashuvda sinxronlash xatosi:', err); }
+});
+
 // ============ QO'SHIMCHA XAVFSIZLIK TO'RI: sahifa yuklanganda tasklarni
 // oddiy 'tasks' kalitidan tekshirib chiqish ============
 // bootSharedApp() yuqorida allaqachon barcha vazifalarni to'liq tizim orqali
@@ -3771,6 +3893,20 @@ function checkReset() {
     // kechagi qolgan miqdor/vaqt ertaga ham saqlanadi (kunlik nolga qaytarilmaydi).
     if(!S.rewardClaims) S.rewardClaims = {};
     if(!S.usageLog) S.usageLog = {};
+
+    // XOTIRANI TEJASH: taskDoneLog/taskSkipLog cheksiz o'sib, oylar davomida
+    // 5MB limitga yaqinlashtiradi. 180 kundan eski yozuvlarni avtomatik tozalaymiz
+    // (streak/statistika uchun bunча uzoq tarix shart emas).
+    try {
+      var _cutoff = new Date(todayDate.getTime() - 180*86400000);
+      var _cutoffStr = _cutoff.getFullYear() + '-' + String(_cutoff.getMonth()+1).padStart(2,'0') + '-' + String(_cutoff.getDate()).padStart(2,'0');
+      ['taskDoneLog','taskSkipLog'].forEach(function(logKey){
+        if (!S[logKey]) return;
+        Object.keys(S[logKey]).forEach(function(id){
+          S[logKey][id] = (S[logKey][id]||[]).filter(function(d){ return d >= _cutoffStr; });
+        });
+      });
+    } catch(e) { console.warn('eski log tozalash xatosi:', e); }
   }
   S.lastDate = td;
   save();
