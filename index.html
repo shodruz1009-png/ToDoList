@@ -3041,8 +3041,13 @@ function today() {
 }
 
 function addDays(dateStr, n) {
-  const d = new Date(dateStr); d.setDate(d.getDate()+n);
-  return d.toISOString().slice(0,10);
+  // MUHIM: "YYYY-MM-DD" formatidagi sana vaqtsiz berilsa, brauzer uni
+  // UTC yarim tuni sifatida talqin qiladi. Bu noutbuk va telefon turli
+  // vaqt zonasida bo'lganda 1 kunlik siljishga (interval vazifalar
+  // yo'qolishi yoki noto'g'ri chiqishiga) sabab bo'lardi. Shu sababli
+  // har doim mahalliy vaqt bilan (T00:00:00) ochiq talqin qilamiz.
+  const d = new Date(dateStr + 'T00:00:00'); d.setDate(d.getDate()+n);
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
 
 function taskDueToday(t) {
@@ -3050,7 +3055,7 @@ function taskDueToday(t) {
   const dow = new Date().getDay();
   if (t.repeat === 'daily') return true;
   if (t.repeat === 'weekdays') return dow >= 1 && dow <= 5;
-  if (t.repeat === 'custom-days') return (t.days||[]).includes(dow);
+  if (t.repeat === 'custom-days' || t.repeat === 'weekly') return (t.days||[]).includes(dow);
   if (t.repeat === 'interval') return t.nextDate ? t.nextDate <= td : true;
   if (t.repeat === 'once') return !t.done;
   return true;
@@ -3123,19 +3128,53 @@ function esc(s){ return escapeHtml(s); }
 // JSON massiv sifatida saqlanadi. Har bir qo'shish/o'zgartirish/o'chirishdan
 // so'ng shu funksiyalar chaqiriladi va ma'lumot darhol diskka yoziladi, shuning
 // uchun sahifa yangilansa ham hech narsa yo'qolmaydi.
+const LOCAL_TASKS_BACKUP_KEY = 'todolist_tasks_backup'; // asosiy kalit shikastlansa/bo'shab qolsa shu yerdan tiklanadi
+
 function readLocalTasks() {
   try {
     const raw = localStorage.getItem(LOCAL_TASKS_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+      console.warn('todolist_tasks massiv emas, backup dan tiklanmoqda');
+    }
   } catch(e) {
-    console.warn('todolist_tasks o\'qish xatosi:', e);
-    return [];
+    console.warn('todolist_tasks o\'qish xatosi, backup dan tiklanmoqda:', e);
   }
+  // Asosiy kalit bo'sh yoki shikastlangan bo'lsa — zaxira nusxadan tiklashga urinamiz,
+  // shu bilan vazifalar ro'yxati sababsiz butunlay yo'qolib qolmaydi.
+  try {
+    const backupRaw = localStorage.getItem(LOCAL_TASKS_BACKUP_KEY);
+    if (backupRaw) {
+      const backupParsed = JSON.parse(backupRaw);
+      if (Array.isArray(backupParsed) && backupParsed.length) {
+        console.warn('todolist_tasks backup dan tiklandi:', backupParsed.length, 'ta vazifa');
+        localStorage.setItem(LOCAL_TASKS_KEY, backupRaw); // asosiy kalitni ham tuzatib qo'yamiz
+        return backupParsed;
+      }
+    }
+  } catch(e) {
+    console.warn('todolist_tasks backup o\'qish xatosi:', e);
+  }
+  return [];
 }
 
 function writeLocalTasks(tasksArr) {
+  const arr = tasksArr || [];
+  const json = JSON.stringify(arr);
   try {
-    localStorage.setItem(LOCAL_TASKS_KEY, JSON.stringify(tasksArr || []));
+    localStorage.setItem(LOCAL_TASKS_KEY, json);
+    // Yozuv haqiqatan ham diskka tushganini darhol tekshiramiz (ba'zi mobil
+    // brauzerlarda vaqtinchalik kesh/xotira xatolari sababli yozuv "yutilib"
+    // qolishi mumkin). Agar mos kelmasa — bir marta qayta urinamiz.
+    const verify = localStorage.getItem(LOCAL_TASKS_KEY);
+    if (verify !== json) {
+      console.warn('todolist_tasks yozuvi tasdiqlanmadi, qayta urinilmoqda...');
+      localStorage.setItem(LOCAL_TASKS_KEY, json);
+    }
+    // Zaxira nusxani ham yangilaymiz — asosiy kalit qandaydir sababdan
+    // tozalanib qolsa, keyingi ochilishda shu yerdan tiklanadi.
+    localStorage.setItem(LOCAL_TASKS_BACKUP_KEY, json);
   } catch(e) {
     console.warn('todolist_tasks yozish xatosi:', e);
   }
@@ -3181,6 +3220,10 @@ async function saveToLocalStorage(state) {
     const clone = Object.assign({}, state);
     delete clone.tasks;      // tasks alohida 'todolist_tasks' kalitida saqlanadi
     delete clone.taskOrder;  // tartib massiv indeksi orqali saqlanadi
+    // Oxirgi saqlashda nechta vazifa bo'lganini ham yozib qo'yamiz — shu orqali
+    // keyingi ochilishda 'todolist_tasks' kutilmaganda bo'sh chiqsa, buni
+    // "haqiqatan ham bo'sh" holatdan farqlab, foydalanuvchini ogohlantirish mumkin.
+    clone._lastTaskCount = (state.tasks || []).length;
     const updatedAt = new Date().toISOString();
     localStorage.setItem(LOCAL_STATE_KEY, JSON.stringify({ data: clone, updated_at: updatedAt }));
     S._serverSavedAt = updatedAt;
@@ -3352,20 +3395,41 @@ function applyImportedBackup(backup, hasNewFormat) {
     toRemove.forEach(function(k){ localStorage.removeItem(k); });
 
     // 2) Backup'dagi kalitlarni yozish
+    var expectedTaskCount = null;
     if (hasNewFormat) {
       Object.keys(backup.keys).forEach(function(k){
-        if (k.indexOf(BACKUP_KEY_PREFIX) === 0) {
+        if (k.indexOf(BACKUP_KEY_PREFIX) === 0 && k !== LOCAL_TASKS_KEY) {
           localStorage.setItem(k, backup.keys[k]);
         }
       });
+      // Vazifalar har doim writeLocalTasks() orqali yoziladi — shunda zaxira
+      // nusxa ('todolist_tasks_backup') ham avtomatik yaratiladi va yozuv
+      // darhol tasdiqlanadi.
+      var importedTasksRaw = backup.keys[LOCAL_TASKS_KEY];
+      var importedTasks = [];
+      try { importedTasks = importedTasksRaw ? JSON.parse(importedTasksRaw) : []; } catch(e) { importedTasks = []; }
+      if (!Array.isArray(importedTasks)) importedTasks = [];
+      expectedTaskCount = (backup.meta && typeof backup.meta.taskCount === 'number') ? backup.meta.taskCount : importedTasks.length;
+      writeLocalTasks(importedTasks);
     } else {
       // Eski format bilan orqaga moslik (faqat tasks + state bo'lgan eksportlar)
-      if (Array.isArray(backup.tasks)) {
-        localStorage.setItem(LOCAL_TASKS_KEY, JSON.stringify(backup.tasks));
-      }
+      var oldTasks = Array.isArray(backup.tasks) ? backup.tasks : [];
+      expectedTaskCount = oldTasks.length;
+      writeLocalTasks(oldTasks);
       if (backup.state) {
         localStorage.setItem(LOCAL_STATE_KEY, JSON.stringify(backup.state));
       }
+    }
+
+    // 3) YOZUVNI TASDIQLASH: qayta o'qib, kutilgan sondagi vazifalar
+    // haqiqatan ham diskka tushganini tekshiramiz. Aks holda foydalanuvchiga
+    // "muvaffaqiyatli" deb yolg'on xabar berib, keyin bo'sh ro'yxatga
+    // qayta yuklamaymiz — bu xuddi shu muammoning oldini oladi.
+    var verifyTasks = readLocalTasks();
+    if (expectedTaskCount > 0 && verifyTasks.length !== expectedTaskCount) {
+      console.warn('Import tekshiruvi mos kelmadi: kutilgan', expectedTaskCount, 'topilgan', verifyTasks.length);
+      toast(t('data_import_error'));
+      return; // sahifani qayta yuklamaymiz — foydalanuvchi qayta urinib ko'rishi mumkin
     }
 
     toast(t('data_import_success'));
@@ -4940,6 +5004,7 @@ async function loadUserDataAndInit() {
   }
 
   // Vazifalar har doim 'todolist_tasks' kalitidan tiklanadi
+  var lastKnownTaskCount = (remote && remote.data && typeof remote.data._lastTaskCount === 'number') ? remote.data._lastTaskCount : 0;
   if (todoRows && todoRows.length) {
     S.tasks = todoRows.map(function(r){ return r.task; });
     S.taskOrder = todoRows.map(function(r){ return r.id; });
@@ -4948,6 +5013,13 @@ async function loadUserDataAndInit() {
     // 'todolist_tasks' kaliti hali bo'sh, lekin holat ichida eski uslubdagi tasks bor —
     // ularni bir martalik migratsiya sifatida LocalStorage'ga yozamiz.
     syncTasksToLocalStorage();
+  } else if (lastKnownTaskCount > 0) {
+    // Oldin vazifalar bor edi (masalan noutbukda 14 ta), lekin hozir na asosiy,
+    // na zaxira kalitda topilmadi — bu haqiqiy "bo'sh ro'yxat" emas, balki
+    // ma'lumot yo'qolishi belgisi. Foydalanuvchini ogohlantiramiz, shunda
+    // sukut bilan "No tasks yet" ko'rsatib chalg'itmaymiz.
+    console.warn('Ogohlantirish: oldin', lastKnownTaskCount, 'ta vazifa bor edi, lekin hech qanday manbada topilmadi.');
+    setTimeout(function(){ toast('⚠️ Vazifalar topilmadi — zaxira nusxadan tiklab bo\u2019lmadi'); }, 500);
   }
 
   render();
