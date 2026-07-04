@@ -511,8 +511,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 </script>
-<!-- Supabase JS SDK — Authentication va Database uchun -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 </head>
 <body>
 
@@ -591,7 +590,6 @@ if ('serviceWorker' in navigator) {
     <button class="tab"        id="tab-goals"   draggable="true" data-tab="goals"   onclick="showTab('goals')" data-i18n="tab_goals">🎯 Maqsadlar</button>
     <button class="tab"        id="tab-chest"   draggable="true" data-tab="chest"   onclick="showTab('chest')" data-i18n="tab_chest">🎲 Chest</button>
     <button class="tab"        id="tab-ielts"   draggable="true" data-tab="ielts"   onclick="showTab('ielts')" data-i18n="tab_ielts">📊 IELTS</button>
-    <button class="tab"        id="tab-study"  draggable="true" data-tab="study"  onclick="showTab('study')">⏱️ O'qish</button>
   </div>
 
   <div id="view-tasks">
@@ -859,16 +857,22 @@ if ('serviceWorker' in navigator) {
 
 
 
+    <!-- 7b. Ma'lumotlarni zaxiralash (Eksport / Import) -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px">
+      <div style="font-size:11px;color:var(--text-dim);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px" data-i18n="data_backup_title">💾 Ma'lumotlar zaxirasi</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.6" data-i18n="data_backup_desc">Barcha vazifalar va statistikangizni faylga saqlab, boshqa qurilmada tiklashingiz mumkin.</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button onclick="exportAppData()" style="flex:1;min-width:140px;padding:12px;border-radius:12px;border:1px solid rgba(52,211,153,0.4);background:rgba(52,211,153,0.08);color:#34D399;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif" data-i18n="data_export_btn">⬇️ Eksport qilish</button>
+        <button onclick="triggerImportAppData()" style="flex:1;min-width:140px;padding:12px;border-radius:12px;border:1px solid rgba(124,92,252,0.4);background:rgba(124,92,252,0.08);color:#B48EFF;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif" data-i18n="data_import_btn">⬆️ Import qilish</button>
+      </div>
+      <input type="file" id="data-import-input" accept="application/json,.json" style="display:none" onchange="importAppData(event)" />
+    </div>
+
     <!-- 8. Xavfli zona -->
     <div style="background:var(--surface);border:1px solid rgba(248,113,113,0.2);border-radius:16px;padding:16px;margin-bottom:12px">
       <div style="font-size:11px;color:var(--text-dim);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:10px" data-i18n="danger_zone_title">⚠️ Xavfli zona</div>
       <div style="font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.6"><span data-i18n="danger_zone_desc_pre">Akkauntni </span><b style="color:var(--text)" data-i18n="danger_zone_desc_bold">qayta boshlash</b><span data-i18n="danger_zone_desc_post"> barcha vazifalar, tangalar, streak va statistikani o'chirib tashlaydi. Bu amalni qaytarib bo'lmaydi!</span></div>
       <button onclick="confirmRestart()" style="width:100%;padding:12px;border-radius:12px;border:1px solid rgba(248,113,113,0.4);background:rgba(248,113,113,0.08);color:#F87171;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif" data-i18n="danger_zone_btn">🔄 Akkauntni qayta boshlash</button>
-    </div>
-
-    <!-- Chiqish (Logout) -->
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px">
-      <button onclick="authLogout()" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">🚪 Chiqish (Logout)</button>
     </div>
 
 
@@ -899,89 +903,6 @@ if ('serviceWorker' in navigator) {
       <div style="font-size:40px;margin-bottom:12px;opacity:0.5">📊</div>
       <span data-i18n="ielts_history_empty">Hali natija kiritilmagan</span>
     </div>
-  </div>
-
-  <!-- STUDY TIMER VIEW -->
-  <div id="view-study" style="display:none;padding:8px 0">
-
-    <!-- Kunlik maqsad karta -->
-    <div style="background:linear-gradient(135deg,rgba(124,92,252,0.18),rgba(180,142,255,0.08));border:1px solid rgba(124,92,252,0.35);border-radius:20px;padding:20px;margin-bottom:14px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <div style="font-family:Syne,sans-serif;font-size:16px;font-weight:700;color:var(--text)">⏱️ Kunlik o'qish maqsadi</div>
-        <button onclick="openStudyGoalModal()" style="background:rgba(124,92,252,0.2);border:1px solid rgba(124,92,252,0.4);border-radius:10px;color:#B48EFF;font-size:12px;padding:5px 12px;cursor:pointer;font-family:'DM Sans',sans-serif">✏️ Maqsad</button>
-      </div>
-      <!-- Progress ring + timer display -->
-      <div style="display:flex;align-items:center;gap:20px">
-        <div style="position:relative;width:110px;height:110px;flex-shrink:0">
-          <svg width="110" height="110" style="transform:rotate(-90deg)">
-            <circle cx="55" cy="55" r="48" fill="none" stroke="rgba(124,92,252,0.15)" stroke-width="9"/>
-            <circle id="study-ring" cx="55" cy="55" r="48" fill="none" stroke="url(#studyGrad)" stroke-width="9"
-              stroke-linecap="round" stroke-dasharray="301.59" stroke-dashoffset="301.59" style="transition:stroke-dashoffset 1s ease"/>
-            <defs>
-              <linearGradient id="studyGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stop-color="#7C5CFC"/>
-                <stop offset="100%" stop-color="#34D399"/>
-              </linearGradient>
-            </defs>
-          </svg>
-          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
-            <div id="study-pct-txt" style="font-family:Syne,sans-serif;font-size:18px;font-weight:700;color:var(--text)">0%</div>
-          </div>
-        </div>
-        <div style="flex:1">
-          <div id="study-elapsed-big" style="font-family:Syne,sans-serif;font-size:38px;font-weight:700;color:var(--text);line-height:1">00:00:00</div>
-          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">O'qilgan vaqt</div>
-          <div style="display:flex;align-items:center;gap:6px;margin-top:8px">
-            <div id="study-goal-label" style="font-size:13px;color:#B48EFF">Maqsad: —</div>
-          </div>
-          <div id="study-remaining" style="font-size:12px;color:var(--text-muted);margin-top:3px">Qoldi: —</div>
-          <div id="study-coins-info" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:5px"></div>
-        </div>
-      </div>
-      <!-- Start/Pause/Reset tugmalar -->
-      <div style="display:flex;gap:10px;margin-top:16px">
-        <button id="study-start-btn" onclick="studyToggle()" style="flex:1;padding:13px;border-radius:14px;border:none;background:linear-gradient(135deg,#7C5CFC,#5B3FD4);color:#fff;font-family:Syne,sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:opacity 0.2s">▶ Boshlash</button>
-        <button onclick="studyReset()" style="padding:13px 18px;border-radius:14px;border:1px solid var(--border);background:var(--surface);color:var(--text-muted);font-size:14px;cursor:pointer">↺</button>
-      </div>
-    </div>
-
-    <!-- Bugungi sessiyalar -->
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px">
-      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px">📋 Bugungi sessiyalar</div>
-      <div id="study-sessions-list" style="display:flex;flex-direction:column;gap:6px">
-        <div style="font-size:13px;color:var(--text-dim);text-align:center;padding:12px 0">Hali sessiya yo'q</div>
-      </div>
-    </div>
-
-    <!-- Tarix -->
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px">
-      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px">📅 So'nggi 7 kun tarixi</div>
-      <div id="study-history-list" style="display:flex;flex-direction:column;gap:8px"></div>
-    </div>
-
-  </div>
-
-  <!-- Study Goal Modal -->
-  <div id="study-goal-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:300;align-items:center;justify-content:center;padding:20px">
-    <div class="modal" style="width:100%;max-width:340px;border-radius:20px;padding:24px">
-      <div style="font-family:Syne,sans-serif;font-size:17px;font-weight:700;margin-bottom:18px">⏱️ Kunlik maqsad</div>
-      <label style="font-size:12px;color:var(--text-muted);letter-spacing:0.05em;text-transform:uppercase;display:block;margin-bottom:6px">Kuniga necha soat o'qish kerak?</label>
-      <input type="number" id="study-goal-input" min="0.5" max="24" step="0.5" value="6"
-        style="width:100%;padding:12px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:22px;font-family:Syne,sans-serif;font-weight:700;outline:none;box-sizing:border-box;text-align:center"/>
-      <div style="font-size:12px;color:var(--text-muted);text-align:center;margin-top:6px">soat / kun</div>
-      <div style="display:flex;gap:10px;margin-top:18px">
-        <button onclick="closeStudyGoalModal()" style="flex:1;padding:12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--text-muted);cursor:pointer;font-family:'DM Sans',sans-serif">Bekor</button>
-        <button onclick="saveStudyGoal()" style="flex:1;padding:12px;border-radius:12px;border:none;background:linear-gradient(135deg,#7C5CFC,#5B3FD4);color:#fff;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Saqlash</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Floating study widget -->
-  <div id="study-float" style="display:none;position:fixed;bottom:80px;right:16px;z-index:500;background:linear-gradient(135deg,#7C5CFC,#5B3FD4);border-radius:20px;padding:10px 14px;box-shadow:0 6px 24px rgba(124,92,252,0.45);cursor:pointer;min-width:130px" onclick="showTab('study')">
-    <div style="font-size:10px;color:rgba(255,255,255,0.7);margin-bottom:2px">⏱️ O'qish</div>
-    <div id="study-float-time" style="font-family:Syne,sans-serif;font-size:20px;font-weight:700;color:#fff;line-height:1">00:00:00</div>
-    <div id="study-float-status" style="font-size:10px;color:rgba(255,255,255,0.8);margin-top:2px">To'xtatilgan</div>
-    <button id="study-float-btn" onclick="event.stopPropagation();studyToggle()" style="margin-top:6px;width:100%;padding:5px 0;border-radius:10px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.15);color:#fff;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer">▶ Boshlash</button>
   </div>
 
   <!-- IELTS Result Modal -->
@@ -1634,6 +1555,20 @@ const I18N = {
     cal_legend_partial: 'Qisman',
     cal_legend_none: 'Bajarilmadi',
     badges_title: '🏅 Badgelarim',
+    data_backup_title: "💾 Ma'lumotlar zaxirasi",
+    data_backup_desc: "Barcha vazifalar va statistikangizni faylga saqlab, boshqa qurilmada tiklashingiz mumkin.",
+    data_export_btn: '⬇️ Eksport qilish',
+    data_import_btn: '⬆️ Import qilish',
+    data_export_success: '✅ Fayl yuklab olindi',
+    data_export_error: "❌ Eksport qilishda xatolik yuz berdi",
+    data_import_success: '✅ Ma\'lumotlar tiklandi, sahifa yangilanmoqda...',
+    data_import_error: "❌ Fayl noto'g'ri yoki buzilgan",
+    data_import_confirm_title: '💾 Zaxiradan tiklash',
+    data_import_confirm_date: 'Sana',
+    data_import_confirm_tasks: 'Vazifalar soni',
+    data_import_confirm_coins: 'Tangalar',
+    data_import_confirm_warn: "Diqqat: joriy qurilmadagi barcha ma'lumotlar shu fayldagi ma'lumot bilan almashtiriladi. Bu amalni qaytarib bo'lmaydi!",
+    data_import_confirm_btn: '✅ Tiklash va yangilash',
     danger_zone_title: '⚠️ Xavfli zona',
     danger_zone_desc_pre: 'Akkauntni ',
     danger_zone_desc_bold: 'qayta boshlash',
@@ -2122,6 +2057,20 @@ const I18N = {
     cal_legend_partial: 'Partial',
     cal_legend_none: 'Not done',
     badges_title: '🏅 My badges',
+    data_backup_title: '💾 Data backup',
+    data_backup_desc: 'Save all your tasks and stats to a file, and restore them on another device.',
+    data_export_btn: '⬇️ Export data',
+    data_import_btn: '⬆️ Import data',
+    data_export_success: '✅ File downloaded',
+    data_export_error: '❌ Export failed',
+    data_import_success: '✅ Data restored, reloading...',
+    data_import_error: '❌ Invalid or corrupted file',
+    data_import_confirm_title: '💾 Restore from backup',
+    data_import_confirm_date: 'Date',
+    data_import_confirm_tasks: 'Tasks',
+    data_import_confirm_coins: 'Coins',
+    data_import_confirm_warn: 'Warning: all current data on this device will be replaced with the data from this file. This cannot be undone!',
+    data_import_confirm_btn: '✅ Restore & reload',
     danger_zone_title: '⚠️ Danger zone',
     danger_zone_desc_pre: 'Resetting your ',
     danger_zone_desc_bold: 'account',
@@ -2609,6 +2558,20 @@ const I18N = {
     cal_legend_none: 'Не выполнено',
     // Бейджи / Опасная зона
     badges_title: '🏅 Мои бейджи',
+    data_backup_title: '💾 Резервная копия',
+    data_backup_desc: 'Сохраните все задачи и статистику в файл и восстановите их на другом устройстве.',
+    data_export_btn: '⬇️ Экспорт данных',
+    data_import_btn: '⬆️ Импорт данных',
+    data_export_success: '✅ Файл загружен',
+    data_export_error: '❌ Ошибка экспорта',
+    data_import_success: '✅ Данные восстановлены, обновление...',
+    data_import_error: '❌ Файл повреждён или неверен',
+    data_import_confirm_title: '💾 Восстановление из копии',
+    data_import_confirm_date: 'Дата',
+    data_import_confirm_tasks: 'Задачи',
+    data_import_confirm_coins: 'Монеты',
+    data_import_confirm_warn: 'Внимание: все текущие данные на этом устройстве будут заменены данными из этого файла. Это действие необратимо!',
+    data_import_confirm_btn: '✅ Восстановить и обновить',
     danger_zone_title: '⚠️ Опасная зона',
     danger_zone_desc_pre: 'Сброс аккаунта ',
     danger_zone_desc_bold: 'удалит всё',
@@ -3120,26 +3083,17 @@ function recalcStreakFromLog() {
   if (streak > (S.bestStreak||0)) S.bestStreak = streak;
 }
 
-// ============ SUPABASE CONFIG (Shared Account + Realtime Database) ============
-// MUHIM: Bu ilova endi "bitta umumiy akkkaunt" arxitekturasida ishlaydi.
-// Alohida login/parol shart emas — barcha foydalanuvchilar bitta umumiy
-// ma'lumotlar bazasiga ulanadi va har qanday qurilmadagi o'zgarish
-// Supabase Realtime orqali darhol boshqa barcha qurilmalarga uzatiladi.
-const SUPABASE_URL = 'https://bskvildvqcelsxbluboe.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_xWsjS4VmlqX138HebYAdPA_D32G5lq0';
-const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-  auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
-});
+// ============ LOCALSTORAGE CONFIG (To'liq offline saqlash) ============
+// MUHIM: Bu ilova endi hech qanday tashqi bazaga (Supabase va h.k.) ulanmaydi.
+// Barcha ma'lumotlar faqat brauzerning LocalStorage xotirasida saqlanadi va
+// internetga ulanmasdan ham to'liq ishlaydi (offline-first). Sahifa yangilansa
+// yoki brauzer qayta ochilsa ham ma'lumotlar shu yerdan tiklanadi.
+const LOCAL_TASKS_KEY = 'todolist_tasks';       // vazifalar ro'yxati shu kalit ostida saqlanadi
+const LOCAL_STATE_KEY = 'todolist_app_state';   // qolgan umumiy holat (tanga, mukofotlar va h.k.)
 
-// Umumiy (shared) akkaunt identifikatori — hamma qurilmalar shu bitta qatordan
-// asosiy (tasks bo'lmagan) ma'lumotlarni o'qiydi/yozadi.
-const SHARED_ACCOUNT_ID = 'shared-account';
-
-var _todosChannel = null;      // 'todos' jadvali uchun realtime kanal
-var _stateChannel = null;      // 'app_state' (umumiy holat) jadvali uchun realtime kanal
-var _lastSyncedTasks = {};     // id -> oxirgi Supabasega yuborilgan task JSON (keraksiz qayta yozishni oldini olish)
-var _pendingSaveIds = {};      // hozir yozilayotgan task id'lari — o'zimiz yuborgan realtime signalni e'tiborsiz qoldirish uchun
-var _pendingStateSave = false; // app_state yozilayotganini bildiradi
+var _lastSyncedTasks = {};     // id -> oxirgi saqlangan task JSON (keraksiz qayta yozishni oldini olish)
+var _pendingSaveIds = {};      // moslik uchun saqlab qolindi (LocalStorage sinxron ishlaydi, kerak emas)
+var _pendingStateSave = false; // moslik uchun saqlab qolindi (LocalStorage sinxron ishlaydi, kerak emas)
 
 // ---------------- XSS HIMOYASI ----------------
 // Foydalanuvchi kiritgan har qanday matn ekranga chiqarishdan oldin shu
@@ -3158,64 +3112,51 @@ function esc(s){ return escapeHtml(s); }
 
 // ---------------- AUTH olib tashlandi ----------------
 // Bitta umumiy (shared) akkaunt arxitekturasida login/parol ekrani shart emas.
-// Dastur ma'lumotlarni qayta yuklash uchun sahifani shunchaki qayta yuklaydi.
-function authLogout() { location.reload(); }
 
-// ============ TODOS JADVALI — CRUD + REALTIME ============
-// 'todos' jadvali: id (bigint, task.id bilan bir xil), task (jsonb — to'liq vazifa
-// obyekti), order_index (tartib), updated_at. Har bir qo'shish/o'zgartirish/o'chirish
-// shu jadvalda haqiqiy INSERT / UPDATE / DELETE sifatida bajariladi, shuning uchun
-// barcha qurilmalar Supabase Realtime orqali darhol xabardor bo'ladi.
-async function upsertTodoRow(task, orderIndex) {
-  const json = JSON.stringify(task);
-  if (_lastSyncedTasks[task.id] === json) return; // o'zgarish yo'q — tarmoqqa chiqmaymiz
-  _pendingSaveIds[task.id] = true;
+// ============ TASKS — LocalStorage CRUD ============
+// Vazifalar ro'yxati brauzer xotirasida 'todolist_tasks' kaliti ostida to'liq
+// JSON massiv sifatida saqlanadi. Har bir qo'shish/o'zgartirish/o'chirishdan
+// so'ng shu funksiyalar chaqiriladi va ma'lumot darhol diskka yoziladi, shuning
+// uchun sahifa yangilansa ham hech narsa yo'qolmaydi.
+function readLocalTasks() {
   try {
-    const { error } = await sbClient
-      .from('todos')
-      .upsert({ id: task.id, task: task, order_index: orderIndex, updated_at: new Date().toISOString() }, { onConflict: 'id' });
-    if (!error) {
-      _lastSyncedTasks[task.id] = json;
-    } else {
-      console.warn('todos upsert xatosi:', error);
-    }
+    const raw = localStorage.getItem(LOCAL_TASKS_KEY);
+    return raw ? JSON.parse(raw) : [];
   } catch(e) {
-    console.warn('todos upsert xatosi:', e);
-  } finally {
-    setTimeout(function(){ delete _pendingSaveIds[task.id]; }, 400);
-  }
-}
-
-async function deleteTodoRow(id) {
-  _pendingSaveIds[id] = true;
-  try {
-    const { error } = await sbClient.from('todos').delete().eq('id', id);
-    if (error) console.warn('todos o\'chirish xatosi:', error);
-  } catch(e) {
-    console.warn('todos o\'chirish xatosi:', e);
-  } finally {
-    delete _lastSyncedTasks[id];
-    setTimeout(function(){ delete _pendingSaveIds[id]; }, 400);
-  }
-}
-
-async function loadAllTodos() {
-  try {
-    const { data, error } = await sbClient
-      .from('todos')
-      .select('id,task,order_index')
-      .order('order_index', { ascending: true });
-    if (error) { console.warn('todos yuklash xatosi:', error); return []; }
-    return data || [];
-  } catch(e) {
-    console.warn('todos yuklash xatosi:', e);
+    console.warn('todolist_tasks o\'qish xatosi:', e);
     return [];
   }
 }
 
-// S.tasks massivini 'todos' jadvali bilan solishtirib, farqlarni (qo'shilgan,
-// o'zgargan, o'chirilgan) aniqlaydi va faqat o'zgarganlarini serverga yuboradi.
-async function syncTasksToSupabase() {
+function writeLocalTasks(tasksArr) {
+  try {
+    localStorage.setItem(LOCAL_TASKS_KEY, JSON.stringify(tasksArr || []));
+  } catch(e) {
+    console.warn('todolist_tasks yozish xatosi:', e);
+  }
+}
+
+async function upsertTodoRow(task, orderIndex) {
+  // LocalStorage'da alohida qatorlar yo'q — faqat ichki keshni yangilaymiz,
+  // haqiqiy yozish syncTasksToLocalStorage() ichida bitta martada bajariladi.
+  const json = JSON.stringify(task);
+  _lastSyncedTasks[task.id] = json;
+}
+
+async function deleteTodoRow(id) {
+  delete _lastSyncedTasks[id];
+}
+
+async function loadAllTodos() {
+  const tasks = readLocalTasks();
+  return tasks.map(function(task, idx) {
+    return { id: task.id, task: task, order_index: idx };
+  });
+}
+
+// S.tasks massivini to'g'ridan-to'g'ri 'todolist_tasks' kaliti ostida
+// LocalStorage'ga yozadi va ichki keshni (_lastSyncedTasks) yangilaydi.
+async function syncTasksToLocalStorage() {
   const currentIds = {};
   (S.tasks || []).forEach(function(task, idx) {
     currentIds[task.id] = true;
@@ -3225,44 +3166,34 @@ async function syncTasksToSupabase() {
     const id = Number(idStr);
     if (!currentIds[id]) deleteTodoRow(id);
   });
+  writeLocalTasks(S.tasks || []);
 }
 
-// ============ APP_STATE JADVALI — qolgan umumiy holat (tanga, mukofotlar,
-// maqsadlar, IELTS, o'quv taymeri, sirli odat, statistika va h.k.) ============
-async function saveToSupabase(state) {
-  _pendingStateSave = true;
+// ============ APP_STATE — qolgan umumiy holat (tanga, mukofotlar,
+// maqsadlar, IELTS, o'quv taymeri, sirli odat, statistika va h.k.) LocalStorage'da ============
+async function saveToLocalStorage(state) {
   try {
     const clone = Object.assign({}, state);
-    delete clone.tasks;      // tasks alohida 'todos' jadvalida saqlanadi
-    delete clone.taskOrder;  // tartib order_index orqali saqlanadi
-    const { data, error } = await sbClient
-      .from('app_state')
-      .upsert({ id: SHARED_ACCOUNT_ID, data: clone, updated_at: new Date().toISOString() }, { onConflict: 'id' })
-      .select('updated_at')
-      .single();
-    if (!error && data && data.updated_at) {
-      S._serverSavedAt = data.updated_at;
-    } else if (error) {
-      console.warn('app_state saqlash xatosi:', error);
-    }
+    delete clone.tasks;      // tasks alohida 'todolist_tasks' kalitida saqlanadi
+    delete clone.taskOrder;  // tartib massiv indeksi orqali saqlanadi
+    const updatedAt = new Date().toISOString();
+    localStorage.setItem(LOCAL_STATE_KEY, JSON.stringify({ data: clone, updated_at: updatedAt }));
+    S._serverSavedAt = updatedAt;
   } catch(e) {
     console.warn('app_state saqlash xatosi:', e);
-  } finally {
-    setTimeout(function(){ _pendingStateSave = false; }, 400);
   }
-  // Vazifalar ro'yxatini ham 'todos' jadvaliga (haqiqiy INSERT/UPDATE/DELETE bilan) yuboramiz
-  syncTasksToSupabase();
+  // Vazifalar ro'yxatini ham 'todolist_tasks' kalitiga yozamiz
+  syncTasksToLocalStorage();
 }
 
-async function loadFromSupabase() {
+async function loadFromLocalStorage() {
   try {
-    const { data, error } = await sbClient
-      .from('app_state')
-      .select('data,updated_at')
-      .eq('id', SHARED_ACCOUNT_ID)
-      .maybeSingle();
-    if (!error && data && data.data) {
-      return { data: data.data, updatedAt: data.updated_at };
+    const raw = localStorage.getItem(LOCAL_STATE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.data) {
+        return { data: parsed.data, updatedAt: parsed.updated_at };
+      }
     }
   } catch(e) {
     console.warn('app_state yuklash xatosi:', e);
@@ -3271,112 +3202,311 @@ async function loadFromSupabase() {
 }
 // =========================================
 
-// ============ SUPABASE REALTIME — 'todos' jadvali (INSERT/UPDATE/DELETE) ============
-function startTodosRealtime() {
-  if (_todosChannel) { try { sbClient.removeChannel(_todosChannel); } catch(e) {} _todosChannel = null; }
-  _todosChannel = sbClient
-    .channel('todos-realtime-changes')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'todos' }, function(payload) {
-      handleTodoRemoteChange('INSERT', payload);
-    })
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'todos' }, function(payload) {
-      handleTodoRemoteChange('UPDATE', payload);
-    })
-    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'todos' }, function(payload) {
-      handleTodoRemoteChange('DELETE', payload);
-    })
-    .subscribe();
-}
+// ============ MA'LUMOTLARNI EKSPORT / IMPORT — "SAVE / LOAD" TIZIMI ============
+// O'yinlardagi Save/Load kabi ishlaydi: Eksport — LocalStorage'dagi
+// ABSOLYUT BARCHA 'todolist_' bilan boshlanuvchi kalitlarni (vazifalar,
+// tanga, streak, kalendar loglari, sozlamalar va h.k.) bitta JSON faylga
+// yig'ib oladi. Import — shu faylni o'qib, xuddi shu kalitlarni to'liq
+// tiklaydi va sahifani qayta yuklab, foydalanuvchini qolgan joyidan
+// davom ettiradi — qaysi qurilmada ochilishidan qat'i nazar.
 
-function handleTodoRemoteChange(kind, payload) {
+var BACKUP_KEY_PREFIX = 'todolist_'; // shu prefiks bilan boshlanuvchi barcha kalitlar zaxiralanadi
+
+function exportAppData() {
   try {
-    if (kind === 'DELETE') {
-      const oldId = payload.old && payload.old.id;
-      if (oldId === undefined || oldId === null) return;
-      if (_pendingSaveIds[oldId]) return; // o'zimiz o'chirgan edik
-      S.tasks = (S.tasks || []).filter(function(x){ return x.id !== oldId; });
-      delete _lastSyncedTasks[oldId];
-    } else {
-      const row = payload.new;
-      if (!row || !row.task) return;
-      if (_pendingSaveIds[row.id]) return; // o'zimiz yuborgan yozuv — qayta ishlamaymiz
-      const json = JSON.stringify(row.task);
-      if (_lastSyncedTasks[row.id] === json) return; // hech narsa o'zgarmagan
-      _lastSyncedTasks[row.id] = json;
-      const idx = (S.tasks || []).findIndex(function(x){ return x.id === row.id; });
-      if (idx === -1) { S.tasks.push(row.task); } else { S.tasks[idx] = row.task; }
+    var keys = {};
+    var taskCount = 0, coinCount = 0;
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && k.indexOf(BACKUP_KEY_PREFIX) === 0) {
+        keys[k] = localStorage.getItem(k);
+      }
     }
-    // Vazifalarni order_index bo'yicha qayta tartiblash uchun taskOrder ham yangilanadi
-    S.taskOrder = (S.tasks || []).map(function(x){ return x.id; });
-    recalcStreakFromLog();
+    try { taskCount = (JSON.parse(keys[LOCAL_TASKS_KEY] || '[]') || []).length; } catch(e) {}
+    try { coinCount = (JSON.parse(keys[LOCAL_STATE_KEY] || 'null') || {}).data ? JSON.parse(keys[LOCAL_STATE_KEY]).data.coins : 0; } catch(e) {}
+
+    var backup = {
+      type: 'todolist_full_backup',
+      version: 2,
+      app: 'ToDoList',
+      exported_at: new Date().toISOString(),
+      meta: { taskCount: taskCount, coins: coinCount || 0 },
+      keys: keys
+    };
+
+    var blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'todolist_backup.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+    toast(t('data_export_success'));
+  } catch(e) {
+    console.warn('Eksport xatosi:', e);
+    toast(t('data_export_error'));
+  }
+}
+
+function triggerImportAppData() {
+  var input = document.getElementById('data-import-input');
+  if (input) { input.value = ''; input.click(); }
+}
+
+function importAppData(event) {
+  var file = event.target.files && event.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var backup = JSON.parse(e.target.result);
+
+      // Yangi format ('keys' obyekti) yoki eski format (tasks/state) — ikkalasini ham qo'llab-quvvatlaymiz
+      var hasNewFormat = backup && backup.keys && typeof backup.keys === 'object';
+      var hasOldFormat = backup && (Array.isArray(backup.tasks) || backup.state);
+      if (!backup || (!hasNewFormat && !hasOldFormat)) {
+        toast(t('data_import_error'));
+        return;
+      }
+
+      showImportConfirmModal(backup, hasNewFormat);
+    } catch(err) {
+      console.warn('Import xatosi:', err);
+      toast(t('data_import_error'));
+    }
+  };
+  reader.readAsText(file);
+}
+
+// O'yinlardagi "Load Game" so'rovi kabi — joriy ma'lumot ustidan
+// yozilishidan oldin foydalanuvchidan aniq tasdiq so'raydi.
+function showImportConfirmModal(backup, hasNewFormat) {
+  var dateStr = '—';
+  try {
+    if (backup.exported_at) {
+      var d = new Date(backup.exported_at);
+      dateStr = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') +
+                ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    }
+  } catch(e) {}
+
+  var taskCount = '—';
+  var coinCount = '—';
+  try {
+    if (hasNewFormat) {
+      taskCount = backup.meta && typeof backup.meta.taskCount === 'number' ? backup.meta.taskCount : (JSON.parse(backup.keys[LOCAL_TASKS_KEY]||'[]')||[]).length;
+      coinCount = backup.meta && typeof backup.meta.coins === 'number' ? backup.meta.coins : '—';
+    } else {
+      taskCount = Array.isArray(backup.tasks) ? backup.tasks.length : 0;
+      coinCount = backup.state && backup.state.data ? (backup.state.data.coins||0) : '—';
+    }
+  } catch(e) {}
+
+  var ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px';
+  var box = document.createElement('div');
+  box.style.cssText = 'background:#1C1C25;border:2px solid rgba(124,92,252,0.4);border-radius:20px;padding:28px 24px;width:100%;max-width:340px;text-align:center';
+  box.innerHTML =
+    '<div style="font-size:44px;margin-bottom:12px">💾</div>' +
+    '<h3 style="font-family:Syne,sans-serif;font-size:18px;font-weight:700;color:#B48EFF;margin-bottom:10px">' + t('data_import_confirm_title') + '</h3>' +
+    '<div style="background:var(--surface2);border-radius:12px;padding:12px;margin-bottom:14px;text-align:left;font-size:12px;color:var(--text-muted);line-height:1.7">' +
+      '📅 ' + t('data_import_confirm_date') + ': <b style="color:var(--text)">' + dateStr + '</b><br>' +
+      '📋 ' + t('data_import_confirm_tasks') + ': <b style="color:var(--text)">' + taskCount + '</b><br>' +
+      '🪙 ' + t('data_import_confirm_coins') + ': <b style="color:var(--text)">' + coinCount + '</b>' +
+    '</div>' +
+    '<p style="font-size:12px;color:#F5A623;margin-bottom:20px;line-height:1.6">' + t('data_import_confirm_warn') + '</p>' +
+    '<div style="display:flex;gap:10px">' +
+      '<button id="import-cancel" style="flex:1;padding:12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:14px;cursor:pointer">' + t('btn_cancel') + '</button>' +
+      '<button id="import-confirm" style="flex:2;padding:12px;border-radius:12px;border:none;background:linear-gradient(135deg,#7C5CFC,#5B3FD4);color:#fff;font-size:14px;font-weight:700;cursor:pointer">' + t('data_import_confirm_btn') + '</button>' +
+    '</div>';
+  ov.appendChild(box);
+  document.body.appendChild(ov);
+
+  document.getElementById('import-cancel').onclick = function(){ ov.remove(); };
+  ov.addEventListener('mousedown', function(e){ if (e.target === ov) ov.remove(); });
+
+  document.getElementById('import-confirm').onclick = function(){
+    ov.remove();
+    applyImportedBackup(backup, hasNewFormat);
+  };
+}
+
+// Backup'dagi ma'lumotlarni LocalStorage'ga to'liq yozib chiqadi
+// (avval eski 'todolist_' kalitlarini tozalab, keyin backup'dagilarni yozadi —
+// shunda eski va yangi ma'lumot aralashib ketmaydi), so'ng sahifani qayta yuklaydi.
+function applyImportedBackup(backup, hasNewFormat) {
+  try {
+    // 1) Joriy 'todolist_' kalitlarini tozalash (faqat shu ilovaga tegishli kalitlar)
+    var toRemove = [];
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && k.indexOf(BACKUP_KEY_PREFIX) === 0) toRemove.push(k);
+    }
+    toRemove.forEach(function(k){ localStorage.removeItem(k); });
+
+    // 2) Backup'dagi kalitlarni yozish
+    if (hasNewFormat) {
+      Object.keys(backup.keys).forEach(function(k){
+        if (k.indexOf(BACKUP_KEY_PREFIX) === 0) {
+          localStorage.setItem(k, backup.keys[k]);
+        }
+      });
+    } else {
+      // Eski format bilan orqaga moslik (faqat tasks + state bo'lgan eksportlar)
+      if (Array.isArray(backup.tasks)) {
+        localStorage.setItem(LOCAL_TASKS_KEY, JSON.stringify(backup.tasks));
+      }
+      if (backup.state) {
+        localStorage.setItem(LOCAL_STATE_KEY, JSON.stringify(backup.state));
+      }
+    }
+
+    toast(t('data_import_success'));
+    // Toast ko'rinishi uchun ozgina kutib, so'ng butun ilovani qayta yuklaymiz —
+    // shunda barcha vazifalar, tanga, streak va statistikalar darhol to'g'ri aks etadi.
+    setTimeout(function() { location.reload(); }, 900);
+  } catch(err) {
+    console.warn('Import qo\u2019llash xatosi:', err);
+    toast(t('data_import_error'));
+  }
+}
+
+// =========================================
+
+// Sahifa ochilganda — internetga ulanish yoki login shart emas, ma'lumotlar
+// to'g'ridan-to'g'ri brauzerning LocalStorage xotirasidan tiklanadi.
+// ============================================================
+// VAQTINCHALIK TEST MA'LUMOTI — 2026-07-01 sanasiga 5 ta sinov
+// vazifasi. Faqat BIR MARTA qo'shiladi ('todolist_test_seed_v1'
+// bayrog'i orqali), sahifa qayta yangilansa takrorlanmaydi.
+// Tekshirib bo'lgach removeTestDataForJuly1() ni konsolda chaqiring
+// yoki shu funksiya chaqiruvini o'chirib tashlang.
+// ============================================================
+var TEST_SEED_FLAG = 'todolist_test_seed_v1';
+function seedTestDataForJuly1() {
+  try {
+    if (localStorage.getItem(TEST_SEED_FLAG)) return; // allaqachon qo'shilgan
+    var TEST_DATE = '2026-07-01';
+    var names = ['Sinov vazifa 1', 'Sinov vazifa 2', 'Sinov vazifa 3', 'Sinov vazifa 4', 'Sinov vazifa 5'];
+
+    if (!S.taskDoneLog) S.taskDoneLog = {};
+    if (!S.tarix) S.tarix = [];
+    if (!S.nextId) S.nextId = 1;
+
+    names.forEach(function (name) {
+      var id = S.nextId++;
+      S.tasks.push({
+        id: id, name: name, emoji: '🧪', repeat: 'once',
+        done: true, skipped: false, coins: 1, diff: 1,
+        _isTestData: true
+      });
+      S.taskDoneLog[id] = [TEST_DATE];
+      S.tarix.push({ type: 'in', desc: '🧪 ' + name, amount: 1, date: TEST_DATE, id: 'test_' + id });
+    });
+
+    localStorage.setItem(TEST_SEED_FLAG, '1');
+    save();
     render();
-    refreshAllModulesFromState();
-    toast(t('realtime_updated_toast'));
-  } catch(ex) { console.warn('realtime todos ishlov xatosi:', ex); }
-}
-// ==========================================
-
-// ============ SUPABASE REALTIME — 'app_state' jadvali (qolgan umumiy holat) ============
-function startStateRealtime() {
-  if (_stateChannel) { try { sbClient.removeChannel(_stateChannel); } catch(e) {} _stateChannel = null; }
-  _stateChannel = sbClient
-    .channel('app_state_changes_' + SHARED_ACCOUNT_ID)
-    .on('postgres_changes', {
-      event: 'UPDATE',
-      schema: 'public',
-      table: 'app_state',
-      filter: 'id=eq.' + SHARED_ACCOUNT_ID
-    }, function(payload) {
-      try {
-        if (_pendingStateSave) return; // o'zimiz yozgan o'zgarish
-        var rec = payload.new;
-        if (!rec || !rec.data) return;
-        var newUpdatedAt = rec.updated_at;
-        if (newUpdatedAt && newUpdatedAt === S._serverSavedAt) return;
-        var newData = Object.assign({}, rec.data);
-        // tasks/taskOrder har doim 'todos' jadvalidan boshqariladi — app_state'dan kelganini e'tiborsiz qoldiramiz
-        delete newData.tasks; delete newData.taskOrder;
-        S = Object.assign({}, S, newData);
-        S._serverSavedAt = newUpdatedAt;
-        (S.goals||[]).forEach(function(g) {
-          if (!g.daysCoinsGiven) {
-            g.daysCoinsGiven = {};
-            Object.keys(g.daysChecked||{}).forEach(function(d) { g.daysCoinsGiven[d] = 1; });
-          }
-        });
-        recalcStreakFromLog();
-        render();
-        refreshAllModulesFromState();
-        toast(t('realtime_updated_toast'));
-      } catch(ex) {}
-    })
-    .subscribe();
-}
-// ==========================================
-
-function startRealtimeSync() {
-  startTodosRealtime();
-  startStateRealtime();
+    console.log('✅ 2026-07-01 uchun 5 ta sinov vazifasi avtomatik qo\'shildi.');
+  } catch (e) {
+    console.warn('Test ma\'lumot qo\'shishda xatolik:', e);
+  }
 }
 
-// Sahifa ochilganda — login talab qilinmaydi, to'g'ridan-to'g'ri umumiy
-// (shared) ma'lumotlar bazasiga ulanamiz.
+// ============================================================
+// VAQTINCHALIK TEST MA'LUMOTI #2 — 2026-07-01 sanasiga 5 ta
+// DOIMIY (har kuni takrorlanadigan, repeat:'daily') sinov sharti.
+// Bir martalik ('once') emas — bu safar doimiy vazifalar bilan
+// kalendarni tekshirish uchun. Faqat BIR MARTA qo'shiladi
+// ('todolist_test_seed_daily_v1' bayrog'i orqali).
+// Tozalash: removeTestDataForJuly1() — u ikkalasini ham tozalaydi
+// (bir xil _isTestData belgisidan foydalanadi).
+// ============================================================
+var TEST_SEED_DAILY_FLAG = 'todolist_test_seed_daily_v1';
+function seedDailyTestDataForJuly1() {
+  try {
+    if (localStorage.getItem(TEST_SEED_DAILY_FLAG)) return; // allaqachon qo'shilgan
+    var TEST_DATE = '2026-07-01';
+    var names = ['Doimiy shart 1', 'Doimiy shart 2', 'Doimiy shart 3', 'Doimiy shart 4', 'Doimiy shart 5'];
+
+    if (!S.taskDoneLog) S.taskDoneLog = {};
+    if (!S.tarix) S.tarix = [];
+    if (!S.nextId) S.nextId = 1;
+    if (!S.calPinnedDates) S.calPinnedDates = {};
+
+    names.forEach(function (name) {
+      var id = S.nextId++;
+      S.tasks.push({
+        id: id, name: name, emoji: '🧪', repeat: 'daily',
+        done: false, skipped: false, coins: 1, diff: 1,
+        createdAt: TEST_DATE,
+        _isTestData: true
+      });
+      // 2026-07-01 kuni uchun "bajarilgan" deb belgilaymiz (kalendarda ko'rinishi uchun)
+      S.taskDoneLog[id] = [TEST_DATE];
+      // Kalendarda ptichka olib tashlansa ham ro'yxatdan g'oyib bo'lmasligi uchun
+      S.calPinnedDates[id] = [TEST_DATE];
+      S.tarix.push({ type: 'in', desc: '🧪 ' + name + ' (doimiy)', amount: 1, date: TEST_DATE, id: 'test_' + id });
+    });
+
+    localStorage.setItem(TEST_SEED_DAILY_FLAG, '1');
+    save();
+    render();
+    console.log('✅ 2026-07-01 uchun 5 ta DOIMIY sinov sharti avtomatik qo\'shildi.');
+  } catch (e) {
+    console.warn('Doimiy test ma\'lumot qo\'shishda xatolik:', e);
+  }
+}
+
+// Tekshirib bo'lgach shu funksiyani brauzer konsolida chaqirsangiz,
+// barcha sinov ma'lumotlari butunlay tozalanadi.
+function removeTestDataForJuly1() {
+  try {
+    S.tasks = S.tasks.filter(function (t) { return !t._isTestData; });
+    if (S.taskDoneLog) {
+      Object.keys(S.taskDoneLog).forEach(function (id) {
+        var stillExists = S.tasks.some(function (t) { return String(t.id) === String(id); });
+        if (!stillExists) delete S.taskDoneLog[id];
+      });
+    }
+    if (S.calPinnedDates) {
+      Object.keys(S.calPinnedDates).forEach(function (id) {
+        var stillExists = S.tasks.some(function (t) { return String(t.id) === String(id); });
+        if (!stillExists) delete S.calPinnedDates[id];
+      });
+    }
+    if (S.tarix) {
+      S.tarix = S.tarix.filter(function (item) {
+        return !(typeof item.id === 'string' && item.id.indexOf('test_') === 0);
+      });
+    }
+    localStorage.removeItem(TEST_SEED_FLAG);
+    localStorage.removeItem(TEST_SEED_DAILY_FLAG);
+    save();
+    render();
+    console.log('🗑️ Sinov ma\'lumotlari (bir martalik + doimiy) tozalandi.');
+  } catch (e) {
+    console.warn('Tozalashda xatolik:', e);
+  }
+}
+
 async function bootSharedApp() {
   await loadUserDataAndInit();
-  startRealtimeSync();
 }
 bootSharedApp();
 // ======================================================================
 
 function load() {
-  // Ma'lumotlar endi faqat Supabasedan (loadUserDataAndInit orqali) yuklanadi.
+  // Ma'lumotlar endi faqat LocalStorage'dan (loadUserDataAndInit orqali) yuklanadi.
   // Bu funksiya eski chaqiruvlar bilan moslik uchun bo'sh saqlab qolindi.
 }
 
 function save() {
   S._savedAt = Date.now();
   S._localUpdatedAt = new Date().toISOString();
-  saveToSupabase(S);
+  saveToLocalStorage(S);
 }
 
 function wasTaskDoneOnDate(t, dateStr) {
@@ -3860,7 +3990,88 @@ function deleteTask(id) {
   ov.addEventListener('touchend', function(e){ if(e.target===ov) ov.remove(); });
 }
 
-// ---- Task reorder (up/down buttons) ----
+// ---- SortableJS orqali mobil uchun silliq Drag & Drop ----
+// Har bir vazifa kartasida faqat "⋮⋮" tutqichidan (drag-handle) ushlab
+// surish mumkin. Tartib o'zgarishi S.taskOrder massivida saqlanadi va
+// darhol LocalStorage'ga yoziladi.
+function vibrateShort() {
+  try { if (navigator.vibrate) navigator.vibrate(10); } catch(e) {}
+}
+
+// S.taskOrder massivini barcha mavjud vazifa ID'lari bilan to'ldiradi
+// (o'chirilgan vazifalarni olib tashlaydi, yangilarini oxiriga qo'shadi).
+function ensureFullTaskOrder() {
+  var existing = Array.isArray(S.taskOrder) ? S.taskOrder.filter(function(id) {
+    return S.tasks.some(function(x) { return x.id === id; });
+  }) : [];
+  var known = {};
+  existing.forEach(function(id) { known[id] = true; });
+  S.tasks.forEach(function(t) {
+    if (!known[t.id]) { existing.push(t.id); known[t.id] = true; }
+  });
+  S.taskOrder = existing;
+}
+
+// Bitta ro'yxat (masalan #daily-list) ichida foydalanuvchi qo'lda
+// o'zgartirgan tartibni o'qib, uni global S.taskOrder ichiga joylaydi.
+function applySortableOrder(containerEl) {
+  if (!containerEl) return;
+  var visibleIds = Array.prototype.slice.call(containerEl.children)
+    .map(function(el) { return parseInt(el.dataset && el.dataset.id, 10); })
+    .filter(function(id) { return !isNaN(id); });
+  if (!visibleIds.length) return;
+
+  ensureFullTaskOrder();
+  var visibleSet = {};
+  visibleIds.forEach(function(id) { visibleSet[id] = true; });
+
+  var result = [];
+  var inserted = false;
+  S.taskOrder.forEach(function(id) {
+    if (visibleSet[id]) {
+      if (!inserted) { result = result.concat(visibleIds); inserted = true; }
+      // shu blokdagi qolgan id'lar allaqachon qo'shildi — o'tkazib yuboriladi
+    } else {
+      result.push(id);
+    }
+  });
+  if (!inserted) result = result.concat(visibleIds);
+
+  S.taskOrder = result;
+  save();
+}
+
+var _taskSortableInited = false;
+function initTaskSortable() {
+  if (typeof Sortable === 'undefined') return; // kutubxona hali yuklanmagan bo'lsa
+  if (_taskSortableInited) return;
+  _taskSortableInited = true;
+  ['daily-list', 'once-list'].forEach(function(listId) {
+    var el = document.getElementById(listId);
+    if (!el) return;
+    Sortable.create(el, {
+      handle: '.drag-handle',   // faqat "⋮⋮" tutqichidan ushlab surish mumkin
+      draggable: '.task-card',
+      animation: 180,
+      delay: 0,
+      ghostClass: 'drag-over',
+      chosenClass: 'dragging',
+      dragClass: 'dragging',
+      forceFallback: false,
+      fallbackTolerance: 3,
+      onStart: function() {
+        vibrateShort(); // yengil vibratsiya — sudrash boshlanganda
+      },
+      onEnd: function(evt) {
+        applySortableOrder(evt.to);
+      }
+    });
+  });
+}
+document.addEventListener('DOMContentLoaded', initTaskSortable);
+if (document.readyState !== 'loading') initTaskSortable();
+
+
 function moveTask(id, dir) {
   // Ensure taskOrder exists and is complete
   if (!S.taskOrder || S.taskOrder.length < S.tasks.length) {
@@ -4024,7 +4235,7 @@ function claimReward(id) {
 function deleteReward(id) { S.rewards=S.rewards.filter(x=>x.id!==id); save(); renderRewards(); }
 
 function showTab(tab) {
-  ['tasks','rewards','spin','profile','tarix','secret','goals','chest','ielts','study'].forEach(function(t){
+  ['tasks','rewards','spin','profile','tarix','secret','goals','chest','ielts'].forEach(function(t){
     var el=document.getElementById('view-'+t);
     if(el) el.style.display=tab===t?'':'none';
     var tb=document.getElementById('tab-'+t);
@@ -4038,7 +4249,6 @@ function showTab(tab) {
   if(tab==='goals') { checkNotifBar(); renderGoals(); }
   if(tab==='chest') renderChest();
   if(tab==='ielts') renderIeltsTab();
-  if(tab==='study') renderStudyTab();
   if(tab==='stats') { showTab('profile'); return; }
   if(tab==='calendar') { showTab('profile'); return; }
 }
@@ -4193,6 +4403,7 @@ function makeTaskEl(t) {
   const canPostpone = !t.done && !t.skipped && (t.repeat==='interval'||t.repeat==='once');
 
   d.innerHTML=`
+    <span class="drag-handle" title="Ushlab suring">⋮⋮</span>
     <div class="reorder-btns" style="display:flex;flex-direction:column;gap:2px;flex-shrink:0">
       <button class="reorder-btn" onclick="moveTask(${t.id},-1)" title="Yuqoriga">&#9650;</button>
       <button class="reorder-btn" onclick="moveTask(${t.id},1)"  title="Pastga">&#9660;</button>
@@ -4227,47 +4438,9 @@ function makeTaskEl(t) {
     <button class="task-menu-btn" onclick="openTaskSheet(${t.id})" title="Amallar">⋯</button>
   `;
 
-  // Drag events  only on handle
-  const handle = d.querySelector('.drag-handle');
-  d.draggable = false;
-  handle.addEventListener('pointerdown', () => { d.draggable = true; });
-  d.addEventListener('dragend', () => { d.draggable = false; });
-
-  d.addEventListener('dragstart', e => {
-    dragSrcId = t.id;
-    setTimeout(() => d.classList.add('dragging'), 0);
-    e.dataTransfer.effectAllowed = 'move';
-  });
-  d.addEventListener('dragend', () => {
-    d.classList.remove('dragging');
-    document.querySelectorAll('.task-card').forEach(c => c.classList.remove('drag-over'));
-  });
-  d.addEventListener('dragover', e => {
-    e.preventDefault();
-    if (dragSrcId !== t.id) d.classList.add('drag-over');
-  });
-  d.addEventListener('dragleave', () => d.classList.remove('drag-over'));
-  d.addEventListener('drop', e => {
-    e.preventDefault();
-    d.classList.remove('drag-over');
-    if (dragSrcId === t.id) return;
-    // Reorder in S.taskOrder
-    if (!S.taskOrder || S.taskOrder.length === 0) {
-      S.taskOrder = S.tasks.map(x => x.id);
-    }
-    const from = S.taskOrder.indexOf(dragSrcId);
-    const to = S.taskOrder.indexOf(t.id);
-    if (from !== -1 && to !== -1) {
-      S.taskOrder.splice(from, 1);
-      S.taskOrder.splice(to, 0, dragSrcId);
-    } else {
-      // fallback: reorder tasks array directly
-      const fi = S.tasks.findIndex(x=>x.id===dragSrcId);
-      const ti = S.tasks.findIndex(x=>x.id===t.id);
-      if (fi!==-1 && ti!==-1) { const tmp=S.tasks[fi]; S.tasks[fi]=S.tasks[ti]; S.tasks[ti]=tmp; }
-    }
-    save(); render();
-  });
+  // Diqqat: sudrab-tashlash (drag & drop) endi konteyner darajasida
+  // SortableJS kutubxonasi orqali boshqariladi (qarang: initTaskSortable()).
+  // Har bir kartada faqat ".drag-handle" (⋮⋮) orqali ushlab surish mumkin.
 
   return d;
 }
@@ -4687,7 +4860,7 @@ function renderTaskList() {
 
   if (q) {
     sortByOrder(filteredRecurring).forEach(function(t){ dList.appendChild(makeTaskEl(t)); });
-    filteredOnce.forEach(function(t){ oList.appendChild(makeTaskEl(t)); });
+    sortByOrder(filteredOnce).forEach(function(t){ oList.appendChild(makeTaskEl(t)); });
   } else {
     var active  = sortByOrder(filteredRecurring.filter(function(t){return !t.done&&!t.skipped;}));
     var skipped = sortByOrder(filteredRecurring.filter(function(t){return t.skipped&&!t.done;}));
@@ -4699,7 +4872,7 @@ function renderTaskList() {
       dList.appendChild(s);
       skipped.forEach(function(t){dList.appendChild(makeTaskEl(t));});
     }
-    filteredOnce.forEach(function(t){ oList.appendChild(makeTaskEl(t)); });
+    sortByOrder(filteredOnce).forEach(function(t){ oList.appendChild(makeTaskEl(t)); });
   }
 
   // Kelajakdagi vazifalar ro'yxati
@@ -4733,13 +4906,13 @@ function renderTaskList() {
 }
 
 // Ilova ochilganda chaqiriladi (bootSharedApp orqali).
-// Barcha ma'lumotlar UMUMIY (shared) Supabase bazasidan yuklanadi:
-//  - 'app_state' jadvalidan — tanga, mukofotlar, maqsadlar, IELTS va h.k.
-//  - 'todos' jadvalidan — vazifalar ro'yxati (har biri alohida qator)
+// Barcha ma'lumotlar brauzerning LocalStorage xotirasidan yuklanadi:
+//  - 'todolist_app_state' kalitidan — tanga, mukofotlar, maqsadlar, IELTS va h.k.
+//  - 'todolist_tasks' kalitidan — vazifalar ro'yxati (to'liq JSON massiv)
 async function loadUserDataAndInit() {
   load(); // moslik uchun (hech narsa qilmaydi)
 
-  const remote = await loadFromSupabase();
+  const remote = await loadFromLocalStorage();
   const todoRows = await loadAllTodos();
 
   if (remote) {
@@ -4757,23 +4930,25 @@ async function loadUserDataAndInit() {
     recalcStreakFromLog();
     checkReset();
   } else {
-    // Supabaseda hali umumiy holat yo'q — birinchi marta, boshlang'ich holatni yuboramiz
-    saveToSupabase(S);
+    // LocalStorage'da hali holat yo'q — birinchi marta, boshlang'ich holatni saqlaymiz
+    saveToLocalStorage(S);
   }
 
-  // Vazifalar har doim 'todos' jadvalidan (haqiqiy qatorlardan) tiklanadi
+  // Vazifalar har doim 'todolist_tasks' kalitidan tiklanadi
   if (todoRows && todoRows.length) {
     S.tasks = todoRows.map(function(r){ return r.task; });
     S.taskOrder = todoRows.map(function(r){ return r.id; });
     todoRows.forEach(function(r){ _lastSyncedTasks[r.id] = JSON.stringify(r.task); });
   } else if (S.tasks && S.tasks.length) {
-    // 'todos' jadvali hali bo'sh, lekin app_state ichida eski uslubdagi tasks bor —
-    // ularni bir martalik migratsiya sifatida 'todos' jadvaliga yuboramiz.
-    syncTasksToSupabase();
+    // 'todolist_tasks' kaliti hali bo'sh, lekin holat ichida eski uslubdagi tasks bor —
+    // ularni bir martalik migratsiya sifatida LocalStorage'ga yozamiz.
+    syncTasksToLocalStorage();
   }
 
   render();
   refreshAllModulesFromState();
+  seedTestDataForJuly1(); // VAQTINCHALIK: 2026-07-01 uchun sinov ma'lumotlari (keyin olib tashlanadi)
+  seedDailyTestDataForJuly1(); // VAQTINCHALIK: 2026-07-01 uchun 5 ta DOIMIY sinov sharti
 
   if (S.pendingStreakMsg) {
     setTimeout(()=>{ toast(S.pendingStreakMsg); confetti(); S.pendingStreakMsg=null; save(); }, 600);
@@ -4786,7 +4961,7 @@ async function loadUserDataAndInit() {
   }
 }
 
-// Supabasedan ma'lumot kelgach — barcha kichik modullarni (tema, tab tartibi, IELTS,
+// LocalStorage'dan ma'lumot kelgach — barcha kichik modullarni (tema, tab tartibi, IELTS,
 // kayfiyat, o'quv taymeri, iroda nazorati, sarlavha) yangi S asosida qayta chizadi.
 // Bular avval localStorage'dan zudlik bilan o'qilardi, endi tarmoq orqali kelgani uchun
 // ma'lumot tayyor bo'lgach bitta joyda qayta ishga tushiriladi.
@@ -4801,8 +4976,6 @@ function refreshAllModulesFromState() {
     if (uT && S.kiName) uT.textContent = S.kiName;
   } catch(e) {}
   try { checkKI(); } catch(e) {}
-  try { if (typeof window.renderStudyTab === 'function') window.renderStudyTab(); } catch(e) {}
-  try { if (typeof window.updateFloatingWidget === 'function') window.updateFloatingWidget(); } catch(e) {}
 }
 
 // === SOAT 00:00 DA AVTOMATIK RESET ===
@@ -5637,7 +5810,7 @@ var _secretUnlocked = false;
 var SECRET_KEY = 'secret_habit_v1';
 
 function getSecretData() {
-  // S.secretHabit — asosiy manba (Supabase orqali saqlanadi)
+  // S.secretHabit — asosiy manba (LocalStorage orqali saqlanadi)
   if (!S.secretHabit) {
     S.secretHabit = {log:{}, pin:DEFAULT_PIN};
   }
@@ -7220,6 +7393,9 @@ function showDayDetail(dateStr) {
 
     var doneOnDate = !!(S.taskDoneLog && S.taskDoneLog[t.id] && S.taskDoneLog[t.id].indexOf(dateStr) !== -1);
     var skipOnDate = !!(S.taskSkipLog && S.taskSkipLog[t.id] && S.taskSkipLog[t.id].indexOf(dateStr) !== -1);
+    // Kalendar orqali shu sana uchun qo'lda belgilangan (bosilgan) vazifalar —
+    // ptichka olib tashlansa ham ro'yxatdan g'oyib bo'lmasligi uchun saqlanadi.
+    var pinnedOnDate = !!(S.calPinnedDates && S.calPinnedDates[t.id] && S.calPinnedDates[t.id].indexOf(dateStr) !== -1);
 
     var isDue = false;
     if (t.repeat === 'daily') isDue = true;
@@ -7241,6 +7417,7 @@ function showDayDetail(dateStr) {
       if (doneOnDate || skipOnDate) isDue = true;
       else if (isToday && !t.done && (!t.postponedTo || t.postponedTo <= tdStr)) isDue = true;
     }
+    if (!isDue && pinnedOnDate) isDue = true;
 
     if (!isDue) return;
     anyTask = true;
@@ -7259,10 +7436,11 @@ function showDayDetail(dateStr) {
     var coins = done ? '+' + t.coins + ' 🪙' : '';
 
     html +=
-      '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface2);border-radius:10px">' +
-        '<span style="font-size:16px;flex-shrink:0">' + icon + '</span>' +
+      '<div id="calrow-' + t.id + '" style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface2);border-radius:10px">' +
+        '<button id="calicon-' + t.id + '" onclick="calToggleTaskDone(' + t.id + ',\'' + dateStr + '\')" title="Bajarilgan/bajarilmagan deb belgilash" ' +
+          'style="background:none;border:none;padding:0;margin:0;cursor:pointer;font-size:16px;flex-shrink:0;line-height:1">' + icon + '</button>' +
         '<span style="flex:1;font-size:13px;color:var(--text)">' + esc(t.name) + '</span>' +
-        (coins ? '<span style="font-size:12px;color:#F5A623;font-weight:600">' + coins + '</span>' : '') +
+        '<span id="calcoin-' + t.id + '" style="font-size:12px;color:#F5A623;font-weight:600">' + coins + '</span>' +
       '</div>';
   });
 
@@ -7279,6 +7457,100 @@ function showDayDetail(dateStr) {
   detail.dataset.openDate = dateStr;
   if (body) body.style.display = alreadyOpen ? 'none' : '';
   if (arrow) arrow.style.transform = alreadyOpen ? '' : 'rotate(90deg)';
+}
+
+// Kalendar kun-detali ichidagi ✅/⬜ belgisini bosganda ishlaydi.
+//  - Bugungi kun uchun: oddiy toggleTask() chaqiriladi (streak/XP bilan
+//    to'g'ri hisoblanishi uchun).
+//  - O'tgan kunlar uchun tanga mantig'i:
+//      ⬜ → ✅ (kechiktirib bajarish):
+//        +qiyinlik tangasi (oson:1, o'rta:2, qiyin:3) + o'sha kun uchun
+//        avval yechilgan -1 jazo qaytarib beriladi. Jami: +(coins+1).
+//      ✅ → ⬜ (bekor qilish):
+//        avval berilgan BARCHA tanga (qiyinlik + qaytarilgan jazo) qaytarib
+//        olinadi, so'ng kun yana bajarilmagan hisoblangani uchun -1 jazo
+//        qaytadan qo'llanadi. Jami: -(coins+1) - 1 = -(coins+2).
+//  Har bir bosish taskDoneLog holatini bir marta flip qiladi (aniq toggle),
+//  shu sababli foydalanuvchi bosishlarni takrorlab tanga yig'a olmaydi —
+//  aksincha, bekor qilish har doim aniq belgilangan miqdorni yechadi.
+function calToggleTaskDone(id, dateStr) {
+  var tk = S.tasks.find(function(x){ return x.id === id; });
+  if (!tk) return;
+
+  var tdStr = today();
+  if (dateStr === tdStr) {
+    // Bugungi kun — mavjud toggleTask() streak/XP/coin mantig'ini to'g'ri boshqaradi
+    toggleTask(id);
+    renderCalendar();
+    showDayDetail(dateStr);
+    return;
+  }
+
+  if (!S.taskDoneLog) S.taskDoneLog = {};
+  if (!S.taskDoneLog[id]) S.taskDoneLog[id] = [];
+  var idx = S.taskDoneLog[id].indexOf(dateStr);
+  var wasDone = idx !== -1;
+
+  // Shu vazifani shu sanaga "mahkamlaymiz" — keyinchalik ptichka
+  // olib tashlansa ham ro'yxatdan g'oyib bo'lib ketmasligi uchun.
+  if (!S.calPinnedDates) S.calPinnedDates = {};
+  if (!S.calPinnedDates[id]) S.calPinnedDates[id] = [];
+  if (S.calPinnedDates[id].indexOf(dateStr) === -1) S.calPinnedDates[id].push(dateStr);
+
+  // Qiyinlik darajasiga qarab tanga: oson=1, o'rta=2, qiyin=3 (t.coins allaqachon shu qiymatga teng)
+  var diffCoins = tk.coins || (tk.diff === 3 ? 3 : tk.diff === 2 ? 2 : 1);
+  var PENALTY = 1; // bir kunda bajarilmagan har bir vazifa uchun standart jazo miqdori
+  var streakBefore = S.streak || 0;
+
+  if (wasDone) {
+    // ✅ → ⬜: bekor qilish.
+    // 1) Avval berilgan barcha tanga (qiyinlik + qaytarilgan jazo) qaytarib olinadi: -(diffCoins + PENALTY)
+    // 2) Kun yana bajarilmagan hisoblangani uchun -1 jazo qaytadan qo'llanadi.
+    S.taskDoneLog[id].splice(idx, 1);
+    var takeBack = diffCoins + PENALTY;
+    var totalDeduct = takeBack + PENALTY; // = diffCoins + 2*PENALTY
+    S.coins = Math.max(0, (S.coins || 0) - totalDeduct);
+    S.totalCoins = Math.max(0, (S.totalCoins || 0) - totalDeduct);
+    addTarixLog('out', '🔄 ' + tk.name + ' bekor qilindi (' + dateStr + ')', -takeBack);
+    addTarixLog('out', '⚠️ Kun uchun jarima qayta qo\u2019llandi', -PENALTY);
+    var msg1 = '↩️ Bekor qilindi, -' + totalDeduct + ' 🪙';
+  } else {
+    // ⬜ → ✅: kechiktirib bajarish.
+    // Vazifa tangasi (qiyinlikka mos) + o'sha kun uchun avval yechilgan jarima qaytariladi.
+    S.taskDoneLog[id].push(dateStr);
+    var total = diffCoins + PENALTY;
+    S.coins = (S.coins || 0) + total;
+    S.totalCoins = (S.totalCoins || 0) + total;
+    addTarixLog('in', '✅ ' + tk.name + ' (kechiktirilgan, ' + dateStr + ')', diffCoins);
+    addTarixLog('in', '↩️ Jarima qaytarildi', PENALTY);
+    var msg1 = '✅ Belgilandi, +' + total + ' 🪙';
+  }
+
+  // ---- STREAK'NI KUNLAR ZANJIRIGA QARAB DINAMIK QAYTA HISOBLASH ----
+  // taskDoneLog o'zgargandan so'ng, streak faqat "bugun"dan emas, balki
+  // LocalStorage'dagi barcha kunlar zanjiridan (bugundan orqaga qarab,
+  // birinchi "to'liq bajarilmagan" kunga qadar) qayta hisoblanadi.
+  // Shu sababli: agar zanjir o'rtasidagi bo'sh kun taqvimdan to'ldirilsa,
+  // uzilgan zanjir qayta ulanadi va streak mos ravishda ORTADI; aksincha,
+  // to'liq bajarilgan kunning bitta ptichkasi olib tashlansa, zanjir yana
+  // o'sha joydan uziladi va streak mos ravishda KAMAYADI.
+  recalcStreakFromLog();
+  var streakAfter = S.streak || 0;
+
+  var msg = msg1;
+  if (streakAfter !== streakBefore) {
+    if (streakAfter > streakBefore) {
+      msg += ' | 🔥 Streak tiklandi: ' + streakAfter;
+    } else {
+      msg += ' | 💔 Streak uzildi: ' + streakAfter;
+    }
+  }
+  toast(msg);
+
+  save();
+  render();
+  renderCalendar();
+  showDayDetail(dateStr);
 }
 
 // ============================================================
@@ -8874,369 +9146,6 @@ function renderSatTab() {
   }).join('');
 }
 
-// ============================================================
-// STUDY TIMER MODULE
-// ============================================================
-(function() {
-  function todayStr() {
-    var d = new Date();
-    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-  }
-
-  function loadST() {
-    if (!S.studyTimer) S.studyTimer = {};
-    return S.studyTimer;
-  }
-
-  function saveST(data) {
-    S.studyTimer = data;
-    save();
-  }
-
-  function fmtTime(ms) {
-    var s = Math.floor(ms / 1000);
-    var h = Math.floor(s / 3600);
-    var m = Math.floor((s % 3600) / 60);
-    var sec = s % 60;
-    return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
-  }
-
-  function fmtHM(ms) {
-    var s = Math.floor(ms / 1000);
-    var h = Math.floor(s / 3600);
-    var m = Math.floor((s % 3600) / 60);
-    if (h > 0) return h + ' soat ' + m + ' daq';
-    return m + ' daqiqa';
-  }
-
-  function checkMidnight() {
-    var st = loadST();
-    if (!st.running || !st.runningDate) return;
-    if (st.runningDate !== todayStr()) {
-      var midnight = new Date(); midnight.setHours(0,0,0,0);
-      var midnightTs = midnight.getTime();
-      var yesterday = st.runningDate;
-      if (!st.sessions) st.sessions = {};
-      if (!st.sessions[yesterday]) st.sessions[yesterday] = [];
-      if (st.currentSessionStart) {
-        st.sessions[yesterday].push({ start: st.currentSessionStart, end: midnightTs });
-      }
-      var today = todayStr();
-      if (!st.sessions[today]) st.sessions[today] = [];
-      st.sessions[today].push({ start: midnightTs, end: null });
-      st.currentSessionStart = midnightTs;
-      st.runningDate = today;
-      saveST(st);
-    }
-  }
-
-  function getCurrentElapsed() {
-    checkMidnight();
-    var st = loadST();
-    var today = todayStr();
-    var sessions = (st.sessions && st.sessions[today]) || [];
-    var total = 0;
-    sessions.forEach(function(s) {
-      total += (s.end === null ? Date.now() : s.end) - s.start;
-    });
-    return total;
-  }
-
-  window.studyToggle = function() {
-    checkMidnight();
-    var st = loadST();
-    var today = todayStr();
-    if (!st.sessions) st.sessions = {};
-    if (!st.sessions[today]) st.sessions[today] = [];
-
-    if (st.running) {
-      var sessions = st.sessions[today];
-      for (var i = sessions.length - 1; i >= 0; i--) {
-        if (sessions[i].end === null) { sessions[i].end = Date.now(); break; }
-      }
-      st.running = false;
-      st.currentSessionStart = null;
-      st.runningDate = null;
-    } else {
-      st.sessions[today].push({ start: Date.now(), end: null });
-      st.running = true;
-      st.currentSessionStart = Date.now();
-      st.runningDate = today;
-    }
-    saveST(st);
-    updateStudyUI();
-    updateFloatingWidget();
-  };
-
-  window.studyReset = function() {
-    if (!confirm("Bugungi barcha vaqtni sifirlamoqchimisiz?")) return;
-    var st = loadST();
-    var today = todayStr();
-    if (st.sessions) delete st.sessions[today];
-    st.running = false;
-    st.currentSessionStart = null;
-    st.runningDate = null;
-    saveST(st);
-    updateStudyUI();
-    updateFloatingWidget();
-  };
-
-  window.openStudyGoalModal = function() {
-    var st = loadST();
-    var goalH = (st.goalMs || 6 * 3600000) / 3600000;
-    var inp = document.getElementById('study-goal-input');
-    if (inp) inp.value = goalH;
-    var modal = document.getElementById('study-goal-modal');
-    if (modal) modal.style.display = 'flex';
-  };
-
-  window.closeStudyGoalModal = function() {
-    var modal = document.getElementById('study-goal-modal');
-    if (modal) modal.style.display = 'none';
-  };
-
-  window.saveStudyGoal = function() {
-    var inp = document.getElementById('study-goal-input');
-    var h = parseFloat(inp ? inp.value : 6) || 6;
-    if (h < 0.5) h = 0.5; if (h > 24) h = 24;
-    var st = loadST();
-    st.goalMs = h * 3600000;
-    saveST(st);
-    closeStudyGoalModal();
-    updateStudyUI();
-  };
-
-  function updateStudyUI() {
-    checkMidnight();
-    var st = loadST();
-    var goalMs = st.goalMs || 6 * 3600000;
-    var elapsed = getCurrentElapsed();
-    var pct = Math.min(100, Math.round(elapsed / goalMs * 100));
-    var remaining = Math.max(0, goalMs - elapsed);
-
-    var ring = document.getElementById('study-ring');
-    if (ring) {
-      var circ = 2 * Math.PI * 48;
-      ring.setAttribute('stroke-dasharray', circ.toFixed(2));
-      ring.setAttribute('stroke-dashoffset', (circ * (1 - pct/100)).toFixed(2));
-    }
-
-    var pctTxt = document.getElementById('study-pct-txt');
-    if (pctTxt) pctTxt.textContent = pct + '%';
-
-    var bigTimer = document.getElementById('study-elapsed-big');
-    if (bigTimer) bigTimer.textContent = fmtTime(elapsed);
-
-    var goalLabel = document.getElementById('study-goal-label');
-    if (goalLabel) goalLabel.textContent = 'Maqsad: ' + fmtHM(goalMs);
-
-    var remEl = document.getElementById('study-remaining');
-    if (remEl) {
-      if (pct >= 100) {
-        remEl.textContent = '\u2705 Maqsadga yetdingiz!';
-        remEl.style.color = '#34D399';
-      } else {
-        remEl.textContent = 'Qoldi: ' + fmtHM(remaining);
-        remEl.style.color = '';
-      }
-    }
-
-    // === STUDY COIN REWARDS ===
-    (function() {
-      var st2 = loadST();
-      var today2 = todayStr();
-      if (!st2.coinRewards) st2.coinRewards = {};
-      if (!st2.coinRewards[today2]) st2.coinRewards[today2] = { goalDone: false, extraHours: 0 };
-      var rec = st2.coinRewards[today2];
-
-      var elapsedSec = Math.floor(elapsed / 1000);
-      var goalSec    = Math.floor(goalMs / 1000);
-      var elapsedH   = Math.floor(elapsedSec / 3600);
-      var goalH      = Math.floor(goalSec  / 3600);
-
-      var changed = false;
-
-      // 1) Maqsad bajarildi: +2 tanga (faqat bir marta)
-      if (elapsed >= goalMs && !rec.goalDone) {
-        rec.goalDone = true;
-        changed = true;
-        if (typeof S !== 'undefined') {
-          S.coins = (S.coins || 0) + 2;
-          addTarixLog('in', "⏱️ O\u02bcqish maqsadi bajarildi! +2 🪙", 2, 'study_goal_' + today2);
-          save(); render();
-          if (typeof confetti === 'function') confetti();
-          setTimeout(function(){ if(typeof toast==='function') toast('🎉 Maqsad bajarildi! +2 🪙'); }, 100);
-        }
-      }
-
-      // 2) Har bir QOSHIMCHA soat uchun +2 tanga
-      // goalH soat standart, undan ortiq har soat bonusga kiradi
-      if (elapsed >= goalMs && elapsedH > goalH) {
-        var extraDone = elapsedH - goalH;          // nechta qo'shimcha soat o'tdi
-        var alreadyRewarded = rec.extraHours || 0; // avval nechtasi uchun tanga berilgan
-        if (extraDone > alreadyRewarded) {
-          var newHours = extraDone - alreadyRewarded;
-          rec.extraHours = extraDone;
-          changed = true;
-          if (typeof S !== 'undefined') {
-            var bonus = newHours * 2;
-            S.coins = (S.coins || 0) + bonus;
-            addTarixLog('in', "⏱️ +" + newHours + " qo\u02bcshimcha soat! +" + bonus + " 🪙", bonus, 'study_extra_' + today2 + '_' + extraDone);
-            save(); render();
-            if (typeof confetti === 'function') confetti();
-            setTimeout(function(){ if(typeof toast==='function') toast("🔥 " + newHours + " qo\u02bcshimcha soat! +" + bonus + " 🪙"); }, 100);
-          }
-        }
-      }
-
-      if (changed) { st2.coinRewards[today2] = rec; saveST(st2); }
-    })();
-
-      // --- Tanga holat panelini yangilash ---
-      (function() {
-        var infoEl = document.getElementById('study-coins-info');
-        if (!infoEl) return;
-        var st3 = loadST();
-        var today3 = todayStr();
-        var rec2 = (st3.coinRewards && st3.coinRewards[today3]) || { goalDone: false, extraHours: 0 };
-        var goalMs2 = st3.goalMs || 6 * 3600000;
-        var gH = Math.floor(goalMs2 / 3600000);
-        var elH = Math.floor(elapsed / 3600000);
-        var extraH = Math.max(0, elH - gH);
-        var chips = [];
-        if (rec2.goalDone) {
-          chips.push('<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;background:rgba(52,211,153,0.15);border:1px solid rgba(52,211,153,0.4);font-size:12px;color:#34D399;font-weight:600">\u2705 Maqsad +2 \uD83E\uDE99</span>');
-        } else {
-          var remMs2 = goalMs2 - elapsed;
-          chips.push('<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;background:rgba(124,92,252,0.12);border:1px solid rgba(124,92,252,0.3);font-size:12px;color:#B48EFF">\u23f3 ' + fmtHM(Math.max(0,remMs2)) + ' \u2192 +2 \uD83E\uDE99</span>');
-        }
-        if (rec2.goalDone) {
-          for (var h = 1; h <= extraH; h++) {
-            if (h <= (rec2.extraHours || 0)) {
-              chips.push('<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;background:rgba(245,166,35,0.15);border:1px solid rgba(245,166,35,0.4);font-size:12px;color:#F5A623;font-weight:600">\uD83D\uDD25 +' + h + ' soat +2 \uD83E\uDE99</span>');
-            }
-          }
-          // Next extra hour countdown
-          var nextMs2 = goalMs2 + ((rec2.extraHours || 0) + 1) * 3600000;
-          var remNext2 = nextMs2 - elapsed;
-          if (remNext2 > 0 && (rec2.extraHours || 0) < 10) {
-            chips.push('<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;background:rgba(245,166,35,0.06);border:1px solid rgba(245,166,35,0.2);font-size:12px;color:rgba(245,166,35,0.6)">\u23f3 ' + fmtHM(remNext2) + ' \u2192 +2 \uD83E\uDE99</span>');
-          }
-        }
-        infoEl.innerHTML = chips.join('');
-      })();
-      // ---
-    // === END STUDY COIN REWARDS ===
-
-    var startBtn = document.getElementById('study-start-btn');
-    if (startBtn) {
-      startBtn.textContent = st.running ? '\u23f8 Pauza' : '\u25b6 Boshlash';
-      startBtn.style.background = st.running
-        ? 'linear-gradient(135deg,#F59E0B,#D97706)'
-        : 'linear-gradient(135deg,#7C5CFC,#5B3FD4)';
-    }
-
-    renderStudySessions();
-    renderStudyHistory();
-  }
-
-  function renderStudySessions() {
-    var container = document.getElementById('study-sessions-list');
-    if (!container) return;
-    var st = loadST();
-    var today = todayStr();
-    var sessions = (st.sessions && st.sessions[today]) || [];
-    if (sessions.length === 0) {
-      container.innerHTML = '<div style="font-size:13px;color:var(--text-dim);text-align:center;padding:12px 0">Hali sessiya yo\u2019q</div>';
-      return;
-    }
-    var html = '';
-    sessions.forEach(function(s, i) {
-      var dur = (s.end || Date.now()) - s.start;
-      var startT = new Date(s.start);
-      var endT = s.end ? new Date(s.end) : null;
-      var startStr = String(startT.getHours()).padStart(2,'0') + ':' + String(startT.getMinutes()).padStart(2,'0');
-      var endStr = endT ? String(endT.getHours()).padStart(2,'0') + ':' + String(endT.getMinutes()).padStart(2,'0') : '...';
-      html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--surface2);border-radius:10px">' +
-        '<div style="font-size:12px;color:var(--text-muted)">' + (i+1) + '. ' + startStr + ' \u2192 ' + endStr + '</div>' +
-        '<div style="font-size:13px;font-weight:600;color:var(--text)">' + fmtTime(dur) + '</div>' +
-        '</div>';
-    });
-    container.innerHTML = html;
-  }
-
-  function renderStudyHistory() {
-    var container = document.getElementById('study-history-list');
-    if (!container) return;
-    var st = loadST();
-    var goalMs = st.goalMs || 6 * 3600000;
-    var sessions = st.sessions || {};
-    var today = todayStr();
-    var days = [];
-    for (var i = 0; i < 7; i++) {
-      var d = new Date(); d.setDate(d.getDate() - i);
-      var ds = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-      days.push(ds);
-    }
-    var html = '';
-    days.forEach(function(ds) {
-      var dayS = sessions[ds] || [];
-      var total = 0;
-      dayS.forEach(function(s) {
-        total += (s.end || (ds === today ? Date.now() : s.start)) - s.start;
-      });
-      var pct = Math.min(100, Math.round(total / goalMs * 100));
-      var d = new Date(ds + 'T12:00:00');
-      var dayName = ['Yak','Dush','Sesh','Chor','Pay','Jum','Shan'][d.getDay()];
-      var dateLabel = ds === today ? 'Bugun' : dayName + ', ' + d.getDate() + '-' + (d.getMonth()+1);
-      var color = pct >= 100 ? '#34D399' : pct >= 60 ? '#F5A623' : 'var(--text-muted)';
-      html += '<div style="display:flex;align-items:center;gap:10px">' +
-        '<div style="width:60px;font-size:11px;color:var(--text-muted);flex-shrink:0">' + dateLabel + '</div>' +
-        '<div style="flex:1;height:8px;background:var(--surface2);border-radius:999px;overflow:hidden">' +
-          '<div style="height:100%;width:' + pct + '%;background:' + color + ';border-radius:999px;transition:width 0.6s ease"></div>' +
-        '</div>' +
-        '<div style="width:54px;font-size:12px;font-weight:600;color:' + color + ';text-align:right;flex-shrink:0">' + (total > 0 ? fmtHM(total) : '\u2014') + '</div>' +
-        '</div>';
-    });
-    container.innerHTML = html || '<div style="color:var(--text-dim);font-size:13px">Ma\u2019lumot yo\u2019q</div>';
-  }
-
-  function updateFloatingWidget() {
-    checkMidnight();
-    var st = loadST();
-    var floatEl = document.getElementById('study-float');
-    var floatTime = document.getElementById('study-float-time');
-    var floatStatus = document.getElementById('study-float-status');
-    var floatBtn = document.getElementById('study-float-btn');
-    var studyView = document.getElementById('view-study');
-    var isStudyVisible = studyView && studyView.style.display !== 'none';
-    var elapsed = getCurrentElapsed();
-    if (floatTime) floatTime.textContent = fmtTime(elapsed);
-    if (floatStatus) floatStatus.textContent = st.running ? '\u25b6 Ishlayapti' : '\u23f8 To\u2019xtatildi';
-    if (floatBtn) floatBtn.textContent = st.running ? '\u23f8 Pauza' : '\u25b6 Boshlash';
-    // Widget ko'rinsin: study tab yopiq bo'lsa va bugun sessiya bor bo'lsa (ishlayotgan yoki pauza)
-    var today = todayStr();
-    var hasTodayActivity = (st.sessions && st.sessions[today] && st.sessions[today].length > 0) || st.running;
-    if (floatEl) floatEl.style.display = (hasTodayActivity && !isStudyVisible) ? 'block' : 'none';
-  }
-
-  window.renderStudyTab = function() {
-    updateStudyUI();
-    var floatEl = document.getElementById('study-float');
-    if (floatEl) floatEl.style.display = 'none';
-  };
-  window.updateFloatingWidget = updateFloatingWidget;
-
-  setInterval(function() {
-    var studyView = document.getElementById('view-study');
-    if (studyView && studyView.style.display !== 'none') updateStudyUI();
-    updateFloatingWidget();
-    checkMidnight();
-  }, 1000);
-
-  setTimeout(function() { updateFloatingWidget(); }, 500);
-
-})();
 </script>
 
 </body>
