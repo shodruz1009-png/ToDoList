@@ -297,17 +297,21 @@
   /* Drag & drop */
   .task-card.dragging { opacity:0.4; border:2px dashed var(--accent); }
   .task-card.drag-over { border-color:var(--accent); background:rgba(124,92,252,0.08); transform:scale(1.01); }
-  .drag-handle { cursor:grab; color:var(--text-dim); padding:0 4px; font-size:16px; flex-shrink:0; touch-action:none; }
+  .drag-handle { cursor:grab; color:var(--text-dim); padding:1px 0; font-size:13px; line-height:0.7; flex-shrink:0; touch-action:none; text-align:center; }
   .drag-handle:active { cursor:grabbing; }
-  /* Reorder up/down buttons */
-  .reorder-btns { opacity:0; transition:opacity 0.18s; }
-  .task-card:hover .reorder-btns, .task-card:focus-within .reorder-btns { opacity:1; }
+  /* Reorder block: up arrow, drag dots, down arrow stacked vertically to save width */
+  .reorder-block {
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:1px; flex-shrink:0;
+  }
   .reorder-btn {
     display:flex; align-items:center; justify-content:center;
-    width:22px; height:18px; border-radius:5px; border:1px solid var(--border);
-    background:var(--surface2); color:var(--text-muted); font-size:9px;
-    cursor:pointer; transition:all 0.15s; padding:0; line-height:1;
+    width:16px; height:12px; border-radius:4px; border:1px solid var(--border);
+    background:var(--surface2); color:var(--text-muted); font-size:7px;
+    cursor:pointer; padding:0; line-height:1;
+    opacity:0; transition:opacity 0.18s, background 0.15s, transform 0.15s;
   }
+  .task-card:hover .reorder-btn, .task-card:focus-within .reorder-btn { opacity:1; }
   .reorder-btn:hover { background:var(--accent); border-color:var(--accent); color:#fff; transform:scale(1.12); }
   .reorder-btn:active { transform:scale(0.95); }
   body.light .reorder-btn { background:#EEEDF8; border-color:rgba(0,0,0,0.12); }
@@ -4404,9 +4408,9 @@ function makeTaskEl(t) {
   const canPostpone = !t.done && !t.skipped && (t.repeat==='interval'||t.repeat==='once');
 
   d.innerHTML=`
-    <span class="drag-handle" title="Ushlab suring">⋮⋮</span>
-    <div class="reorder-btns" style="display:flex;flex-direction:column;gap:2px;flex-shrink:0">
+    <div class="reorder-block">
       <button class="reorder-btn" onclick="moveTask(${t.id},-1)" title="Yuqoriga">&#9650;</button>
+      <span class="drag-handle" title="Ushlab suring">⋮⋮</span>
       <button class="reorder-btn" onclick="moveTask(${t.id},1)"  title="Pastga">&#9660;</button>
     </div>
     ${t.label ? `<span class="task-label-dot" style="background:${t.label}"></span>` : ''}
