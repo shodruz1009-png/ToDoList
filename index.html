@@ -3607,7 +3607,47 @@ function seedDailyTestDataForJuly1() {
   }
 }
 
-// Tekshirib bo'lgach shu funksiyani brauzer konsolida chaqirsangiz,
+// ============================================================
+// VAQTINCHALIK TEST MA'LUMOTI #3 — "Writing" nomli, 2026-07-03
+// sanasidan boshlab HAR 4 KUNDA BIR takrorlanadigan (repeat:'interval')
+// sinov vazifasi. Interval-filtrlash mantig'ini (kalendar +
+// "Keyingisi:" sanasi) tekshirish uchun. Faqat BIR MARTA qo'shiladi
+// ('todolist_test_seed_interval_v1' bayrog'i orqali).
+// Tozalash: removeTestDataForJuly1() — u buni ham tozalaydi
+// (bir xil _isTestData belgisidan foydalanadi).
+// ============================================================
+var TEST_SEED_INTERVAL_FLAG = 'todolist_test_seed_interval_v1';
+function seedIntervalTestData() {
+  try {
+    if (localStorage.getItem(TEST_SEED_INTERVAL_FLAG)) return; // allaqachon qo'shilgan
+    var START_DATE = '2026-07-03';
+    var INTERVAL = 4;
+
+    if (!S.nextId) S.nextId = 1;
+    if (!S.tarix) S.tarix = [];
+
+    var id = S.nextId++;
+    S.tasks.push({
+      id: id, name: 'Writing', emoji: '✍️', repeat: 'interval',
+      interval: INTERVAL,
+      createdAt: START_DATE,
+      nextDate: START_DATE,
+      done: false, doneDate: null, skipped: false, skippedDate: null, lastDoneDate: null,
+      coins: 1, diff: 1,
+      _isTestData: true
+    });
+    S.tarix.push({ type: 'in', desc: '🧪 Writing (interval sinov) qo\u2019shildi', amount: 0, date: START_DATE, id: 'test_' + id });
+
+    localStorage.setItem(TEST_SEED_INTERVAL_FLAG, '1');
+    save();
+    render();
+    console.log('✅ "Writing" (har 4 kunda, 2026-07-03 dan) sinov vazifasi avtomatik qo\'shildi. Kalendarda 07-03, 07-07, 07-11... kunlarida ko\'rinishi kerak.');
+  } catch (e) {
+    console.warn('Interval test ma\'lumot qo\'shishda xatolik:', e);
+  }
+}
+
+// Tekshirib bo'lgach shu funksiyani brauzer konsolida chaqiring,
 // barcha sinov ma'lumotlari butunlay tozalanadi.
 function removeTestDataForJuly1() {
   try {
@@ -3631,9 +3671,10 @@ function removeTestDataForJuly1() {
     }
     localStorage.removeItem(TEST_SEED_FLAG);
     localStorage.removeItem(TEST_SEED_DAILY_FLAG);
+    localStorage.removeItem(TEST_SEED_INTERVAL_FLAG);
     save();
     render();
-    console.log('🗑️ Sinov ma\'lumotlari (bir martalik + doimiy) tozalandi.');
+    console.log('🗑️ Sinov ma\'lumotlari (bir martalik + doimiy + interval) tozalandi.');
   } catch (e) {
     console.warn('Tozalashda xatolik:', e);
   }
@@ -4136,6 +4177,13 @@ function saveTask() {
       tk.days = mRepeat==='custom-days' ? [...mDays] : null;
       tk.interval = mRepeat==='interval' ? interval : null;
       tk.nextDate = mRepeat==='interval' ? startDate : tk.nextDate;
+      // MUHIM TUZATISH: calIsTaskDueOnDate() interval hisobini t.createdAt
+      // dan boshlaydi, lekin bu yerda createdAt hech qachon formadagi
+      // "Qachondan boshlanadi?" (startDate) qiymatiga yangilanmagan edi —
+      // shu sabab kelajakdagi boshlanish sanasi e'tiborga olinmay, vazifa
+      // bugun ham "due" bo'lib chiqib qolardi. Endi interval turi uchun
+      // createdAt ham aynan tanlangan startDate'ga tenglashtiriladi.
+      tk.createdAt = mRepeat==='interval' ? startDate : tk.createdAt;
       tk.label = mLabel || null;
       tk.note = document.getElementById('m-note').value.trim() || null;
       tk.emoji = mEmoji || null;
@@ -4152,7 +4200,12 @@ function saveTask() {
     interval: mRepeat==='interval'?interval:null,
     nextDate: mRepeat==='interval'?startDate:null,
     done:false, doneDate:null, skipped:false, skippedDate:null, lastDoneDate:null,
-    createdAt: today(),
+    // MUHIM TUZATISH: interval turdagi vazifalar uchun davriylik hisobi
+    // (calIsTaskDueOnDate ichidagi "origin") aynan shu createdAt maydonidan
+    // olinadi. Avval bu yerda har doim today() yozilardi — shuning uchun
+    // kelajakka belgilangan boshlanish sanasi (masalan 9-iyul) e'tiborga
+    // olinmay, vazifa xato ravishda bugundan boshlab ko'rinib qolardi.
+    createdAt: mRepeat==='interval' ? startDate : today(),
     label: mLabel || null,
     note: document.getElementById('m-note').value.trim() || null,
     emoji: mEmoji || null,
@@ -4168,7 +4221,7 @@ function toggleTask(id) {
   tsk.done = !tsk.done;
   if (tsk.done) {
     tsk.doneDate = today(); tsk.skipped=false; tsk.skippedDate=null;
-    if (tsk.repeat==='interval') { tsk.lastDoneDate=today(); tsk.nextDate=addDays(today(),tsk.interval); }
+    if (tsk.repeat==='interval') { tsk.lastDoneDate=today(); tsk.nextDate=addDays(today(), Number(tsk.interval)||1); }
     // Streak uchun kun tarixi — reset bo'lganda ham yo'qolmaydi
     if (!S.taskDoneLog) S.taskDoneLog = {};
     if (!S.taskDoneLog[tsk.id]) S.taskDoneLog[tsk.id] = [];
@@ -4264,7 +4317,7 @@ function skipTask(id) {
     if (!S.taskSkipLog[tk.id]) S.taskSkipLog[tk.id] = [];
     var tds = today();
     if (S.taskSkipLog[tk.id].indexOf(tds) === -1) S.taskSkipLog[tk.id].push(tds);
-    if(tk.repeat==='interval') tk.nextDate=addDays(today(),tk.interval);
+    if(tk.repeat==='interval') tk.nextDate=addDays(today(), Number(tk.interval)||1);
     S.coins-=1; addTarixLog('out',tk.name+' '+_skipLogSuffix,-1);
     toast(_skipToast);
     save(); render();
@@ -5497,6 +5550,7 @@ async function loadUserDataAndInit() {
   refreshAllModulesFromState();
   seedTestDataForJuly1(); // VAQTINCHALIK: 2026-07-01 uchun sinov ma'lumotlari (keyin olib tashlanadi)
   seedDailyTestDataForJuly1(); // VAQTINCHALIK: 2026-07-01 uchun 5 ta DOIMIY sinov sharti
+  seedIntervalTestData(); // VAQTINCHALIK: "Writing" — 2026-07-03 dan har 4 kunda bir (interval) sinov vazifasi
 
   if (S.pendingStreakMsg) {
     setTimeout(()=>{ toast(S.pendingStreakMsg); confetti(); S.pendingStreakMsg=null; save(); }, 600);
@@ -6352,8 +6406,24 @@ function confirmRestart() {
     S.pendingStreakMsg = null;
     if (S.secretHabit) S.secretHabit.log = {}; // PIN ozgarmaydi
 
+    // Davriylikni ham bugundan qayta boshlash (ilgari alohida tugma edi, endi shu yerda birga)
+    var todayStr = today();
+    S.tasks.forEach(function (tsk) {
+      tsk.createdAt = todayStr;
+      tsk.done = false;
+      tsk.doneDate = null;
+      tsk.skipped = false;
+      tsk.skippedDate = null;
+      tsk.lastDoneDate = null;
+      if (tsk.repeat === 'interval') {
+        tsk.nextDate = todayStr;
+      }
+    });
+
     save();
+    if (typeof recalcStreakFromLog === 'function') recalcStreakFromLog();
     render();
+    if (typeof renderTaskList === 'function') renderTaskList();
     ov.remove();
     toast(t('stats_reset_toast'));
     showTab('tasks');
@@ -6362,6 +6432,80 @@ function confirmRestart() {
 }
 
 
+
+// == GLOBAL RESTART (davriylikni ham bugundan boshlaydi) ==
+// MUHIM: todayStr uchun new Date().toISOString() ATAYLAB ishlatilmadi —
+// u UTC sanani beradi va ilovaning o'z today() funksiyasi (lokal vaqt)
+// bilan mos kelmasligi mumkin (kechqurun 1 kunlik siljish xatosiga sabab
+// bo'ladi). Shuning uchun ilova ichidagi today() dan foydalanamiz —
+// format bir xil ("YYYY-MM-DD"), faqat xatosiz.
+function resetApp() {
+  const todayStr = today(); // "YYYY-MM-DD" — lokal sana
+
+  // 1) Har bir vazifaning davriylik hisobi aynan bugundan qayta boshlansin
+  S.tasks.forEach(function (tsk) {
+    tsk.createdAt = todayStr;   // taskWasDueOnDate/taskDueToday shu maydonga qarab hisoblaydi
+    tsk.done = false;
+    tsk.doneDate = null;
+    tsk.skipped = false;
+    tsk.skippedDate = null;
+    tsk.lastDoneDate = null;
+    if (tsk.repeat === 'interval') {
+      tsk.nextDate = todayStr; // interval hisob-kitobi ham noldan
+    }
+  });
+
+  // 2) Bajarilganlik tarixi (eski qizil belgilar/intervallar shundan chiqadi)
+  S.taskDoneLog = {};
+  S.taskSkipLog = {};
+  S.taskDoneHourLog = {};
+  S.weekDoneLog = {};
+  S.taskDoneCount = {};
+
+  // Streak/statistika ham davriylik bilan bog'liq bo'lgani uchun tozalanadi
+  S.streak = 0;
+  S.bestStreak = 0;
+  S.totalTasksDone = 0;
+  S.hardTasksDone = 0;
+
+  // 3) Tangalar — xohishga ko'ra. Hozircha SAQLAB QOLINADI.
+  //    Agar tangalar ham nollansin desangiz, quyidagi 2 qatorni oching:
+  // S.coins = 0;
+  // S.totalCoins = 0;
+
+  // 4) Saqlash (LocalStorage) va sahifani to'liq qayta chizish
+  save();
+  recalcStreakFromLog(); // streak yangi holatga mos qayta hisoblanadi (natija 0 bo'ladi)
+  render();
+  if (typeof renderTaskList === 'function') renderTaskList();
+
+  toast(t('stats_reset_toast'));
+  showTab('tasks');
+}
+
+// Tasdiqlash oynasi bilan chaqiriladigan versiya (tugmaga ulash uchun)
+function confirmResetApp() {
+  var ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px';
+  var box = document.createElement('div');
+  box.style.cssText = 'background:#1C1C25;border:2px solid rgba(248,113,113,0.4);border-radius:20px;padding:28px 24px;width:100%;max-width:340px;text-align:center';
+  box.innerHTML =
+    '<div style="font-size:44px;margin-bottom:12px">🔄</div>' +
+    '<h3 style="font-family:Syne,sans-serif;font-size:18px;font-weight:700;color:#F87171;margin-bottom:10px">Davriylikni bugundan qayta boshlash</h3>' +
+    '<p style="font-size:13px;color:var(--text-muted);margin-bottom:20px;line-height:1.7">Barcha vazifalarning bajarilganlik tarixi, streak va davriylik hisobi tozalanib, bugungi kundan boshlab qaytadan hisoblanadi. Vazifalarning o\'zi va tangalar saqlanib qoladi.</p>' +
+    '<div style="display:flex;gap:10px">' +
+      '<button id="reset-app-cancel" style="flex:1;padding:12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:14px;cursor:pointer">Bekor qilish</button>' +
+      '<button id="reset-app-confirm" style="flex:2;padding:12px;border-radius:12px;border:none;background:#F87171;color:#fff;font-size:14px;font-weight:700;cursor:pointer">Ha, qayta boshlash</button>' +
+    '</div>';
+  ov.appendChild(box);
+  document.body.appendChild(ov);
+  document.getElementById('reset-app-cancel').onclick = function () { ov.remove(); };
+  document.getElementById('reset-app-confirm').onclick = function () {
+    resetApp();
+    ov.remove();
+  };
+  ov.addEventListener('mousedown', function (e) { if (e.target === ov) ov.remove(); });
+}
 
 // ========= SECRET HABIT TRACKER =========
 var DEFAULT_PIN = '1009'; // default PIN — bitta konstanta, barcha kod shu yerdan oladi
@@ -8039,6 +8183,10 @@ function calToggleTaskDone(id, dateStr) {
     addTarixLog('out', '🔄 ' + tk.name + ' bekor qilindi (' + dateStr + ')', -takeBack);
     addTarixLog('out', '⚠️ Kun uchun jarima qayta qo\u2019llandi', -PENALTY);
     var msg1 = '↩️ Bekor qilindi, -' + totalDeduct + ' 🪙';
+    // MUHIM TUZATISH: "har N kunda" vazifa kalendar orqali shu sanada
+    // bekor qilinsa, "Keyingisi" sanasi ham shu kunga qaytarilishi kerak
+    // (toggleTask() bugungi kun uchun xuddi shu tarzda ishlaydi).
+    if (tk.repeat === 'interval') { tk.nextDate = dateStr; }
   } else {
     // ⬜ → ✅: kechiktirib bajarish.
     // Vazifa tangasi (qiyinlikka mos) + o'sha kun uchun avval yechilgan jarima qaytariladi.
@@ -8049,6 +8197,20 @@ function calToggleTaskDone(id, dateStr) {
     addTarixLog('in', '✅ ' + tk.name + ' (kechiktirilgan, ' + dateStr + ')', diffCoins);
     addTarixLog('in', '↩️ Jarima qaytarildi', PENALTY);
     var msg1 = '✅ Belgilandi, +' + total + ' 🪙';
+    // MUHIM TUZATISH: avvalgi versiyada "har N kunda" vazifa kalendar
+    // orqali (bugundan boshqa kun uchun) bajarilgan deb belgilanganda
+    // t.nextDate UMUMAN yangilanmasdi — natijada u eski (masalan, vazifa
+    // birinchi yaratilgandagi) sanada "qotib" qolar, va "Keyingisi:" yorlig'i
+    // hamda asosiy ro'yxatdagi taskDueToday() tekshiruvi noto'g'ri sanaga
+    // asoslanib, vazifa ketma-ket bir necha kun qatorida chiqib qolar edi.
+    // Endi: aynan shu bajarilgan sana + interval kuni = keyingi haqiqiy sana.
+    // Faqat OLDINGA suramiz (allaqachon kelajakdagi bajarilgan sanani orqaga
+    // qaytarib yubormasligi uchun).
+    if (tk.repeat === 'interval') {
+      var iv = Number(tk.interval) || 1;
+      var candidate = addDays(dateStr, iv);
+      if (!tk.nextDate || candidate > tk.nextDate) tk.nextDate = candidate;
+    }
   }
 
   // ---- STREAK'NI KUNLAR ZANJIRIGA QARAB DINAMIK QAYTA HISOBLASH ----
