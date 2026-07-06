@@ -3845,22 +3845,28 @@ function calIsTaskDueOnDate(t, dateStr, dow) {
   if (t.repeat === 'custom-days') return (t.days || []).indexOf(dow) !== -1;
 
   if (t.repeat === 'interval') {
-    // 1) ENG ISHONCHLI MANBA: haqiqiy kunlik jadval tarixi — nextDate
-    //    asosida, foydalanuvchi harakatlarini hisobga olgan holda kun
-    //    sayin yozib borilgan. Mavjud bo'lsa, albatta shundan foydalanamiz.
-    if (S.taskScheduleLog && S.taskScheduleLog[t.id] &&
-        S.taskScheduleLog[t.id].indexOf(dateStr) !== -1) {
-      return true;
-    }
-    // 2) ZAXIRA (faqat tarix hali yozilmagan, ushbu yangilanishdan OLDINGI
-    //    eski kunlar uchun): createdAt'dan boshlab taxminiy "har N kunda
-    //    bir" formulasi. Tarix mavjud bo'lgan kunlarda bu ishlatilmaydi.
-    var origin = t.createdAt || '2020-01-01';
+    // QAT'IY DAVR FORMULASI (yagona manba): vazifa boshlangan kundan
+    // (createdAt) buyon aynan har N kunda BIR MARTA "due" bo'ladi.
+    //
+    // MUHIM TUZATISH: avvalgi versiya birinchi navbatda S.taskScheduleLog
+    // (nextDate asosida kun sayin yozilgan tarix) dan foydalanardi. Ammo
+    // nextDate vazifa bajarilmaguncha OLDINGA SURILMAYDI — ya'ni
+    // recordIntervalDueLog() "nextDate <= dateStr" shartini har kuni
+    // qayta-qayta rost deb yozib, boshlangan kundan e'tiboran BARCHA
+    // keyingi kunlarni "due" deb belgilab qo'yardi. Aynan shu sabab
+    // "har 4 kunda" vazifa xato ravishda HAR KUNI ko'rinib qolar edi.
+    //
+    // Yechim: kalendar uchun faqat qat'iy, o'zgarmas modul-arifmetika
+    // formulasidan foydalanamiz — bajarilgan/bajarilmaganidan qat'i
+    // nazar, diffDays < 0 bo'lsa umuman ko'rinmaydi, diffDays % interval
+    // === 0 bo'lgandagina ko'rinadi.
+    var origin = t.createdAt || dateStr;
     var interval = t.interval || 1;
     var originTime = new Date(origin + 'T00:00:00').getTime();
     var dateTime   = new Date(dateStr + 'T00:00:00').getTime();
-    var diff = Math.round((dateTime - originTime) / 86400000);
-    return diff >= 0 && diff % interval === 0;
+    var diffDays = Math.round((dateTime - originTime) / 86400000);
+    if (diffDays < 0) return false;
+    return diffDays % interval === 0;
   }
 
   if (t.repeat === 'once') {
