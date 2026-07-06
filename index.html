@@ -3795,6 +3795,83 @@ function taskWasDueOnDate(t, dateStr) {
   return false;
 }
 
+// ============================================================
+// INTERVAL VAZIFALAR UCHUN HAQIQIY KUNLIK JADVAL TARIXI
+// ------------------------------------------------------------
+// Interval ("har N kunda") vazifaning navbatdagi sanasi (t.nextDate)
+// foydalanuvchi harakatiga (bajarish/o'tkazish/kechiktirish) qarab
+// DINAMIK ravishda o'zgarib turadi — shu sababli uni createdAt'dan
+// boshlab qattiq formula ("har N kunda bir") bilan qayta hisoblab
+// bo'lmaydi. Aynan shu farq kalendarda "boshqa kunga tegishli
+// vazifa aralashib chiqishi" xatosining sababi bo'lgan.
+// Yechim: har kuni (o'tgan kunlar uchun checkReset() ichida, joriy
+// kun uchun render() ichida) o'sha kundagi HAQIQIY nextDate holatini
+// S.taskScheduleLog'ga o'zgarmas tarix sifatida yozib qo'yamiz.
+function recordIntervalDueLog(dateStr) {
+  if (!S.tasks) return;
+  if (!S.taskScheduleLog) S.taskScheduleLog = {};
+  S.tasks.forEach(function(t) {
+    if (t.repeat !== 'interval') return;
+    if (t.createdAt && dateStr < t.createdAt) return;
+    // taskDueToday() bilan bir xil mantiq: nextDate <= dateStr => due
+    var isDue = t.nextDate ? (t.nextDate <= dateStr) : true;
+    if (!isDue) return;
+    if (!S.taskScheduleLog[t.id]) S.taskScheduleLog[t.id] = [];
+    if (S.taskScheduleLog[t.id].indexOf(dateStr) === -1) {
+      S.taskScheduleLog[t.id].push(dateStr);
+    }
+  });
+}
+
+// Kalendar uchun YAGONA, ishonchli manba: berilgan sanada vazifa
+// haqiqatan "due" (o'sha kuni bajarilishi kerak) bo'lganmi-yo'qmi
+// shuni aniqlaydi. getDayStats() va showDayDetail() ikkalasi ham
+// AYNAN shu funksiyadan foydalanadi — shu sababli ular orasida
+// hech qachon nomuvofiqlik (va demak aralashib ketish) bo'lmaydi.
+function calIsTaskDueOnDate(t, dateStr, dow) {
+  // Vazifa qo'shilguncha bo'lgan kunlarga ta'sir qilmasin
+  if (t.createdAt && dateStr < t.createdAt) return false;
+
+  var doneOnDate = !!(S.taskDoneLog && S.taskDoneLog[t.id] && S.taskDoneLog[t.id].indexOf(dateStr) !== -1);
+  var skipOnDate = !!(S.taskSkipLog && S.taskSkipLog[t.id] && S.taskSkipLog[t.id].indexOf(dateStr) !== -1);
+
+  // Agar o'sha kuni vazifa ustida aniq harakat qilingan bo'lsa (bajarilgan
+  // yoki o'tkazilgan) — demak u kuni albatta "due" bo'lgan, boshqa hisobga
+  // hojat yo'q.
+  if (doneOnDate || skipOnDate) return true;
+
+  if (t.repeat === 'daily') return true;
+  if (t.repeat === 'weekdays') return dow >= 1 && dow <= 5;
+  if (t.repeat === 'custom-days') return (t.days || []).indexOf(dow) !== -1;
+
+  if (t.repeat === 'interval') {
+    // 1) ENG ISHONCHLI MANBA: haqiqiy kunlik jadval tarixi — nextDate
+    //    asosida, foydalanuvchi harakatlarini hisobga olgan holda kun
+    //    sayin yozib borilgan. Mavjud bo'lsa, albatta shundan foydalanamiz.
+    if (S.taskScheduleLog && S.taskScheduleLog[t.id] &&
+        S.taskScheduleLog[t.id].indexOf(dateStr) !== -1) {
+      return true;
+    }
+    // 2) ZAXIRA (faqat tarix hali yozilmagan, ushbu yangilanishdan OLDINGI
+    //    eski kunlar uchun): createdAt'dan boshlab taxminiy "har N kunda
+    //    bir" formulasi. Tarix mavjud bo'lgan kunlarda bu ishlatilmaydi.
+    var origin = t.createdAt || '2020-01-01';
+    var interval = t.interval || 1;
+    var originTime = new Date(origin + 'T00:00:00').getTime();
+    var dateTime   = new Date(dateStr + 'T00:00:00').getTime();
+    var diff = Math.round((dateTime - originTime) / 86400000);
+    return diff >= 0 && diff % interval === 0;
+  }
+
+  if (t.repeat === 'once') {
+    var tdStr = today();
+    if (dateStr === tdStr && !t.done && (!t.postponedTo || t.postponedTo <= tdStr)) return true;
+    return false;
+  }
+
+  return false;
+}
+
 function checkReset() {
   const td = today();
   if (S.lastDate && S.lastDate !== td) {
@@ -3810,6 +3887,11 @@ function checkReset() {
                String(checkDate.getMonth()+1).padStart(2,'0') + '-' +
                String(checkDate.getDate()).padStart(2,'0');
       var dow = checkDate.getDay();
+
+      // Shu kun uchun interval vazifalarning HAQIQIY (nextDate asosidagi)
+      // jadval holatini o'zgarmas tarixga yozib qo'yamiz — kalendar aynan
+      // shu tarixdan foydalanadi (taxminiy formula emas).
+      recordIntervalDueLog(ps);
 
       // O'sha kunda bajariladigan vazifalar
       var dueTasks = S.tasks.filter(function(t) {
@@ -4489,7 +4571,12 @@ function claimReward(id) {
   if((S.coins||0)<r.cost){toast(t('reward_need_more_coins_toast')+r.cost+' 🪙');return;}
   S.coins=(S.coins||0)-r.cost;
   if(!S.rewardClaims)S.rewardClaims={};
-  var addCount = (r.rtype==='count' && r.amount>0) ? r.amount : 1;
+  // MUHIM TUZATISH: avval faqat rtype==='count' bo'lganda r.amount qo'shilardi,
+  // 'time' (vaqt) turi uchun har doim +1 qo'yilardi (masalan 10/15 daqiqa
+  // sotib olinsa ham). Endi ikkala turda ham HAQIQIY miqdor (r.amount —
+  // vaqt uchun daqiqa, dona uchun son) qo'shiladi, shu sababli qayta-qayta
+  // sotib olinganda daqiqalar to'g'ri USTIGA QO'SHILADI (10+10=20 min).
+  var addCount = (r.amount>0) ? r.amount : 1;
   S.rewardClaims[r.id]=(S.rewardClaims[r.id]||0)+addCount;
   S.totalPurchases=(S.totalPurchases||0)+1;
   addTarixLog('out',r.icon+' '+r.name+' sotib olindi',-r.cost);
@@ -4752,15 +4839,24 @@ function renderRewards() {
       save(); renderRewards();
     });
 
+    // MUHIM TUZATISH: avval mukofot "vaqtli"ligi parseMinutes(r.name) orqali
+    // NOM matnidan ("daqiqa"/"soat" so'zi) qidirib topilardi — bu til
+    // (EN/RU'da "min"/"мин" ishlatiladi) yoki nom formatiga bog'liq holda
+    // ishlamay qolardi. Endi mukofot yaratilganda saqlangan HAQIQIY
+    // maydondan (r.rtype) foydalanamiz — ishonchli va tildan mustaqil.
+    const isTimeReward = r.rtype === 'time';
+    // claimReward() endi vaqtli mukofot uchun ham to'g'ri miqdorni (r.amount,
+    // ya'ni daqiqa sonini) qo'shadi, shu sababli `claims` allaqachon JAMI
+    // SOTIB OLINGAN DAQIQA (yoki dona) miqdorini bildiradi — qo'shimcha
+    // ko'paytirishga (mins*claims) hojat yo'q.
     const claims=(S.rewardClaims||{})[r.id]||0;
-    const mins=parseMinutes(r.name);
     const usedLog=(S.usageLog||{})[r.id]||[];
     const totalUsedMins=usedLog.reduce(function(a,x){return a+(x.mins||0);},0);
     const totalUsedCount=usedLog.reduce(function(a,x){return a+(x.count||1);},0);
-    const totalBoughtMins=mins?mins*claims:null;
+    const totalBoughtMins=isTimeReward?claims:null;
 
     let statsHtml='';
-    if(!mins){
+    if(!isTimeReward){
       if(claims>0||totalUsedCount>0){
         var rem=claims-totalUsedCount;
         statsHtml='<div style="margin-top:8px;background:var(--surface2);border-radius:8px;padding:8px 10px;font-size:11px;text-align:left;line-height:1.8">';
@@ -4814,13 +4910,18 @@ function renderClaimSummary() {
   html += '<div style="display:flex;flex-direction:column;gap:8px">';
   entries.forEach(([id, count]) => {
     const r = S.rewards.find(x=>x.id==id); if(!r) return;
-    const mins = parseMinutes(r.name);
+    // MUHIM TUZATISH: mukofot turi endi ishonchli r.rtype maydonidan
+    // aniqlanadi (parseMinutes(r.name) o'rniga — bu faqat o'zbekcha
+    // "daqiqa"/"soat" so'zi bo'lsa ishlardi). `count` (S.rewardClaims)
+    // vaqtli mukofot uchun claimReward() orqali allaqachon JAMI
+    // to'plangan daqiqani bildiradi — uni yana ko'paytirish shart emas.
+    const isTimeReward = r.rtype === 'time';
     const usedLog = (S.usageLog||{})[id]||[];
 
-    if(mins) {
+    if(isTimeReward) {
       // Vaqtli mukofot — 0 daqiqa qolsa listdan chiqib ketsin
       const totalUsedMins = usedLog.reduce((a,x)=>a+(x.mins||0),0);
-      const totalBoughtMins = mins * count;
+      const totalBoughtMins = count;
       const remMins = totalBoughtMins - totalUsedMins;
       if(remMins <= 0) return; // listdan o'chir
       html += `<div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border-radius:10px;padding:10px 14px">
@@ -4890,6 +4991,10 @@ function renderLevel() {
 }
 
 function render() {
+  // Bugungi kun uchun interval vazifalarning haqiqiy jadval holatini
+  // har renderda yozib qo'yamiz — shunda foydalanuvchi hali hech qanday
+  // amal qilmagan bo'lsa ham, kalendar bugungi kunni to'g'ri ko'rsatadi.
+  recordIntervalDueLog(today());
   recalcStreakFromLog();
   document.getElementById('coins-display').textContent=S.coins;
   checkNegativeCoins();
@@ -4947,14 +5052,25 @@ function render() {
   });
   const onceTasks = S.tasks.filter(t=>t.repeat==='once' && (!t.postponedTo || t.postponedTo<=today()) && !t.done);
 
+  // MUHIM TUZATISH: kelajakka mo'ljallangan vazifa bugun oldindan "Done"
+  // qilingan bo'lsa ham, u todayTasks ichida bo'lmagani uchun DONE
+  // hisoblagichiga va "Bajarilgan vazifalar" paneliga tushmay qolardi.
+  // Haqiqiy mezon — vazifaning YARATILGAN yoki NAVBATDAGI sanasi emas,
+  // balki "bugun amalda bajarildi" degan status: t.doneDate === bugun.
+  // Shu status bo'yicha, todayTasks'da hali yo'q bo'lgan qo'shimcha
+  // bajarilgan vazifalarni topamiz.
+  var extraCompletedToday = S.tasks.filter(function(t) {
+    return t.done && t.doneDate === today() && todayTasks.indexOf(t) === -1;
+  });
+
   // For stats count all due today
   const total = todayTasks.length;
   const done = todayTasks.filter(t=>t.done).length;
 
   // Chest vazifalaridan bugun bajarilganlarini ham hisobga olish
   var chestDoneToday = (S.chestHistory || []).filter(function(h){ return h.date === today(); }).length;
-  document.getElementById('done-count').textContent = done + chestDoneToday;
-  document.getElementById('total-count').textContent = total + chestDoneToday;
+  document.getElementById('done-count').textContent = done + chestDoneToday + extraCompletedToday.length;
+  document.getElementById('total-count').textContent = total + chestDoneToday + extraCompletedToday.length;
   const pct=total>0?Math.round(done/total*100):0;
   document.getElementById('pct-label').textContent=pct+'%';
   document.getElementById('progress-fill').style.width=pct+'%';
@@ -4973,7 +5089,10 @@ function render() {
       return ai - bi;
     });
   }
-  const done2=sortByOrder(recurringTasks.filter(t=>t.done));
+  // Bugun bajarilgan bo'lsa — qaysi kunga mo'ljallanganidan qat'i nazar
+  // (kelajakdagi vazifa bo'lsa ham) shu ro'yxatda ko'rinadi va checkbox
+  // orqali qaytarib bekor qilish (uncheck) imkoni saqlanadi.
+  const done2=sortByOrder(recurringTasks.filter(t=>t.done).concat(extraCompletedToday));
   const dpList=document.getElementById('done-panel-list'); dpList.innerHTML='';
   if(done2.length===0){
     dpList.innerHTML='<div style="color:var(--text-dim);font-size:13px;padding:4px 0">'+t('done_panel_empty')+'</div>';
@@ -4981,20 +5100,21 @@ function render() {
     done2.forEach(t=>dpList.appendChild(makeTaskEl(t)));
   }
 
-  // Chest banner: faqat barcha asosiy vazifalar bajarilganda
+  // Chest banner: faqat va faqat BUGUNGI kunga tegishli faol vazifalar
+  // bajarilganda chiqadi. MUHIM TUZATISH: avvalgi kod har qanday
+  // 'weekdays'/'custom-days'/'interval' vazifani (kelajakdagi kunga
+  // mo'ljallangan bo'lsa ham) shartsiz "bugungi vazifa" deb hisoblab,
+  // Chest ochilishini noto'g'ri to'sib qo'yardi. Endi yuqorida allaqachon
+  // to'g'ri hisoblangan `todayTasks` (taskDueToday() + postponedTo filtri
+  // bilan, FAQAT bugun due bo'lgan vazifalar) ishlatiladi — boshqa
+  // kunlarning vazifalari bu tekshiruvga umuman ta'sir qilmaydi.
   (function() {
     var banner = document.getElementById('tasks-chest-banner');
     if (!banner) return;
     var chestTasks = S.chestTasks || [];
     if (chestTasks.length === 0) { banner.style.display = 'none'; return; }
     var tdStr = today();
-    var allMainTasks = (S.tasks || []).filter(function(t) {
-      if (t.repeat === 'once') return !t.done;
-      if (t.repeat === 'daily') return true;
-      if (t.repeat === 'weekly' && t.days) { return t.days.indexOf(new Date().getDay()) !== -1; }
-      return true;
-    });
-    var allMainDone = allMainTasks.length > 0 && allMainTasks.every(function(t) { return t.done || t.skipped; });
+    var allMainDone = todayTasks.length > 0 && todayTasks.every(function(t) { return t.done || t.skipped; });
     if (!allMainDone) { banner.style.display = 'none'; return; }
     var doneTodayNames = (S.chestDoneHistory || []).filter(function(h){ return h.date === tdStr; }).map(function(h){ return h.name; });
     var remaining = chestTasks.filter(function(t){ return doneTodayNames.indexOf(t.name) === -1; });
@@ -5050,8 +5170,16 @@ function daysUntilTask(t) {
 }
 
 // Vazifa bugun emas, lekin yaqin kunda chiqadimi?
+// MUHIM TUZATISH: avval bu yerda "if (t.done) return false;" bor edi —
+// shu sababli kelajakdagi vazifa "Done" qilinganda bir vaqtning o'zida
+// ham bugungi ro'yxatga (chunki u hali due emas), ham kelajakdagi
+// ro'yxatga (chunki t.done=true) sig'masdan, butunlay g'oyib bo'lib
+// qolardi va uni orqaga qaytarib bo'lmasdi. Endi vazifaning "kelajakka
+// tegishli" ekanligi FAQAT uning sanasiga (nextDate/postponedTo/hafta
+// kuni) qarab aniqlanadi — bajarilgan-bajarilmaganligi bunga ta'sir
+// qilmaydi, shu sababli u "Done" bo'lgandan keyin ham ko'rinib turadi
+// va checkbox orqali qaytarib bekor qilish mumkin bo'ladi.
 function taskIsFuture(t, td) {
-  if (t.done) return false;
   if (t.repeat === 'interval' && t.nextDate && t.nextDate > td) return true;
   if (t.repeat === 'once' && t.postponedTo && t.postponedTo > td) return true;
   if (t.repeat === 'custom-days') {
@@ -5364,11 +5492,17 @@ function logUsage(id) {
   var r=S.rewards.find(function(x){return x.id===id;}); if(!r) return;
   var ov=document.getElementById('usage-modal'); if(ov) ov.remove();
 
-  var mins=parseMinutes(r.name); // vaqtli mukofot (daqiqa bor)
+  // MUHIM TUZATISH: avval mukofot "vaqtli"ligi va bitta xariddagi daqiqa
+  // miqdori nomdan (parseMinutes(r.name) — faqat o'zbekcha "daqiqa"/"soat"
+  // so'zini taniydi) qidirilardi. Endi mukofot yaratilganda saqlangan
+  // HAQIQIY, tildan mustaqil maydonlardan (r.rtype, r.amount) foydalanamiz —
+  // renderRewards() bilan bir xil, ishonchli manba.
+  var isTimeReward = r.rtype === 'time';
+  var unitMins = r.amount || 0; // bitta xariddagi daqiqa miqdori (masalan 10)
   var claims=(S.rewardClaims||{})[r.id]||0;
 
   // === DONALI mukofot (daqiqa yo'q) ===
-  if(!mins){
+  if(!isTimeReward){
     // nechta ishlatilganini hisoblash
     var usedCount=(S.usageLog&&S.usageLog[id]) ? S.usageLog[id].reduce(function(a,x){return a+(x.count||1);},0) : 0;
     var remaining=claims-usedCount;
@@ -5427,7 +5561,12 @@ function logUsage(id) {
   }
 
   // === VAQTLI mukofot (daqiqa bor) ===
-  var totalBoughtMins=claims>0 ? mins*claims : null;
+  // MUHIM TUZATISH: `claims` claimReward() orqali allaqachon JAMI sotib
+  // olingan daqiqa yig'indisini bildiradi (masalan 10+10=20 min). Buni
+  // yana `unitMins`ga ko'paytirish (eski "mins*claims" mantig'i) natijani
+  // bir necha barobar noto'g'ri oshirib yuborardi. Endi to'g'ridan-to'g'ri
+  // `claims`ning o'zi ishlatiladi — renderRewards() bilan bir xil mantiq.
+  var totalBoughtMins=claims>0 ? claims : null;
   var usedLog=(S.usageLog||{})[id]||[];
   var alreadyUsedMins=usedLog.reduce(function(a,x){return a+(x.mins||0);},0);
   var remainingMins=totalBoughtMins!=null ? Math.max(0,totalBoughtMins-alreadyUsedMins) : null;
@@ -5478,7 +5617,9 @@ function logUsage(id) {
   var prev=document.getElementById('usage-prev');
 
   function calcPenalty(m){
-    var minutesPer = mins / r.cost;
+    // Bitta tangaga necha daqiqa to'g'ri kelishini unitMins/r.cost orqali
+    // hisoblaymiz (r.amount — bitta xariddagi daqiqa, r.cost — narxi).
+    var minutesPer = (unitMins>0 && r.cost>0) ? (unitMins / r.cost) : 1;
     if(totalBoughtMins!=null){
       var over=(alreadyUsedMins+m)-totalBoughtMins;
       if(over<=0) return 0;
@@ -7516,30 +7657,10 @@ function getDayStats(dateStr) {
     var doneOnDate = !!(S.taskDoneLog && S.taskDoneLog[t.id] && S.taskDoneLog[t.id].indexOf(dateStr) !== -1);
     var skipOnDate = !!(S.taskSkipLog && S.taskSkipLog[t.id] && S.taskSkipLog[t.id].indexOf(dateStr) !== -1);
 
-    var isDue = false;
-    if (t.repeat === 'daily') isDue = true;
-    else if (t.repeat === 'weekdays') isDue = dow >= 1 && dow <= 5;
-    else if (t.repeat === 'custom-days') isDue = (t.days||[]).indexOf(dow) !== -1;
-    else if (t.repeat === 'interval') {
-      // interval: due if done/skipped on that date, OR if it was scheduled on that date
-      // We reconstruct due dates from startDate (createdAt or nextDate origin) + interval
-      if (doneOnDate || skipOnDate) {
-        isDue = true;
-      } else {
-        // Calculate if this date falls on an interval cycle
-        var origin = t.createdAt || '2020-01-01';
-        var interval = t.interval || 1;
-        var originTime = new Date(origin + 'T00:00:00').getTime();
-        var dateTime   = new Date(dateStr + 'T00:00:00').getTime();
-        var diff = Math.round((dateTime - originTime) / 86400000);
-        if (diff >= 0 && diff % interval === 0) isDue = true;
-      }
-    }
-    else if (t.repeat === 'once') {
-      // once: show on the day it was done/skipped, OR on today if still pending
-      if (doneOnDate || skipOnDate) isDue = true;
-      else if (dateStr === tdStr && !t.done && (!t.postponedTo || t.postponedTo <= tdStr)) isDue = true;
-    }
+    // Bitta yagona manba — getDayStats() va showDayDetail() aynan shu
+    // funksiyadan foydalanadi, shu sababli ular orasida hech qachon
+    // nomuvofiqlik bo'lmaydi va boshqa kunning vazifalari aralashmaydi.
+    var isDue = calIsTaskDueOnDate(t, dateStr, dow);
 
     if (!isDue) return;
     due++;
@@ -7680,26 +7801,10 @@ function showDayDetail(dateStr) {
     // ptichka olib tashlansa ham ro'yxatdan g'oyib bo'lmasligi uchun saqlanadi.
     var pinnedOnDate = !!(S.calPinnedDates && S.calPinnedDates[t.id] && S.calPinnedDates[t.id].indexOf(dateStr) !== -1);
 
-    var isDue = false;
-    if (t.repeat === 'daily') isDue = true;
-    else if (t.repeat === 'weekdays') isDue = dow >= 1 && dow <= 5;
-    else if (t.repeat === 'custom-days') isDue = (t.days||[]).indexOf(dow) !== -1;
-    else if (t.repeat === 'interval') {
-      if (doneOnDate || skipOnDate) {
-        isDue = true;
-      } else {
-        var origin = t.createdAt || '2020-01-01';
-        var interval = t.interval || 1;
-        var originTime = new Date(origin + 'T00:00:00').getTime();
-        var dateTime   = new Date(dateStr + 'T00:00:00').getTime();
-        var diff = Math.round((dateTime - originTime) / 86400000);
-        if (diff >= 0 && diff % interval === 0) isDue = true;
-      }
-    }
-    else if (t.repeat === 'once') {
-      if (doneOnDate || skipOnDate) isDue = true;
-      else if (isToday && !t.done && (!t.postponedTo || t.postponedTo <= tdStr)) isDue = true;
-    }
+    // Bitta yagona manba — getDayStats() bilan AYNAN bir xil funksiya,
+    // shu sababli rang (yashil/qizil) va ro'yxat har doim bir-biriga mos
+    // keladi va boshqa kunning vazifalari aralashmaydi.
+    var isDue = calIsTaskDueOnDate(t, dateStr, dow);
     if (!isDue && pinnedOnDate) isDue = true;
 
     if (!isDue) return;
