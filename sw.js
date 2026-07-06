@@ -7,7 +7,7 @@
 // Har bir deploy'da CACHE_VERSION'ni oshiring (masalan v3 -> v4),
 // shunda eski kesh avtomatik "activate" bosqichida o'chib, yangi
 // fayllar bilan almashtiriladi.
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const CACHE_NAME = `todolist-cache-${CACHE_VERSION}`;
 
 // Ilova offline'da ishlashi uchun oldindan keshlanadigan fayllar.
