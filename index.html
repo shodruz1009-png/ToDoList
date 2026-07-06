@@ -4659,7 +4659,50 @@ function parseMinutes(name) {
   if (soat) return parseInt(soat[1]) * 60;
   const daq = name.match(/(\d+)\s*daqiqa/i);
   if (daq) return parseInt(daq[1]);
+  const min = name.match(/(\d+)\s*min/i);
+  if (min) return parseInt(min[1]);
   return null;
+}
+
+// BIR MARTALIK MIGRATSIYA: r.rtype/r.amount maydonlari qo'shilishidan OLDIN
+// yaratilgan "eski" mukofotlarda bu maydonlar umuman yo'q edi. Shu sababli:
+//  1) renderRewards() ularni "vaqtli" deb tanimay, dona (ta) sifatida
+//     ko'rsatardi ("Bought: 1" o'rniga "Bought: 10 min" kerak edi);
+//  2) o'sha davrdagi claimReward() r.amount topa olmagani uchun har safar
+//     shunchaki +1 qo'shardi (masalan 2 marta sotib olingan bo'lsa
+//     S.rewardClaims = 2, aslida 20 daqiqa bo'lishi kerak edi).
+// Bu funksiya har yuklanishda ishlaydi, lekin faqat r.rtype hali YO'Q
+// bo'lgan (haqiqatan ham eski) mukofotlarga tegadi — bir marta rtype
+// o'rnatilgach, keyingi yuklanishlarda qayta ishlov berilmaydi, shu
+// sababli mavjud (allaqachon to'g'ri) claims qayta-qayta ko'paytirilib
+// buzilib ketmaydi.
+function migrateLegacyRewards() {
+  if (!S.rewards || !S.rewards.length) return;
+  if (!S.rewardClaims) S.rewardClaims = {};
+  if (!S.usageLog) S.usageLog = {};
+  var changed = false;
+  S.rewards.forEach(function(r) {
+    if (r.rtype) return; // yangi formatda — tegilmaydi
+    changed = true;
+    var mins = parseMinutes(r.name || '');
+    if (mins) {
+      r.rtype = 'time';
+      r.amount = mins;
+      // Eski buggy claimReward() har xariddan faqat +1 qo'shgan —
+      // haqiqiy daqiqa yig'indisiga aylantiramiz.
+      var oldClaims = S.rewardClaims[r.id] || 0;
+      if (oldClaims > 0) S.rewardClaims[r.id] = oldClaims * mins;
+      // Eski usageLog yozuvlarida "mins" maydoni bo'lmasligi mumkin edi —
+      // "count" (dona) sifatida yozilgan bo'lsa, uni ham daqiqaga o'giramiz.
+      (S.usageLog[r.id] || []).forEach(function(u) {
+        if (u.mins == null) u.mins = (u.count || 1) * mins;
+      });
+    } else {
+      r.rtype = 'count';
+      if (!r.amount) r.amount = 1;
+    }
+  });
+  if (changed) save();
 }
 
 function formatMinutes(total) {
@@ -5355,6 +5398,11 @@ async function loadUserDataAndInit() {
     recalcStreakFromLog();
     checkReset();
   }
+
+  // Mukofotlar (rewards) uchun eski formatdagi yozuvlarni yangi
+  // rtype/amount tuzilmasiga o'tkazamiz — render() dan OLDIN, aks holda
+  // birinchi chizishda hali ham "1 ta" ko'rinib qolishi mumkin edi.
+  migrateLegacyRewards();
 
   render();
   refreshAllModulesFromState();
