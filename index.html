@@ -1118,7 +1118,7 @@ if ('serviceWorker' in navigator) {
           <button class="rcost-chip" onclick="setCost(20)">20 🪙</button>
           <button class="rcost-chip" onclick="setCost(30)">30 🪙</button>
         </div>
-        <input type="number" id="r-cost" placeholder="Yoki o'zingiz kiriting..." data-i18n-ph="rstep2_ph" min="1" oninput="syncCostChips()" style="margin-top:8px" />
+        <input type="number" id="r-cost" inputmode="numeric" pattern="[0-9]*" placeholder="Yoki o'zingiz kiriting..." data-i18n-ph="rstep2_ph" min="1" oninput="syncCostChips()" style="margin-top:8px" />
       </div>
 
       <!-- Step 3: Tur (daqiqa yoki miqdor) -->
@@ -1134,7 +1134,7 @@ if ('serviceWorker' in navigator) {
       <div class="reward-step" id="rstep-4" style="display:none">
         <div class="rstep-label" id="rstep-4-label"><span class="rstep-num">4</span> <span data-i18n="rstep4_label">Qancha?</span></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap" id="r-amount-presets"></div>
-        <input type="number" id="r-amount" placeholder="Yoki o'zingiz kiriting..." data-i18n-ph="rstep4_ph" min="1" style="margin-top:8px" oninput="syncAmountChips()" />
+        <input type="number" id="r-amount" inputmode="numeric" pattern="[0-9]*" placeholder="Yoki o'zingiz kiriting..." data-i18n-ph="rstep4_ph" min="1" style="margin-top:8px" oninput="syncAmountChips()" />
       </div>
 
       <!-- Emoji -->
@@ -4452,8 +4452,36 @@ function moveTask(id, dir) {
 // -- Reward form helpers --
 var _rewardType = '';
 
+// Ba'zi mobil klaviaturalar (ayniqsa fors/arab/o'zbek tizim tili yoqilgan
+// qurilmalarda) raqamlarni lotin (0-9) o'rniga boshqa raqam belgilari bilan
+// kiritishi mumkin (masalan ۰۱۲۳۴۵۶۷۸۹ yoki ०१२३४५६७८९). parseInt() bunday
+// belgilarni tushunmay, natijani noto'g'ri (yoki 0/NaN) qaytarishi mumkin.
+// Bu funksiya kiritilgan matndagi raqam ko'rinishidagi barcha belgilarni
+// oddiy lotin raqamlariga o'giradi, shundan keyingina parseInt qilinadi.
+function normalizeDigits(str) {
+  if (str == null) return '';
+  var map = {
+    '۰':'0','۱':'1','۲':'2','۳':'3','۴':'4','۵':'5','۶':'6','۷':'7','۸':'8','۹':'9', // fors-arab
+    '٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9', // arab
+    '०':'0','१':'1','२':'2','३':'3','४':'4','५':'5','६':'6','७':'7','८':'8','९':'9'  // devanagari
+  };
+  return String(str).replace(/[۰-۹٠-٩०-९]/g, function(ch){ return map[ch] || ch; })
+                     .replace(/[^\d.\-]/g, ''); // bo'shliq, valyuta belgisi va h.k. ni tashlab yuboradi
+}
+function parseIntSafe(str) {
+  var n = parseInt(normalizeDigits(str), 10);
+  return isNaN(n) ? 0 : n;
+}
+
 function selRewardType(type) {
   _rewardType = type;
+  // HIMOYA: JS o'zgaruvchisi bilan bir qatorda, tanlangan turni DOM
+  // data-atributiga ham yozib qo'yamiz — shu bilan ikkita mustaqil manba
+  // bo'ladi (var + DOM), va agar biri (kamdan-kam holatda, masalan sekin
+  // mobil qurilmada eventlar tartibi buzilsa) eskirib qolsa, addReward()
+  // ikkinchisidan foydalanadi.
+  var body = document.getElementById('add-reward-body');
+  if (body) body.setAttribute('data-selected-rtype', type);
   document.getElementById('rtype-time').className = 'rtype-btn' + (type==='time'?' sel':'');
   document.getElementById('rtype-count').className = 'rtype-btn' + (type==='count'?' sel':'');
   var step4 = document.getElementById('rstep-4');
@@ -4524,16 +4552,47 @@ function toggleAddReward() {
   arrow.style.transform = open ? '' : 'rotate(-90deg)';
 }
 
+var _addingRewardInProgress = false;
+
 function addReward() {
+  // QO'SH-BOSISH (DOUBLE-TAP) HIMOYASI: mobil ekranlarda tez-tez bosilganda
+  // yoki sekin tarmoqda tugma ikki marta faollashib, bitta mukofot ikki marta
+  // qo'shilib ketishi mumkin edi. Funksiya band bo'lsa, keyingi chaqiruv
+  // e'tiborsiz qoldiriladi.
+  if (_addingRewardInProgress) return;
+
   var name = (document.getElementById('r-name').value||'').trim();
-  var cost = parseInt(document.getElementById('r-cost').value) || 0;
+  var cost = parseIntSafe(document.getElementById('r-cost').value);
   var icon = (document.getElementById('r-icon').value||'').trim() || '🎁';
-  var amount = parseInt(document.getElementById('r-amount').value) || 0;
+  var amount = parseIntSafe(document.getElementById('r-amount').value);
+
+  // HIMOYA QATLAMI: reward turi UCHTA mustaqil manbadan tasdiqlanadi —
+  // (1) _rewardType JS o'zgaruvchisi, (2) #add-reward-body elementidagi
+  // data-selected-rtype atributi, (3) qaysi tugmada .sel klassi borligi.
+  // Mobil qurilmalarda ba'zan eventlar tartibi sekinlashishi yoki DOM
+  // yangilanishi biroz kechikishi mumkin — shu sabab bittasiga emas,
+  // barchasiga tayanib, eng ishonchli natijani olamiz. Uchalasi ham bir xil
+  // bo'lsa — hech narsa o'zgarmaydi; farq qilsa — DOM (eng "yangi" haqiqiy
+  // holat) ustuvor hisoblanadi va konsolga ogohlantirish yoziladi.
+  var body = document.getElementById('add-reward-body');
+  var domAttrType = body ? (body.getAttribute('data-selected-rtype') || '') : '';
+  var timeBtn = document.getElementById('rtype-time');
+  var countBtn = document.getElementById('rtype-count');
+  var domClassType = timeBtn && /\bsel\b/.test(timeBtn.className) ? 'time'
+                    : countBtn && /\bsel\b/.test(countBtn.className) ? 'count'
+                    : '';
+  var effectiveType = domAttrType || domClassType || _rewardType || '';
+  if (effectiveType && effectiveType !== _rewardType) {
+    console.warn('addReward(): rtype manbalari mos kelmadi (var="'+_rewardType+'", dom-attr="'+domAttrType+'", dom-class="'+domClassType+'"), DOM asosida to\'g\'irlandi ->', effectiveType);
+  }
+  _rewardType = effectiveType;
 
   if(!name){ document.getElementById('r-name').focus(); toast(t('reward_name_required_toast')); return; }
   if(!cost){ document.getElementById('r-cost').focus(); toast(t('reward_cost_required_toast')); return; }
   if(!_rewardType){ toast(t('reward_type_required_toast')); return; }
   if(!amount){ document.getElementById('r-amount').focus(); toast(_rewardType==='time'?t('reward_minutes_required_toast'):t('reward_amount_required_toast')); return; }
+
+  _addingRewardInProgress = true;
 
   if(!S.rewards) S.rewards=[];
   if(!S.nextRid) S.nextRid=Date.now();
@@ -4547,7 +4606,19 @@ function addReward() {
     fullName = name;
   }
 
-  S.rewards.push({id:S.nextRid++, name:fullName, icon:icon, cost:cost, rtype:_rewardType, amount:amount, baseName:name});
+  // YAKUNIY OBYEKT: `rtype` va `amount` ANIQ va MAJBURIY ravishda yoziladi.
+  // 'time' turi uchun amount = kiritilgan daqiqa soni (masalan 15);
+  // 'count' turi uchun amount = kiritilgan dona soni.
+  var newReward = {
+    id: S.nextRid++,
+    name: fullName,
+    icon: icon,
+    cost: cost,
+    rtype: _rewardType,      // 'time' | 'count'
+    amount: amount,          // 'time' bo'lsa — daqiqa, 'count' bo'lsa — dona
+    baseName: name
+  };
+  S.rewards.push(newReward);
 
   document.getElementById('r-name').value='';
   document.getElementById('r-cost').value='';
@@ -4555,20 +4626,31 @@ function addReward() {
   document.getElementById('r-amount').value='';
   document.getElementById('rstep-4').style.display='none';
   _rewardType='';
+  if (body) body.removeAttribute('data-selected-rtype');
   document.getElementById('rtype-time').className='rtype-btn';
   document.getElementById('rtype-count').className='rtype-btn';
   document.querySelectorAll('.rcost-chip').forEach(function(b){b.className='rcost-chip';});
   document.querySelectorAll('.remoji-chip').forEach(function(b){b.className='remoji-chip';});
 
   save(); renderRewards(); toast(t('reward_added_toast'));
+  _addingRewardInProgress = false;
 }
 
 
+var _claimingRewardIds = {};
+
 function claimReward(id) {
+  // QO'SH-BOSISH HIMOYASI: mobilda tez-tez bosilganda bitta xarid ikki
+  // marta amalga oshib, tanga ikki marta yechilib, daqiqa ikki barobar
+  // qo'shilib ketishining oldini oladi. Bir mukofot uchun so'rov hali
+  // yakunlanmagan bo'lsa, keyingi bosishlar e'tiborsiz qoldiriladi.
+  if (_claimingRewardIds[id]) return;
+  _claimingRewardIds[id] = true;
+
   if(!S.rewards)S.rewards=[];
   var r=S.rewards.find(function(x){return x.id===id;});
-  if(!r){toast(t('reward_not_found_toast'));return;}
-  if((S.coins||0)<r.cost){toast(t('reward_need_more_coins_toast')+r.cost+' 🪙');return;}
+  if(!r){toast(t('reward_not_found_toast'));_claimingRewardIds[id]=false;return;}
+  if((S.coins||0)<r.cost){toast(t('reward_need_more_coins_toast')+r.cost+' 🪙');_claimingRewardIds[id]=false;return;}
   S.coins=(S.coins||0)-r.cost;
   if(!S.rewardClaims)S.rewardClaims={};
   // MUHIM TUZATISH: avval faqat rtype==='count' bo'lganda r.amount qo'shilardi,
@@ -4581,6 +4663,7 @@ function claimReward(id) {
   S.totalPurchases=(S.totalPurchases||0)+1;
   addTarixLog('out',r.icon+' '+r.name+' sotib olindi',-r.cost);
   toast(t('reward_claimed_toast').replace('{icon}', r.icon).replace('{name}', r.name).replace('{cost}', r.cost)); confetti(); save(); render();
+  _claimingRewardIds[id] = false;
 }
 
 function deleteReward(id) { S.rewards=S.rewards.filter(x=>x.id!==id); save(); renderRewards(); }
