@@ -4,10 +4,15 @@
 // Supabase olib tashlangan, SortableJS CDN orqali ulanadi.
 // ============================================================
 
-// Har bir deploy'da CACHE_VERSION'ni oshiring (masalan v3 -> v4),
+// Har bir deploy'da CACHE_VERSION'ni oshiring (masalan v5 -> v6),
 // shunda eski kesh avtomatik "activate" bosqichida o'chib, yangi
 // fayllar bilan almashtiriladi.
-const CACHE_VERSION = 'v5';
+// MUHIM: index.html'ga (masalan IELTS "Chuqur tahlil" moduli kabi)
+// yangi o'zgarish kiritilganda, foydalanuvchi eski keshlangan versiyani
+// ko'rmasligi uchun bu versiya raqami albatta oshirilishi shart —
+// aks holda Service Worker eski faylni keshdan qaytaraverib, yangi
+// kod hech qachon ishga tushmaydi.
+const CACHE_VERSION = 'v6';
 const CACHE_NAME = `todolist-cache-${CACHE_VERSION}`;
 
 // Ilova offline'da ishlashi uchun oldindan keshlanadigan fayllar.
