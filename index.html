@@ -329,6 +329,147 @@
   .levelup-sub { font-size:14px; color:var(--text-muted); margin-bottom:24px; }
   .levelup-btn { padding:14px 40px; border-radius:14px; border:none; background:var(--gold); color:#111; font-size:15px; font-weight:700; cursor:pointer; font-family:'Syne',sans-serif; }
 
+  /* Personaj + HP (Jon) paneli — Minecraft uslubidagi to'liq gavdali personaj */
+  @keyframes charFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+  }
+  @keyframes charFloatAlert {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    25% { transform: translateY(-2px) rotate(-1.2deg); }
+    75% { transform: translateY(-2px) rotate(1.2deg); }
+  }
+  @keyframes mcArmSwayL { 0%,100% { transform: rotate(-9deg); } 50% { transform: rotate(9deg); } }
+  @keyframes mcArmSwayR { 0%,100% { transform: rotate(9deg); } 50% { transform: rotate(-9deg); } }
+  @keyframes mcLegSwayL { 0%,100% { transform: rotate(7deg); } 50% { transform: rotate(-7deg); } }
+  @keyframes mcLegSwayR { 0%,100% { transform: rotate(-7deg); } 50% { transform: rotate(7deg); } }
+  #char-avatar-float { animation: charFloat 2.2s ease-in-out infinite; transition: opacity 0.5s ease; transform-origin:center; }
+  /* MUHIM: transform-box:fill-box — har bir qo'l/oyoq guruhi o'ZINING bounding
+     box'i asosida aylanadi, shuning uchun px/user-unit chalkashishi yo'qoladi
+     va aylanish nuqtasi (yelka/son) doim to'g'ri joyda bo'ladi. */
+  #mc-arm-left, #mc-arm-right, #mc-leg-left, #mc-leg-right,
+  #mc-arm-left-back, #mc-arm-right-back, #mc-leg-left-back, #mc-leg-right-back {
+    transform-box: fill-box;
+    transform-origin: 50% 0%;
+  }
+  #mc-arm-left  { animation: mcArmSwayL 2.2s ease-in-out infinite; }
+  #mc-arm-right { animation: mcArmSwayR 2.2s ease-in-out infinite; }
+  #mc-leg-left  { animation: mcLegSwayL 2.2s ease-in-out infinite; }
+  #mc-leg-right { animation: mcLegSwayR 2.2s ease-in-out infinite; }
+  /* Orqa tomon (backside) a'zolari — xuddi old tomon kabi bir xil idle
+     "nafas/yurish" animatsiyasi bilan, shunda xarakter aylanib turganda ham
+     3D fazoning ikkala tomonida ham harakat uzilib qolmaydi. */
+  #mc-arm-left-back  { animation: mcArmSwayL 2.2s ease-in-out infinite; }
+  #mc-arm-right-back { animation: mcArmSwayR 2.2s ease-in-out infinite; }
+  #mc-leg-left-back  { animation: mcLegSwayL 2.2s ease-in-out infinite; }
+  #mc-leg-right-back { animation: mcLegSwayR 2.2s ease-in-out infinite; }
+
+  /* ============ 360° AYLANTIRISH (DRAG TO ROTATE 3D) ============ */
+  /* #char-avatar-float — 3D "sahna": perspective shu yerda o'rnatiladi, shuning
+     uchun ichkaridagi rotator elementi haqiqiy hajm (depth) hissi bilan aylanadi. */
+  #char-avatar-float { perspective: 520px; cursor: grab; }
+  #char-avatar-float.is-dragging { cursor: grabbing; }
+  #char-3d-rotator {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.45s cubic-bezier(.22,.9,.34,1);
+    touch-action: none; user-select: none; -webkit-user-select: none;
+  }
+  #char-3d-rotator.is-dragging { transition: none; }
+  /* Old va orqa tomon — bir xil joyda ustma-ust turadi, faqat kamera qaysi
+     tomonga qaragan bo'lsa o'sha ko'rinadi (backface-visibility: hidden). */
+  #char-svg, #char-svg-back {
+    position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
+    backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  }
+  #char-svg-back { transform: rotateY(180deg) translateZ(-1px); }
+  /* Soya — xarakter bilan birga aylanmaydi, doim yerda tekis yotadi */
+  #char-shadow-flat { position:absolute; left:50%; bottom:-1px; width:45px; height:7px; border-radius:50%; background:rgba(0,0,0,0.25); transform:translateX(-50%); pointer-events:none; }
+  #hp-bar-fill { box-shadow: 0 0 10px rgba(74,222,128,0.35) inset; }
+  #char-hp-widget { user-select:none; }
+
+  /* ============ YURAKCHA ZARARLANISH (HEART DAMAGE) EFFEKTI ============ */
+  /* Jazo tufayli jon kamayganda — yurakcha matni + Steve xarakteri birga silkinadi */
+  @keyframes heartShakeAnim {
+    0%, 100% { transform: translateX(0) rotate(0deg); }
+    15% { transform: translateX(-5px) rotate(-4deg); }
+    30% { transform: translateX(5px) rotate(4deg); }
+    45% { transform: translateX(-4px) rotate(-3deg); }
+    60% { transform: translateX(4px) rotate(3deg); }
+    75% { transform: translateX(-2px) rotate(-1deg); }
+    90% { transform: translateX(2px) rotate(1deg); }
+  }
+  .hp-shake { animation: heartShakeAnim 0.5s ease; }
+  /* Yurakcha matni soniyali (vaqtinchalik) qizil rangga o'tib, ortga qaytadi */
+  @keyframes heartFlashRedAnim {
+    0% { color:#F87171; text-shadow:0 0 10px rgba(248,113,113,0.9); transform:scale(1.25); }
+    60% { color:#F87171; text-shadow:0 0 6px rgba(248,113,113,0.6); }
+    100% { color:var(--text); text-shadow:none; transform:scale(1); }
+  }
+  .hp-flash-red { display:inline-block; animation: heartFlashRedAnim 0.9s ease-out; }
+
+  /* ---- Butun tana qip-qizil bo'lib chaqnaydi (Minecraft-uslubidagi damage flash) ---- */
+  @keyframes damageFlashAnim {
+    0% { opacity: 0.7; }
+    100% { opacity: 0; }
+  }
+  .dmg-flash-active { animation: damageFlashAnim 0.45s ease-out; }
+
+  /* ---- Uchib chiqib yo'qoluvchi "-X HP" matni ---- */
+  @keyframes dmgFloatUpAnim {
+    0% { transform: translate(-50%, 0) scale(1); opacity: 1; }
+    65% { opacity: 1; }
+    100% { transform: translate(-50%, -46px) scale(1.1); opacity: 0; }
+  }
+  .dmg-float-text {
+    position: absolute; left: 50%; top: 4px;
+    color: #F87171; font-weight: 800; font-family: 'Syne', sans-serif;
+    font-size: 15px; text-shadow: 0 2px 6px rgba(0,0,0,0.7), 0 0 10px rgba(248,113,113,0.6);
+    animation: dmgFloatUpAnim 1s ease-out forwards;
+    pointer-events: none; z-index: 6; white-space: nowrap;
+  }
+
+  /* ============ O'LIM HOLATI (0❤️) — GAME OVER OVERLAY ============ */
+  .death-overlay {
+    position:fixed; inset:0; z-index:99999;
+    background:#0a0000; display:flex; align-items:center; justify-content:center;
+    padding:20px; animation:fadeIn 0.5s ease;
+  }
+  .death-vignette {
+    position:absolute; inset:0; pointer-events:none;
+    background: radial-gradient(ellipse at center, transparent var(--vig-safe,28%), rgba(139,0,0,0.55) var(--vig-mid,68%), rgba(0,0,0,0.96) 100%);
+    animation: vignettePulse 2.6s ease-in-out infinite;
+    transition: background 1s linear;
+  }
+  @keyframes vignettePulse {
+    0%, 100% { opacity: var(--vig-min, 0.55); }
+    50% { opacity: var(--vig-max, 0.9); }
+  }
+  .death-box {
+    position:relative; z-index:2; text-align:center; width:100%; max-width:380px;
+    background:linear-gradient(135deg, rgba(35,0,0,0.92), rgba(10,0,0,0.96));
+    border:2px solid #F87171; border-radius:22px; padding:38px 26px;
+    box-shadow:0 0 60px rgba(248,113,113,0.4), 0 20px 60px rgba(0,0,0,0.6);
+  }
+  .death-skull { font-size:64px; display:block; margin-bottom:10px; animation:bounceIn 0.6s cubic-bezier(0.34,1.56,0.64,1); filter:drop-shadow(0 0 14px rgba(248,113,113,0.65)); }
+  .death-title { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; color:#F87171; letter-spacing:0.03em; text-transform:uppercase; margin-bottom:10px; }
+  .death-sub { font-size:14px; color:#FFD9D9; line-height:1.6; margin-bottom:24px; }
+  .death-timer-row { display:flex; align-items:flex-end; justify-content:center; gap:8px; margin-bottom:4px; }
+  .death-timer { font-family:'Syne',sans-serif; font-size:46px; font-weight:800; color:#fff; letter-spacing:0.02em; text-shadow:0 0 20px rgba(248,113,113,0.65); line-height:1; }
+  .death-timer-label { font-size:13px; color:rgba(255,255,255,0.55); margin-bottom:8px; }
+  .death-timer-sub { font-size:11px; color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:20px; }
+  .death-progress-track { height:7px; border-radius:999px; background:rgba(255,255,255,0.1); overflow:hidden; margin-bottom:10px; }
+  .death-progress-fill { height:100%; width:0%; background:linear-gradient(90deg,#F87171,#EF4444); border-radius:999px; transition:width 1s linear; }
+  .death-hint { font-size:11px; color:rgba(255,255,255,0.35); line-height:1.5; }
+  .death-close-btn {
+    position:absolute; top:10px; right:10px; width:28px; height:28px; border-radius:50%;
+    border:1px solid rgba(255,255,255,0.25); background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.7);
+    font-size:14px; line-height:1; display:flex; align-items:center; justify-content:center; cursor:pointer;
+    transition: all 0.15s ease; z-index:3; font-family:'Syne',sans-serif;
+  }
+  .death-close-btn:hover { background:rgba(255,255,255,0.18); color:#fff; border-color:rgba(255,255,255,0.4); transform:scale(1.08); }
+  .death-close-btn:active { transform:scale(0.92); }
+
   /* Profile avatar modal */
   .avatar-view-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:500; display:flex; align-items:center; justify-content:center; cursor:pointer; }
   .avatar-view-img { width:260px; height:260px; border-radius:50%; object-fit:cover; border:3px solid var(--accent); animation:bounceIn 0.35s cubic-bezier(0.34,1.56,0.64,1); }
@@ -516,6 +657,24 @@ if ('serviceWorker' in navigator) {
 </head>
 <body>
 
+<!-- O'LIM (GAME OVER) OVERLAY — jon 0❤️ ga tushganda ochiladi, 30 kunlik taymer tugamaguncha yopilmaydi -->
+<div id="death-overlay" class="death-overlay" style="display:none">
+  <div class="death-vignette" id="death-vignette"></div>
+  <div class="death-box">
+    <button type="button" class="death-close-btn" id="death-close-btn" onclick="dismissDeathOverlay()" aria-label="Yopish" title="Vaqtincha yopish">✕</button>
+    <span class="death-skull">💀</span>
+    <div class="death-title">Siz o'ldingiz!</div>
+    <div class="death-sub">📵 INSTAGRAM 30 kunga o'chirildi!</div>
+    <div class="death-timer-row">
+      <span class="death-timer" id="death-timer-days">30</span>
+    </div>
+    <div class="death-timer-label" id="death-timer-label">kun qoldi</div>
+    <div class="death-timer-sub">Jazo muddati</div>
+    <div class="death-progress-track"><div class="death-progress-fill" id="death-progress-fill"></div></div>
+    <div class="death-hint" id="death-hint">Steve faqat vaqt tugagach jonlanadi. Bu oyna 30 kun tugamaguncha yopilmaydi.</div>
+  </div>
+</div>
+
 <div class="wrapper">
   <div class="header">
     <div class="header-left">
@@ -683,13 +842,127 @@ if ('serviceWorker' in navigator) {
 
   <div id="view-profile" style="display:none;padding:8px 0">
 
-    <!-- 1. Avatar + Ism + Tahrirlash -->
-    <div style="text-align:center;padding:20px 0 16px">
-      <div id="profile-avatar" style="width:88px;height:88px;border-radius:50%;background:var(--accent);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:38px;cursor:pointer;border:3px solid rgba(124,92,252,0.4);transition:border-color 0.2s;box-shadow:0 0 24px rgba(124,92,252,0.2)" onclick="viewProfilePhoto()" title="Rasmni ko'rish" data-i18n-title="profile_view_photo_title"></div>
-      <div id="profile-name-big" style="font-family:Syne,sans-serif;font-size:22px;font-weight:700;color:var(--text);margin-bottom:2px">Shodruz</div>
-      <div id="profile-age-big" style="font-size:14px;color:var(--text-muted)" data-i18n="profile_no_age">Yosh kiritilmagan</div>
-      <button onclick="showProfileEdit()" style="margin-top:10px;padding:7px 18px;border-radius:999px;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:13px;cursor:pointer" data-i18n="profile_edit_btn">&#9998; Tahrirlash</button>
+    <!-- 1. Profil tepa qatori: CHAPDA Minecraft Steve + HP, O'NGDA dumaloq Avatar + Ism + Tahrirlash -->
+    <!-- Simmetrik "Perfect Split" layout: chiziq qoq markazda, har bir blok o'z 50% hududining markazida -->
+    <div style="position:relative;display:flex;flex-direction:row;align-items:stretch;width:100%;padding:22px 12px 18px;box-sizing:border-box">
+
+      <!-- CHAP: Minecraft Steve — to'liq gavda (pixel-art SVG) + HP (Jon) paneli — chap yarmining markazida -->
+      <div style="width:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 16px;box-sizing:border-box">
+        <div id="char-hp-widget" style="text-align:center;flex-shrink:0">
+          <div id="hp-days-left-badge" style="display:none;margin:0 auto 6px;text-align:center">
+            <span style="display:inline-block;padding:3px 10px;border-radius:999px;background:rgba(248,113,113,0.15);border:1px solid rgba(248,113,113,0.4);color:#F87171;font-size:11px;font-weight:700;font-family:Syne,sans-serif;letter-spacing:0.02em;white-space:nowrap">
+              <span id="hp-days-left-value">30</span> <span data-i18n="goal_days_left">kun qoldi</span>
+            </span>
+          </div>
+          <div style="width:118px;margin:0 auto 8px">
+            <div style="text-align:center;margin-bottom:6px">
+              <span id="hp-value-label" style="font-size:16px;font-weight:800;color:var(--text);font-family:Syne,sans-serif;letter-spacing:0.02em">100❤️</span>
+            </div>
+            <div style="width:100%;height:12px;border-radius:999px;background:var(--surface2);border:1px solid var(--border);overflow:hidden;position:relative">
+              <div id="hp-bar-fill" style="height:100%;width:100%;border-radius:999px;background:linear-gradient(90deg,#4ADE80,#22C55E);transition:width 0.6s ease,background 0.6s ease"></div>
+            </div>
+          </div>
+          <div id="char-avatar-float" style="width:60px;height:120px;margin:0 auto;position:relative;overflow:visible">
+            <div id="char-3d-rotator">
+              <!-- OLD TOMON (FRONT) — mavjud xarakter, o'zgarishsiz -->
+              <svg id="char-svg" viewBox="0 0 8 16" shape-rendering="crispEdges" style="filter:drop-shadow(0 6px 8px rgba(0,0,0,0.35))">
+                <!-- OYOQLAR (idle uchun alohida guruh, sonidan tebranadi) -->
+                <g id="mc-leg-left">
+                  <rect x="2" y="10" width="2" height="5" fill="#3B4CCA"/>
+                  <rect x="2" y="15" width="2" height="1" fill="#232323"/>
+                </g>
+                <g id="mc-leg-right">
+                  <rect x="4" y="10" width="2" height="5" fill="#33449E"/>
+                  <rect x="4" y="15" width="2" height="1" fill="#1A1A1A"/>
+                </g>
+
+                <!-- TANA -->
+                <rect x="2" y="4" width="4" height="6" fill="#3FBDBD"/>
+                <rect x="2" y="9" width="4" height="1" fill="#2E8F8F"/>
+
+                <!-- QO'LLAR (idle uchun alohida guruh, yelkasidan tebranadi) -->
+                <g id="mc-arm-left">
+                  <rect x="0" y="4" width="2" height="2" fill="#2E8F8F"/>
+                  <rect x="0" y="6" width="2" height="4" fill="#E8B58C"/>
+                </g>
+                <g id="mc-arm-right">
+                  <rect x="6" y="4" width="2" height="2" fill="#2E8F8F"/>
+                  <rect x="6" y="6" width="2" height="4" fill="#D9A87D"/>
+                </g>
+
+                <!-- BOSH -->
+                <rect x="2" y="0.3" width="4" height="3.7" fill="#E8B58C"/>
+                <rect x="2" y="0.3" width="4" height="1" fill="#4A2E1D"/>
+                <rect x="2" y="1.3" width="0.6" height="1" fill="#4A2E1D"/>
+                <rect x="5.4" y="1.3" width="0.6" height="1" fill="#4A2E1D"/>
+                <!-- Qoshlar: faqat xavotirli/qiynalgan holatda ko'rinadi (kayfiyatga qarab) -->
+                <path id="char-eyebrow-l" d="M2.65 1.72 L3.6 1.72" stroke="#4A2E1D" stroke-width="0.18" fill="none" stroke-linecap="round" opacity="0"/>
+                <path id="char-eyebrow-r" d="M4.4 1.72 L5.35 1.72" stroke="#4A2E1D" stroke-width="0.18" fill="none" stroke-linecap="round" opacity="0"/>
+                <rect id="char-eye-l" x="2.8" y="2" width="0.7" height="0.7" fill="#2B2B2B"/>
+                <rect id="char-eye-r" x="4.5" y="2" width="0.7" height="0.7" fill="#2B2B2B"/>
+                <path id="char-mouth" d="M3.3 3.3 Q4 3.7 4.7 3.3" stroke="#7A4B32" stroke-width="0.22" fill="none" stroke-linecap="round"/>
+                <!-- Zarar yeganda butun tana qip-qizil bo'lib chaqnaydigan qatlam (Minecraft damage flash) -->
+                <rect id="char-damage-flash" x="-0.5" y="-0.5" width="9" height="17" fill="#FF3B3B" opacity="0" style="pointer-events:none"/>
+              </svg>
+
+              <!-- ORQA TOMON (BACK) — soch, ko'ylak va shim orqasi. Yuz ifodalari
+                   (ko'z/og'iz/qosh) BU YERDA MUTLAQO YO'Q — faqat jigarrang soch. -->
+              <svg id="char-svg-back" viewBox="0 0 8 16" shape-rendering="crispEdges" style="filter:drop-shadow(0 6px 8px rgba(0,0,0,0.35))">
+                <!-- OYOQLAR — ORQA TOMON (to'qroq soya rang, bir xil idle tebranish bilan) -->
+                <g id="mc-leg-left-back">
+                  <rect x="2" y="10" width="2" height="5" fill="#2E3A9E"/>
+                  <rect x="2" y="15" width="2" height="1" fill="#1A1A1A"/>
+                </g>
+                <g id="mc-leg-right-back">
+                  <rect x="4" y="10" width="2" height="5" fill="#26327E"/>
+                  <rect x="4" y="15" width="2" height="1" fill="#101010"/>
+                </g>
+
+                <!-- TANA — ORQA TOMON (ko'ylak orqasi, tikuv chizig'i bilan) -->
+                <rect x="2" y="4" width="4" height="6" fill="#2F9D9D"/>
+                <rect x="2" y="9" width="4" height="1" fill="#256F6F"/>
+                <rect x="3.9" y="4.3" width="0.2" height="5.4" fill="#256F6F" opacity="0.55"/>
+
+                <!-- QO'LLAR — ORQA TOMON -->
+                <g id="mc-arm-left-back">
+                  <rect x="0" y="4" width="2" height="2" fill="#256F6F"/>
+                  <rect x="0" y="6" width="2" height="4" fill="#D1A177"/>
+                </g>
+                <g id="mc-arm-right-back">
+                  <rect x="6" y="4" width="2" height="2" fill="#256F6F"/>
+                  <rect x="6" y="6" width="2" height="4" fill="#C08F65"/>
+                </g>
+
+                <!-- BOSH — ORQA TOMON: FAQAT SOCH, yuz yo'q -->
+                <rect x="2" y="0.3" width="4" height="3.7" fill="#4A2E1D"/>
+                <rect x="2.35" y="0.6" width="0.35" height="3.1" fill="#3E2617" opacity="0.55"/>
+                <rect x="3.25" y="0.6" width="0.35" height="3.1" fill="#3E2617" opacity="0.55"/>
+                <rect x="4.15" y="0.6" width="0.35" height="3.1" fill="#3E2617" opacity="0.55"/>
+                <rect x="5.05" y="0.6" width="0.35" height="3.1" fill="#3E2617" opacity="0.55"/>
+              </svg>
+            </div>
+            <!-- Soya — xarakter bilan birga aylanmaydi, doim yerda tekis yotadi -->
+            <div id="char-shadow-flat"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Markazdagi ajratuvchi chiziq — konteynerning aynan qoq o'rtasida (absolute, layoutga ta'sir qilmaydi) -->
+      <div style="position:absolute;top:8px;bottom:8px;left:50%;width:1px;background:var(--border);opacity:0.6;transform:translateX(-50%);pointer-events:none"></div>
+
+      <!-- O'NG: Mavjud dumaloq Avatar + Ism + Tahrirlash — o'ng yarmining markazida -->
+      <div style="width:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 16px;box-sizing:border-box">
+        <div style="text-align:center;flex-shrink:0">
+          <div id="profile-avatar" style="width:88px;height:88px;border-radius:50%;background:var(--accent);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:38px;cursor:pointer;border:3px solid rgba(124,92,252,0.4);transition:border-color 0.2s;box-shadow:0 0 24px rgba(124,92,252,0.2)" onclick="viewProfilePhoto()" title="Rasmni ko'rish" data-i18n-title="profile_view_photo_title"></div>
+          <div id="profile-name-big" style="font-family:Syne,sans-serif;font-size:22px;font-weight:700;color:var(--text);margin-bottom:2px">Shodruz</div>
+          <div id="profile-age-big" style="font-size:14px;color:var(--text-muted)" data-i18n="profile_no_age">Yosh kiritilmagan</div>
+          <button onclick="showProfileEdit()" style="margin-top:10px;padding:7px 18px;border-radius:999px;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:13px;cursor:pointer" data-i18n="profile_edit_btn">&#9998; Tahrirlash</button>
+        </div>
+      </div>
+
     </div>
+
+
 
 
 
@@ -1044,10 +1317,11 @@ if ('serviceWorker' in navigator) {
         <div style="font-size:12px;color:var(--text-muted);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:12px" data-i18n="sec_coin_system_title">🪙 Tanga tizimi</div>
         <div style="display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--text-muted)">
           <div style="display:flex;justify-content:space-between"><span data-i18n="sec_daily_clean">✅ Har kun (qilmadim)</span><span style="color:#34D399;font-weight:600">+3 🪙</span></div>
-          <div style="display:flex;justify-content:space-between"><span data-i18n="sec_streak_3">🔥 3 kun streak</span><span style="color:#34D399;font-weight:600">+5 🪙</span></div>
-          <div style="display:flex;justify-content:space-between"><span data-i18n="sec_streak_7">🔥 7 kun streak</span><span style="color:#34D399;font-weight:600">+15 🪙</span></div>
-          <div style="display:flex;justify-content:space-between"><span data-i18n="sec_streak_14">🔥 14 kun streak</span><span style="color:#34D399;font-weight:600">+30 🪙</span></div>
-          <div style="display:flex;justify-content:space-between"><span data-i18n="sec_streak_30">🔥 30 kun streak</span><span style="color:#34D399;font-weight:600">+60 🪙</span></div>
+          <div style="display:flex;justify-content:space-between"><span data-i18n="sec_streak_5">🥉 Daraja 1 (5 kun)</span><span style="color:#34D399;font-weight:600">+8 🪙</span></div>
+          <div style="display:flex;justify-content:space-between"><span data-i18n="sec_streak_10">🥈 Daraja 2 (10 kun)</span><span style="color:#34D399;font-weight:600">+20 🪙</span></div>
+          <div style="display:flex;justify-content:space-between"><span data-i18n="sec_streak_20">🥇 Daraja 3 (20 kun)</span><span style="color:#34D399;font-weight:600">+45 🪙</span></div>
+          <div style="display:flex;justify-content:space-between"><span data-i18n="sec_streak_40">🏅 Daraja 4 (40 kun)</span><span style="color:#34D399;font-weight:600">+90 🪙</span></div>
+          <div style="display:flex;justify-content:space-between"><span data-i18n="sec_streak_75">👑 Daraja 5 (75 kun)</span><span style="color:#34D399;font-weight:600">+180 🪙</span></div>
           <div style="height:1px;background:var(--border);margin:4px 0"></div>
           <div style="display:flex;justify-content:space-between"><span data-i18n="sec_fail_penalty">❌ Yiqilsa (jazo)</span><span style="color:#F87171;font-weight:600">-5 🪙</span></div>
           <div style="display:flex;justify-content:space-between"><span data-i18n="sec_fail_2x_penalty">⚠️ 3 kun ketma-ket (2x jazo)</span><span style="color:#F87171;font-weight:600">-10 🪙</span></div>
@@ -1476,8 +1750,10 @@ const I18N = {
     ielts_detail_no_part_data: "Ma'lumot yo'q",
     ielts_detail_avg_label: "O'rtacha",
     ielts_detail_times_suffix: ' ta natija',
+    ielts_detail_last_n_label: 'Oxirgi {n} ta',
+    ielts_detail_older_label: 'Eski natija',
     ielts_detail_all_title: "🧾 To'liq test (All) natijalari",
-    ielts_detail_hint: "Har bir qismning o'rtachasi shu qismga kiritilgan BARCHA natijalar asosida hisoblanadi",
+    ielts_detail_hint: "Listening/Reading: oxirgi 5 ta, Writing/Speaking: oxirgi 3 ta natija asosida hisoblanadi (eski natijalar hisobga olinmaydi)",
     ielts_detail_tap_hint: '👆 Batafsil tahlil uchun bosing',
     ielts_raw_correct_suffix: " to'g'ri",
     ielts_modal_title: '📊 IELTS Natija',
@@ -1613,6 +1889,29 @@ const I18N = {
     pe_age_ph: 'Yoshingiz...',
     pe_prep_label: 'Nimaga tayyorlanyapsiz?',
     pe_prep_none: 'Boshqa',
+    guide_info_tooltip: "Ilova bo'yicha qo'llanma",
+    guide_title: "📱 Ilovadan qanday foydalanish",
+    guide_next_btn: 'Keyingi →',
+    guide_back_btn: '← Orqaga',
+    guide_done_btn: 'Tushunarli ✓',
+    guide_step_tasks_title: '📋 Vazifalar',
+    guide_step_tasks_desc: "Har kuni bajarishingiz kerak bo'lgan vazifalarni shu yerga qo'shing. Vazifani bajargach belgilang — shunda tanga va streak olasiz.",
+    guide_step_streak_title: '🔥 Streak',
+    guide_step_streak_desc: "Streak — ketma-ket necha kun vazifa bajarganingizni ko'rsatadi. Streak qancha uzun bo'lsa, shuncha ko'p bonus tanga olasiz. Streak sonini bosib mukofotlarni ko'rishingiz mumkin.",
+    guide_step_rewards_title: '🎁 Mukofotlar',
+    guide_step_rewards_desc: "Tanga evaziga o'zingiz uchun mukofotlar (dam olish, shirinlik va h.k.) belgilab qo'ying va ularni 'sotib oling'.",
+    guide_step_goals_title: '🎯 Maqsadlar',
+    guide_step_goals_desc: "Uzoq muddatli maqsadlaringizni shu yerga yozib, ularga bosqichma-bosqich yaqinlashib boring.",
+    guide_step_chest_title: '🎲 Chest',
+    guide_step_chest_desc: "Chest bo'limida tasodifiy bonuslarni ochib, qo'shimcha tanga yutib olishingiz mumkin.",
+    guide_step_spin_title: '🎰 Spin',
+    guide_step_spin_desc: "Yuqoridagi Spin tugmasi orqali aylanma o'yin o'ynab, tasodifiy mukofotlar yutib olishingiz mumkin.",
+    guide_step_tarix_title: '💰 Tarix',
+    guide_step_tarix_desc: "Yuqoridagi tanga ko'rsatkichini bosib, barcha tanga kirim va chiqimlaringiz tarixini ko'rishingiz mumkin.",
+    guide_step_ielts_title: '📊 IELTS / SAT',
+    guide_step_ielts_desc: "Imtihonga tayyorlanayotgan bo'lsangiz, shu bo'limda natijalaringizni kiriting — o'rtacha ballingiz va imtihongacha qolgan kunlarni kuzatib borasiz.",
+    guide_step_profile_title: '👤 Profil',
+    guide_step_profile_desc: "Ism, rasm, til va imtihon turini shu oynada o'zgartirishingiz mumkin. Tilni o'zgartirsangiz, butun ilova shu tilga o'tadi.",
     btn_save: 'Saqlash',
     profile_saved_toast: '✅ Profil saqlandi!',
     // IELTS countdown
@@ -1731,6 +2030,7 @@ const I18N = {
     badge_group_coins: 'Tangalar',
     badge_group_hard: 'Qiyin',
     badge_group_shop: 'Mukofotlar',
+    badge_group_focus: 'Fokus',
     badge_unit_days: 'kun',
     badge_unit_tasks: 'vazifa',
     badge_unit_shop: 'ta',
@@ -1740,7 +2040,9 @@ const I18N = {
     badge_desc_coins: 'Jami {n} tanga topgansiz',
     badge_desc_hard: '{n} ta qiyin vazifa bajardingiz',
     badge_desc_shop: '{n} ta mukofot sotib oldingiz',
+    badge_desc_focus: '{n} kun barqaror davom ettirdingiz',
     badge_all_earned: 'Hammasi!',
+    badge_earned_toast: '🏅 Yangi badge qo\'lga kiritildi! +25 🪙',
     // Mood tracker
     mood_modal_title: '✨ Kayfiyat kundaligi',
     mood_select_label: 'Bugun kayfiyatni belgilang',
@@ -1772,10 +2074,11 @@ const I18N = {
     // Secret habit tracker reward table
     sec_coin_system_title: '🪙 Tanga tizimi',
     sec_daily_clean: '✅ Har kun (qilmadim)',
-    sec_streak_3: '🔥 3 kun streak',
-    sec_streak_7: '🔥 7 kun streak',
-    sec_streak_14: '🔥 14 kun streak',
-    sec_streak_30: '🔥 30 kun streak',
+    sec_streak_5: '🥉 Daraja 1 (5 kun)',
+    sec_streak_10: '🥈 Daraja 2 (10 kun)',
+    sec_streak_20: '🥇 Daraja 3 (20 kun)',
+    sec_streak_40: '🏅 Daraja 4 (40 kun)',
+    sec_streak_75: '👑 Daraja 5 (75 kun)',
     sec_fail_penalty: '❌ Yiqilsa (jazo)',
     sec_fail_2x_penalty: '⚠️ 3 kun ketma-ket (2x jazo)',
     sec_streak_label: '🔥 Streak',
@@ -2054,8 +2357,10 @@ const I18N = {
     ielts_detail_no_part_data: 'No data',
     ielts_detail_avg_label: 'Average',
     ielts_detail_times_suffix: ' entries',
+    ielts_detail_last_n_label: 'Last {n}',
+    ielts_detail_older_label: 'Older entry',
     ielts_detail_all_title: '🧾 Full test (All) results',
-    ielts_detail_hint: "Each part's average is calculated from ALL results entered for that part",
+    ielts_detail_hint: "Listening/Reading: based on the last 5 entries. Writing/Speaking: based on the last 3 entries (older entries don't count)",
     ielts_detail_tap_hint: '👆 Tap for detailed analysis',
     ielts_raw_correct_suffix: ' correct',
     ielts_modal_title: '📊 IELTS Result',
@@ -2196,6 +2501,29 @@ const I18N = {
     pe_age_ph: 'Your age...',
     pe_prep_label: 'What are you preparing for?',
     pe_prep_none: 'Other',
+    guide_info_tooltip: 'App guide',
+    guide_title: '📱 How to use the app',
+    guide_next_btn: 'Next →',
+    guide_back_btn: '← Back',
+    guide_done_btn: 'Got it ✓',
+    guide_step_tasks_title: '📋 Tasks',
+    guide_step_tasks_desc: "Add the tasks you need to do each day here. Mark a task done to earn coins and build your streak.",
+    guide_step_streak_title: '🔥 Streak',
+    guide_step_streak_desc: "Streak shows how many days in a row you've completed tasks. The longer your streak, the more bonus coins you earn. Tap the streak number to see the reward milestones.",
+    guide_step_rewards_title: '🎁 Rewards',
+    guide_step_rewards_desc: "Set up rewards for yourself (rest time, a treat, etc.) and 'buy' them with the coins you've earned.",
+    guide_step_goals_title: '🎯 Goals',
+    guide_step_goals_desc: "Write down your long-term goals here and track your progress toward them step by step.",
+    guide_step_chest_title: '🎲 Chest',
+    guide_step_chest_desc: "Open the Chest to reveal random bonuses and win extra coins.",
+    guide_step_spin_title: '🎰 Spin',
+    guide_step_spin_desc: "Use the Spin button at the top to play a spin game for random rewards.",
+    guide_step_tarix_title: '💰 History',
+    guide_step_tarix_desc: "Tap the coin counter at the top to see the full history of your coin earnings and spending.",
+    guide_step_ielts_title: '📊 IELTS / SAT',
+    guide_step_ielts_desc: "If you're preparing for an exam, enter your results here to track your average score and the days left until the exam.",
+    guide_step_profile_title: '👤 Profile',
+    guide_step_profile_desc: "Change your name, photo, language, and exam type in this window. Changing the language switches the whole app.",
     btn_save: 'Save',
     profile_saved_toast: '✅ Profile saved!',
     // IELTS countdown
@@ -2314,6 +2642,7 @@ const I18N = {
     badge_group_coins: 'Coins',
     badge_group_hard: 'Hard',
     badge_group_shop: 'Rewards',
+    badge_group_focus: 'Focus',
     badge_unit_days: 'days',
     badge_unit_tasks: 'tasks',
     badge_unit_shop: '',
@@ -2323,7 +2652,9 @@ const I18N = {
     badge_desc_coins: 'Earned {n} coins total',
     badge_desc_hard: 'Completed {n} hard tasks',
     badge_desc_shop: 'Purchased {n} rewards',
+    badge_desc_focus: 'Stayed consistent for {n} days',
     badge_all_earned: 'All earned!',
+    badge_earned_toast: '🏅 New badge earned! +25 🪙',
     // Mood tracker
     mood_modal_title: '✨ Mood journal',
     mood_select_label: "Set today's mood",
@@ -2355,10 +2686,11 @@ const I18N = {
     // Secret habit tracker reward table
     sec_coin_system_title: '🪙 Coin system',
     sec_daily_clean: "✅ Every day (didn't do it)",
-    sec_streak_3: '🔥 3-day streak',
-    sec_streak_7: '🔥 7-day streak',
-    sec_streak_14: '🔥 14-day streak',
-    sec_streak_30: '🔥 30-day streak',
+    sec_streak_5: '🥉 Level 1 (5 days)',
+    sec_streak_10: '🥈 Level 2 (10 days)',
+    sec_streak_20: '🥇 Level 3 (20 days)',
+    sec_streak_40: '🏅 Level 4 (40 days)',
+    sec_streak_75: '👑 Level 5 (75 days)',
     sec_fail_penalty: '❌ If you fail (penalty)',
     sec_fail_2x_penalty: '⚠️ 3 days in a row (2x penalty)',
     sec_streak_label: '🔥 Streak',
@@ -2635,8 +2967,10 @@ const I18N = {
     ielts_detail_no_part_data: 'Нет данных',
     ielts_detail_times_suffix: ' результатов',
     ielts_detail_avg_label: 'Среднее',
+    ielts_detail_last_n_label: 'Последние {n}',
+    ielts_detail_older_label: 'Старый результат',
     ielts_detail_all_title: '🧾 Результаты полного теста (All)',
-    ielts_detail_hint: 'Среднее по каждой части рассчитывается по ВСЕМ введённым результатам этой части',
+    ielts_detail_hint: 'Listening/Reading: рассчитывается по последним 5 результатам. Writing/Speaking: по последним 3 (старые результаты не учитываются)',
     ielts_detail_tap_hint: '👆 Нажмите для подробного анализа',
     ielts_raw_correct_suffix: ' правильных',
     ielts_modal_title: '📊 Результат IELTS',
@@ -2776,6 +3110,29 @@ const I18N = {
     pe_age_ph: 'Ваш возраст...',
     pe_prep_label: 'К чему готовитесь?',
     pe_prep_none: 'Другое',
+    guide_info_tooltip: 'Руководство по приложению',
+    guide_title: '📱 Как пользоваться приложением',
+    guide_next_btn: 'Далее →',
+    guide_back_btn: '← Назад',
+    guide_done_btn: 'Понятно ✓',
+    guide_step_tasks_title: '📋 Задачи',
+    guide_step_tasks_desc: 'Добавляйте сюда задачи, которые нужно выполнять каждый день. Отмечайте задачу выполненной, чтобы получать монеты и увеличивать streak.',
+    guide_step_streak_title: '🔥 Streak',
+    guide_step_streak_desc: 'Streak показывает, сколько дней подряд вы выполняете задачи. Чем длиннее streak, тем больше бонусных монет вы получаете. Нажмите на число streak, чтобы увидеть награды за рубежи.',
+    guide_step_rewards_title: '🎁 Награды',
+    guide_step_rewards_desc: "Настройте награды для себя (отдых, сладость и т.д.) и «покупайте» их за накопленные монеты.",
+    guide_step_goals_title: '🎯 Цели',
+    guide_step_goals_desc: 'Записывайте сюда свои долгосрочные цели и постепенно продвигайтесь к ним.',
+    guide_step_chest_title: '🎲 Chest',
+    guide_step_chest_desc: 'Открывайте Chest, чтобы получить случайные бонусы и выиграть дополнительные монеты.',
+    guide_step_spin_title: '🎰 Spin',
+    guide_step_spin_desc: 'Нажмите кнопку Spin вверху, чтобы сыграть в рулетку и выиграть случайные награды.',
+    guide_step_tarix_title: '💰 История',
+    guide_step_tarix_desc: 'Нажмите на счётчик монет вверху, чтобы увидеть полную историю начислений и трат.',
+    guide_step_ielts_title: '📊 IELTS / SAT',
+    guide_step_ielts_desc: 'Если вы готовитесь к экзамену, вносите сюда результаты, чтобы отслеживать средний балл и количество дней до экзамена.',
+    guide_step_profile_title: '👤 Профиль',
+    guide_step_profile_desc: 'Измените имя, фото, язык и тип экзамена в этом окне. При смене языка меняется весь интерфейс приложения.',
     btn_save: 'Сохранить',
     profile_saved_toast: '✅ Профиль сохранён!',
     // IELTS мотивация
@@ -2894,6 +3251,7 @@ const I18N = {
     badge_group_coins: 'Монеты',
     badge_group_hard: 'Сложные',
     badge_group_shop: 'Награды',
+    badge_group_focus: 'Фокус',
     badge_unit_days: 'дней',
     badge_unit_tasks: 'задач',
     badge_unit_shop: 'шт',
@@ -2903,7 +3261,9 @@ const I18N = {
     badge_desc_coins: 'Заработали {n} монет',
     badge_desc_hard: 'Выполнили {n} сложных задач',
     badge_desc_shop: 'Купили {n} наград',
+    badge_desc_focus: 'Продержались {n} дней подряд',
     badge_all_earned: 'Все получены!',
+    badge_earned_toast: '🏅 Новый бейдж получен! +25 🪙',
     // Дневник настроения
     mood_modal_title: '✨ Дневник настроения',
     mood_select_label: 'Отметьте настроение сегодня',
@@ -2935,10 +3295,11 @@ const I18N = {
     // Система монет (справка)
     sec_coin_system_title: '🪙 Система монет',
     sec_daily_clean: '✅ Каждый день (не выполнил)',
-    sec_streak_3: '🔥 3 дня streak',
-    sec_streak_7: '🔥 7 дней streak',
-    sec_streak_14: '🔥 14 дней streak',
-    sec_streak_30: '🔥 30 дней streak',
+    sec_streak_5: '🥉 Уровень 1 (5 дней)',
+    sec_streak_10: '🥈 Уровень 2 (10 дней)',
+    sec_streak_20: '🥇 Уровень 3 (20 дней)',
+    sec_streak_40: '🏅 Уровень 4 (40 дней)',
+    sec_streak_75: '👑 Уровень 5 (75 дней)',
     sec_fail_penalty: '❌ Нарушил (штраф)',
     sec_fail_2x_penalty: '⚠️ 3 дня подряд (2x штраф)',
     sec_streak_label: '🔥 Streak',
@@ -3255,6 +3616,7 @@ function getStreakBonus(streak) {
 let S = {
   tasks:[], taskOrder:[], rewards:JSON.parse(JSON.stringify(defaultRewards)),
   coins:0, totalCoins:0, streak:0, lastDate:null, nextId:200, nextRid:20,
+  hp:100, hpLastCoins:0, isDead:false, deathAt:null,
 };
 
 // Modal state
@@ -5434,6 +5796,354 @@ function renderLevel() {
   });
 }
 
+// ============ PERSONAJ JON (HP) TIZIMI ============
+// Qoidalar:
+//  - Maksimal jon: 100 HP, S.hp da saqlanadi (localStorage orqali S bilan birga persist bo'ladi).
+//  - Tangalar balansi manfiy tomonga o'zgarsa (masalan -3 dan -5 ga tushsa): har 1 manfiy
+//    tanga uchun -2 HP.
+//  - Tangalar balansi 0 yoki musbat bo'lganda ortib borsa: har 1 musbat tanga uchun +0.5 HP
+//    (maksimal 100 gacha).
+//  - S.hpLastCoins — oxirgi hisoblangan paytdagi tanga balansi, delta shundan hisoblanadi.
+// ---- Yurakcha zararlanish effekti: matn + Steve xarakteri birga silkinadi,
+// matn soniyali qizil rangga o'tib ortga qaytadi ----
+function triggerHeartDamage(amount) {
+  var widget = document.getElementById('char-hp-widget');
+  var label = document.getElementById('hp-value-label');
+  var flashRect = document.getElementById('char-damage-flash');
+  var floatWrap = document.getElementById('char-avatar-float');
+  if (widget) {
+    widget.classList.remove('hp-shake');
+    void widget.offsetWidth; // reflow — animatsiyani qayta boshlash uchun
+    widget.classList.add('hp-shake');
+    setTimeout(function(){ widget.classList.remove('hp-shake'); }, 520);
+  }
+  if (label) {
+    label.classList.remove('hp-flash-red');
+    void label.offsetWidth;
+    label.classList.add('hp-flash-red');
+    setTimeout(function(){ label.classList.remove('hp-flash-red'); }, 950);
+  }
+  // Butun Steve tanasi qip-qizil bo'lib chaqnaydi (Minecraft damage flash)
+  if (flashRect) {
+    flashRect.classList.remove('dmg-flash-active');
+    void flashRect.offsetWidth;
+    flashRect.classList.add('dmg-flash-active');
+    setTimeout(function(){ flashRect.classList.remove('dmg-flash-active'); }, 460);
+  }
+  // Ustidan "-X HP" matni uchib chiqib yo'qoladi
+  if (floatWrap && amount) {
+    var dmgEl = document.createElement('div');
+    dmgEl.className = 'dmg-float-text';
+    dmgEl.textContent = '-' + Math.round(amount) + ' HP';
+    floatWrap.appendChild(dmgEl);
+    setTimeout(function(){ if (dmgEl.parentNode) dmgEl.parentNode.removeChild(dmgEl); }, 1000);
+  }
+  try { if (navigator.vibrate) navigator.vibrate([15,40,15]); } catch(e) {}
+}
+
+// ---- Game Over overlayini vaqtincha yopish (X tugmasi) ----
+// Bu holat FAQAT joriy sessiya uchun amal qiladi (saqlanmaydi) — sahifa
+// qayta yuklanganda yoki yangi o'lim sodir bo'lganda overlay yana ko'rinadi.
+var deathOverlayDismissed = false;
+function dismissDeathOverlay() {
+  deathOverlayDismissed = true;
+  var overlay = document.getElementById('death-overlay');
+  if (overlay) overlay.style.display = 'none';
+}
+
+// ---- HP panelidagi kichik "X kun qoldi" belgisini yangilaydi ----
+// Bu — Game Over oynasi X tugmasi bilan yopilgan bo'lsa ham, foydalanuvchi
+// hali nechi kun jazoda ekanini HP panelidan bir qarashda bilib olishi uchun.
+function updateHpDaysLeftBadge(daysLeft) {
+  var badge = document.getElementById('hp-days-left-badge');
+  var valEl = document.getElementById('hp-days-left-value');
+  if (!badge) return;
+  if (!S.isDead) { badge.style.display = 'none'; return; }
+  if (valEl) valEl.textContent = daysLeft;
+  badge.style.display = 'inline-block';
+}
+
+// ---- O'lim (GAME OVER) overlayini 30 kunlik taymer holatiga qarab yangilaydi ----
+function updateDeathOverlay() {
+  var overlay = document.getElementById('death-overlay');
+  if (!overlay) return;
+  if (!S.isDead) { overlay.style.display = 'none'; updateHpDaysLeftBadge(0); return; }
+
+  var TOTAL_MS = 30 * 24 * 60 * 60 * 1000;
+  var deathAt = S.deathAt || Date.now();
+  var elapsed = Date.now() - deathAt;
+  if (elapsed < 0) elapsed = 0;
+
+  if (elapsed >= TOTAL_MS) {
+    // 30 kunlik jazo muddati tugadi — Steve jonlanadi, jon qisman tiklanadi
+    S.isDead = false;
+    S.deathAt = null;
+    S.hp = 50;
+    S.hpLastCoins = S.coins || 0;
+    deathOverlayDismissed = false;
+    save();
+    overlay.style.display = 'none';
+    updateHpDaysLeftBadge(0);
+    toast('❤️ Steve jonlandi! Instagram qayta ochildi.');
+    renderHp();
+    return;
+  }
+
+  // Foydalanuvchi "X" tugmasi orqali vaqtincha yopgan bo'lsa, jazo hali ham
+  // amal qiladi (taymer davom etadi), lekin oyna qayta majburiy ko'rsatilmaydi.
+  overlay.style.display = deathOverlayDismissed ? 'none' : 'flex';
+  var progressFrac = elapsed / TOTAL_MS; // 0 -> 1, vaqt o'tishi bilan ortadi
+  var remainMs = TOTAL_MS - elapsed;
+  var daysLeft = Math.max(1, Math.ceil(remainMs / (24*60*60*1000)));
+  updateHpDaysLeftBadge(daysLeft);
+  var daysEl = document.getElementById('death-timer-days');
+  var fillEl = document.getElementById('death-progress-fill');
+  if (daysEl) daysEl.textContent = daysLeft;
+  if (fillEl) fillEl.style.width = (progressFrac*100) + '%';
+
+  // Ekran chetlari — vaqt o'tishi bilan (jazo muddati davom etgani sayin)
+  // xuddi bo'g'ilayotgandek tobora qorayib/qizarib, kuchayib boradi.
+  var vig = document.getElementById('death-vignette');
+  if (vig) {
+    var minOp = 0.45 + progressFrac * 0.4;   // ~0.45 -> 0.85
+    var maxOp = 0.65 + progressFrac * 0.32;  // ~0.65 -> 0.97
+    vig.style.setProperty('--vig-min', Math.min(0.9, minOp).toFixed(2));
+    vig.style.setProperty('--vig-max', Math.min(0.98, maxOp).toFixed(2));
+    // Kun o'tgani sayin ekranning "tirik" (ochiq) markazi torayib,
+    // bosim xuddi tiqilib kelayotgandek kuchayib boradi.
+    var safe = 28 - progressFrac * 20;  // 28% -> 8%
+    var mid  = 68 - progressFrac * 30;  // 68% -> 38%
+    vig.style.setProperty('--vig-safe', Math.max(6, safe).toFixed(1) + '%');
+    vig.style.setProperty('--vig-mid', Math.max(30, mid).toFixed(1) + '%');
+  }
+}
+// Overlay ochiq bo'lganda taymer/vignette har daqiqada yangilanib tursin
+setInterval(function(){ if (S.isDead) updateDeathOverlay(); }, 60000);
+
+// ---- Tanga o'zgarishidan Jon (HP) ga ta'sir formulasi — YAGONA manba ----
+//   Jon FAQAT tangalar balansi 0 dan pastda bo'lgan/pastga tushgan qismi
+//   uchun ta'sirlanadi. Balansning butunlay musbat/0 hududidagi harakati
+//   jonni "jazo" sifatida kamaytirmaydi — faqat sekin tiklanish (+0.5/tanga) beradi.
+//
+//   Har bir tranzaksiyada "haqiqiy minus farq" (negDiff) shunday topiladi:
+//     negDiff = Math.min(0, yangi_balans) - Math.min(0, eski_balans)
+//   - Eski balans ham, yangi balans ham minus bo'lsa -> negDiff aynan
+//     ikkalasi orasidagi farq (butun diff, chunki hammasi minus hududda).
+//   - Eski balans musbat/0, yangi balans minusga tushsa -> negDiff faqat
+//     "0 dan pastga o'tgan" qismi, ya'ni (0 - Math.min(0, yangi_balans)) ning
+//     manfiy ishorasi bilan.
+//   negDiff manfiy bo'lsa -> jon ketadi (negDiff * 2 = manfiy son, HP'ga qo'shiladi).
+//   negDiff musbat bo'lsa -> minus hududda qisman tiklanish (jon qaytadi).
+var HP_LOSS_PER_NEGATIVE_COIN = 2;   // 1 ta minus tanga = shuncha HP ketadi/qaytadi (0 dan pastdagi qism uchun)
+var HP_GAIN_PER_POSITIVE_COIN = 0.5; // 1 ta musbat tanga (balans 0/musbat hududda o'sganda) = shuncha HP tiklanadi
+
+// Berilgan eski/yangi tanga balansidan qancha HP o'zgarishi kerakligini hisoblaydi.
+// BU FUNKSIYA HECH QANDAY YON TA'SIRGA (side effect) EGA EMAS — faqat sof
+// hisob-kitob qaytaradi, shu bilan formulaning qayerda ham bo'lmasin faqat
+// BITTA joyda, BITTA marta qo'llanishini kafolatlaydi.
+function calcHpDeltaFromCoinDiff(diff, oldCoins, newCoins) {
+  if (diff === 0) return 0;
+
+  // Balansning faqat 0 dan pastdagi ("minus") qismidagi harakati:
+  var oldNeg = Math.min(0, oldCoins);
+  var newNeg = Math.min(0, newCoins);
+  var negDiff = newNeg - oldNeg;
+
+  if (negDiff !== 0) {
+    // Minus hududdagi haqiqiy farq — pasayish (negDiff<0) jon oladi,
+    // o'sha hudud ichida qisman tiklanish (negDiff>0) jonni qaytaradi.
+    return negDiff * HP_LOSS_PER_NEGATIVE_COIN;
+  }
+
+  // Balans butunlay 0/musbat hududda qolgan holat: faqat ko'payganda
+  // (diff>0) jon sekin tiklanadi.
+  if (oldCoins >= 0 && newCoins >= 0 && diff > 0) {
+    return diff * HP_GAIN_PER_POSITIVE_COIN;
+  }
+  return 0;
+}
+
+
+// Qayta-kirish (reentrancy) qulfi — renderHp() qanday sabab bilan bo'lmasin
+// (masalan ikkita joydan ketma-ket yoki bir-birining ichida) chaqirilsa ham,
+// BITTA tanga o'zgarishi (tranzaksiya) uchun HP formulasi faqat BIR MARTA
+// ishlashini kafolatlaydi.
+var _hpCoinTxLock = false;
+
+function renderHp() {
+  if (typeof S.hp !== 'number' || isNaN(S.hp)) S.hp = 100;
+  if (typeof S.hpLastCoins !== 'number' || isNaN(S.hpLastCoins)) S.hpLastCoins = S.coins || 0;
+  if (typeof S.isDead !== 'boolean') S.isDead = false;
+
+  if (S.isDead) {
+    // O'lim holatida jon 0'da muzlab qoladi — 30 kun tugamaguncha
+    // tangalar o'zgarishi jonni tiklamaydi.
+    S.hp = 0;
+    S.hpLastCoins = S.coins || 0;
+    updateDeathOverlay();
+  } else if (_hpCoinTxLock) {
+    // Qayta-kirish aniqlandi (renderHp() allaqachon ishlab turibdi) —
+    // bir xil tanga o'zgarishini ikkinchi marta hisoblamaslik uchun
+    // bu chaqiruv HP arifmetikasini o'tkazib yuboradi, faqat vizualni yangilaydi.
+  } else {
+    _hpCoinTxLock = true;
+    try {
+      var oldHp = S.hp;
+      var curCoins = S.coins || 0;
+      // MUHIM: diff'ni o'qib olamiz VA baselineni (S.hpLastCoins) DARHOL,
+      // arifmetikadan OLDIN yopiq holga o'tkazamiz — shu bilan bitta
+      // tanga o'zgarishi hech qachon ikki marta hisoblanmaydi.
+      var oldCoinsBaseline = S.hpLastCoins;
+      var diff = curCoins - oldCoinsBaseline;
+      S.hpLastCoins = curCoins; // baseline darhol "band" qilinadi (lock-in)
+
+      if (diff !== 0) {
+        var hpDelta = calcHpDeltaFromCoinDiff(diff, oldCoinsBaseline, curCoins);
+        if (hpDelta !== 0) {
+          S.hp += hpDelta;
+          S.hp = Math.max(0, Math.min(100, S.hp));
+        }
+      }
+
+      // Jon kamaygan bo'lsa — yurakcha + Steve birga silkinadi, tana qizarib chaqnaydi,
+      // "-X HP" matni uchib chiqadi, matn qizarib o'tadi
+      if (S.hp < oldHp) triggerHeartDamage(oldHp - S.hp);
+
+      // Jon roppa-rosa 0❤️ ga tushdi — o'lim holati va 30 kunlik taymer boshlanadi
+      if (S.hp <= 0 && !S.isDead) {
+        S.isDead = true;
+        S.deathAt = Date.now();
+        deathOverlayDismissed = false;
+        save();
+        updateDeathOverlay();
+      }
+    } finally {
+      _hpCoinTxLock = false;
+    }
+  }
+
+  var pct = Math.max(0, Math.min(100, S.hp));
+  var fill = document.getElementById('hp-bar-fill');
+  var label = document.getElementById('hp-value-label');
+  var color1, color2;
+  if (pct > 60) { color1 = '#4ADE80'; color2 = '#22C55E'; }
+  else if (pct > 30) { color1 = '#FBBF24'; color2 = '#F59E0B'; }
+  else { color1 = '#F87171'; color2 = '#EF4444'; }
+  if (fill) {
+    fill.style.width = pct + '%';
+    fill.style.background = 'linear-gradient(90deg,' + color1 + ',' + color2 + ')';
+  }
+  if (label) label.textContent = Math.round(pct) + '❤️';
+
+  // Personaj kayfiyati (yuz ifodasi) HP darajasiga qarab dinamik o'zgaradi:
+  //  75-100 HP: xursand/oddiy · 30-74 HP: xavotirli/o'ylanib qolgan · 1-29 HP: juda qiynalgan
+  var mouth = document.getElementById('char-mouth');
+  var eyeL = document.getElementById('char-eye-l');
+  var eyeR = document.getElementById('char-eye-r');
+  var browL = document.getElementById('char-eyebrow-l');
+  var browR = document.getElementById('char-eyebrow-r');
+  var floatWrap = document.getElementById('char-avatar-float');
+
+  if (pct >= 75) {
+    // Xursand / oddiy Steve — ochiq ko'zlar, tabassum, qoshlar tinch
+    if (mouth) mouth.setAttribute('d', 'M3.3 3.3 Q4 3.7 4.7 3.3');
+    if (eyeL) { eyeL.setAttribute('y', '2'); eyeL.setAttribute('height', '0.7'); }
+    if (eyeR) { eyeR.setAttribute('y', '2'); eyeR.setAttribute('height', '0.7'); }
+    if (browL) browL.setAttribute('opacity', '0');
+    if (browR) browR.setAttribute('opacity', '0');
+  } else if (pct >= 30) {
+    // Xavotirli / o'ylanib qolgan — qoshlar chimirilgan, og'iz to'g'ri chiziq
+    if (mouth) mouth.setAttribute('d', 'M3.3 3.55 L4.7 3.55');
+    if (eyeL) { eyeL.setAttribute('y', '2'); eyeL.setAttribute('height', '0.7'); }
+    if (eyeR) { eyeR.setAttribute('y', '2'); eyeR.setAttribute('height', '0.7'); }
+    if (browL) { browL.setAttribute('opacity', '1'); browL.setAttribute('d', 'M2.65 1.7 L3.6 1.92'); }
+    if (browR) { browR.setAttribute('opacity', '1'); browR.setAttribute('d', 'M4.4 1.92 L5.35 1.7'); }
+  } else {
+    // Juda qiynalayotgan — ko'zlari qisilgan, og'iz azob chizig'i, qoshlar qattiq chimirilgan
+    if (mouth) mouth.setAttribute('d', 'M3.3 3.65 Q4 3.25 4.7 3.65');
+    if (eyeL) { eyeL.setAttribute('y', '2.25'); eyeL.setAttribute('height', '0.25'); }
+    if (eyeR) { eyeR.setAttribute('y', '2.25'); eyeR.setAttribute('height', '0.25'); }
+    if (browL) { browL.setAttribute('opacity', '1'); browL.setAttribute('d', 'M2.65 1.95 L3.6 1.62'); }
+    if (browR) { browR.setAttribute('opacity', '1'); browR.setAttribute('d', 'M4.4 1.62 L5.35 1.95'); }
+  }
+
+  if (floatWrap) {
+    floatWrap.style.opacity = pct <= 0 ? '0.5' : '1';
+    floatWrap.style.animation = pct > 30
+      ? 'charFloat 2.2s ease-in-out infinite'
+      : 'charFloatAlert 1.3s ease-in-out infinite';
+  }
+}
+
+// ============ XARAKTERNI 360° AYLANTIRISH (DRAG TO ROTATE 3D) ============
+// Sichqoncha yoki barmoq bilan bosib turib chapga/o'ngga surilganda,
+// Minecraft Steve Y o'qi bo'ylab aylanadi va orqa tomoni (soch, kiyim va
+// shim orqasi) ko'rinadi. Qo'yib yuborilganda qaysi burchakda to'xtagan
+// bo'lsa o'sha holatida qoladi.
+(function initChar3DRotate() {
+  var stage = document.getElementById('char-avatar-float');
+  var rotator = document.getElementById('char-3d-rotator');
+  if (!stage || !rotator) return;
+
+  var ROTATE_SENSITIVITY = 0.6; // 1px surishga necha darajadan aylanish
+  var isDragging = false;
+  var startX = 0;
+  var startAngle = 0;
+  var currentAngle = 0;
+
+  function setAngle(angle) {
+    currentAngle = angle;
+    rotator.style.transform = 'rotateY(' + currentAngle + 'deg)';
+  }
+
+  function beginDrag(clientX) {
+    isDragging = true;
+    startX = clientX;
+    startAngle = currentAngle;
+    stage.classList.add('is-dragging');
+    rotator.classList.add('is-dragging'); // sudrash chog'ida transition o'chadi — teking, kechikishsiz aylanadi
+  }
+
+  function moveDrag(clientX) {
+    if (!isDragging) return;
+    var deltaX = clientX - startX;
+    setAngle(startAngle + deltaX * ROTATE_SENSITIVITY);
+  }
+
+  function endDrag() {
+    if (!isDragging) return;
+    isDragging = false;
+    stage.classList.remove('is-dragging');
+    rotator.classList.remove('is-dragging'); // yumshoq "settle" transition qaytadi
+  }
+
+  // ---- Sichqoncha (mouse) hodisalari ----
+  stage.addEventListener('mousedown', function (e) {
+    beginDrag(e.clientX);
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove', function (e) {
+    if (isDragging) { moveDrag(e.clientX); e.preventDefault(); }
+  });
+  window.addEventListener('mouseup', function () { endDrag(); });
+
+  // ---- Mobil sensor (touch) hodisalari ----
+  stage.addEventListener('touchstart', function (e) {
+    if (e.touches && e.touches.length) beginDrag(e.touches[0].clientX);
+  }, { passive: true });
+  stage.addEventListener('touchmove', function (e) {
+    if (isDragging && e.touches && e.touches.length) {
+      moveDrag(e.touches[0].clientX);
+      e.preventDefault(); // sahifa gorizontal/vertikal skroll qilib ketmasin
+    }
+  }, { passive: false });
+  stage.addEventListener('touchend', function () { endDrag(); });
+  stage.addEventListener('touchcancel', function () { endDrag(); });
+
+  // Qulaylik uchun: ikki marta bosish/tegish — old tomonga tez qaytaradi
+  stage.addEventListener('dblclick', function () { setAngle(0); });
+})();
+
 function render() {
   // Bugungi kun uchun interval vazifalarning haqiqiy jadval holatini
   // har renderda yozib qo'yamiz — shunda foydalanuvchi hali hech qanday
@@ -5442,6 +6152,7 @@ function render() {
   recalcStreakFromLog();
   document.getElementById('coins-display').textContent=S.coins;
   checkNegativeCoins();
+  renderHp();
   document.getElementById('streak-display').textContent=S.streak||0;
   renderLevel();
 
@@ -6233,7 +6944,7 @@ function showProfileEdit() {
   overlay.id='profile-edit-modal';
   overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px';
   var box=document.createElement('div');
-  box.style.cssText='background:#1C1C25;border:1px solid rgba(255,255,255,0.15);border-radius:20px;padding:16px;width:100%;max-width:340px';
+  box.style.cssText='position:relative;background:#1C1C25;border:1px solid rgba(255,255,255,0.15);border-radius:20px;padding:16px;width:100%;max-width:340px';
 
   // Avatar preview area
   var avatarHtml = photo
@@ -6244,6 +6955,7 @@ function showProfileEdit() {
   var labelStyle = 'font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px';
 
   box.innerHTML=
+    '<button id="pe-guide-btn" title="'+t('guide_info_tooltip')+'" style="position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:50%;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:12px;font-weight:700;font-family:Georgia,serif;font-style:italic;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0">i</button>'+
     '<h3 style="font-family:Syne,sans-serif;font-size:15px;font-weight:700;color:var(--text);margin-bottom:12px;text-align:center">Profilni tahrirlash</h3>'+
     // Photo + Name row
     '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">'+
@@ -6291,6 +7003,11 @@ function showProfileEdit() {
   overlay.appendChild(box);
   document.body.appendChild(overlay);
 
+  document.getElementById('pe-guide-btn').onclick=function(e){
+    e.stopPropagation();
+    showAppGuide();
+  };
+
   // Photo file input handler
   var newPhotoData = photo; // keep current if not changed
   document.getElementById('pe-photo-inp').addEventListener('change', function(e){
@@ -6336,7 +7053,89 @@ function showProfileEdit() {
   overlay.addEventListener('mousedown',function(e){if(e.target===overlay)overlay.remove();});
 }
 
+// ============ ILOVA BO'YICHA QO'LLANMA (App Guide) ============
+// Profilni tahrirlash oynasidagi kichik "i" tugmasi orqali ochiladi.
+// Har bir qadam joriy tanlangan tilda (t() orqali) ko'rsatiladi.
+// Sichqoncha bilan "Keyingi" tugmasini bosish, yoki klaviaturada
+// Enter/Space bosish — keyingi qadamga o'tkazadi.
+function getAppGuideSteps() {
+  return [
+    { icon:'📋', title:t('guide_step_tasks_title'),   desc:t('guide_step_tasks_desc')   },
+    { icon:'🔥', title:t('guide_step_streak_title'),  desc:t('guide_step_streak_desc')  },
+    { icon:'🎁', title:t('guide_step_rewards_title'), desc:t('guide_step_rewards_desc') },
+    { icon:'🎯', title:t('guide_step_goals_title'),   desc:t('guide_step_goals_desc')   },
+    { icon:'🎲', title:t('guide_step_chest_title'),   desc:t('guide_step_chest_desc')   },
+    { icon:'🎰', title:t('guide_step_spin_title'),    desc:t('guide_step_spin_desc')    },
+    { icon:'💰', title:t('guide_step_tarix_title'),   desc:t('guide_step_tarix_desc')   },
+    { icon:'📊', title:t('guide_step_ielts_title'),   desc:t('guide_step_ielts_desc')   },
+    { icon:'👤', title:t('guide_step_profile_title'), desc:t('guide_step_profile_desc') }
+  ];
+}
+
+function showAppGuide() {
+  var old = document.getElementById('app-guide-modal'); if (old) old.remove();
+  var steps = getAppGuideSteps();
+  var idx = 0;
+
+  var overlay = document.createElement('div');
+  overlay.id = 'app-guide-modal';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px';
+
+  var box = document.createElement('div');
+  box.style.cssText = 'background:#1C1C25;border:1px solid rgba(255,255,255,0.15);border-radius:20px;padding:24px 22px;width:100%;max-width:360px;text-align:center';
+
+  function renderStep() {
+    var s = steps[idx];
+    var dots = steps.map(function(_, i) {
+      return '<span style="display:inline-block;width:'+(i===idx?'18px':'6px')+';height:6px;border-radius:999px;background:'+(i===idx?'var(--accent)':'var(--border)')+';transition:all 0.2s"></span>';
+    }).join('');
+
+    box.innerHTML =
+      '<div style="font-size:12px;color:var(--text-dim);margin-bottom:10px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase">' + t('guide_title') + '</div>' +
+      '<div style="font-size:38px;margin-bottom:14px">' + s.icon + '</div>' +
+      '<div style="font-family:Syne,sans-serif;font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px">' + s.title + '</div>' +
+      '<div style="font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:18px;min-height:60px">' + s.desc + '</div>' +
+      '<div style="display:flex;justify-content:center;gap:6px;margin-bottom:20px">' + dots + '</div>' +
+      '<div style="display:flex;gap:10px">' +
+        (idx > 0 ? '<button id="guide-back-btn" style="flex:1;padding:10px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:13px;cursor:pointer;font-family:DM Sans,sans-serif">' + t('guide_back_btn') + '</button>' : '') +
+        '<button id="guide-next-btn" style="flex:2;padding:10px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif">' + (idx === steps.length - 1 ? t('guide_done_btn') : t('guide_next_btn')) + '</button>' +
+      '</div>';
+
+    var backBtn = document.getElementById('guide-back-btn');
+    if (backBtn) backBtn.onclick = function(e) { e.stopPropagation(); idx--; renderStep(); };
+    document.getElementById('guide-next-btn').onclick = function(e) { e.stopPropagation(); advance(); };
+  }
+
+  function advance() {
+    if (idx < steps.length - 1) { idx++; renderStep(); }
+    else { closeGuide(); }
+  }
+
+  function closeGuide() {
+    document.removeEventListener('keydown', keyHandler);
+    overlay.remove();
+  }
+
+  // Enter yoki Space bosilsa — keyingi qadamga o'tadi (oxirgi qadamda yopadi)
+  function keyHandler(e) {
+    if (e.key === 'Enter' || e.key === ' ' || e.code === 'Space') {
+      e.preventDefault();
+      advance();
+    } else if (e.key === 'Escape') {
+      closeGuide();
+    }
+  }
+
+  overlay.addEventListener('mousedown', function(e) { if (e.target === overlay) closeGuide(); });
+  document.addEventListener('keydown', keyHandler);
+
+  renderStep();
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+
 function renderProfile() {
+  renderHp();
   var name=(S.profile&&S.profile.name)||'Shodruz';
   var age=(S.profile&&S.profile.age);
   var el;
@@ -6927,7 +7726,8 @@ function updateChpinDots() {
 }
 
 // Streak milestone coins
-var SEC_STREAK_BONUSES = {3:5, 7:15, 14:30, 30:60};
+var SEC_STREAK_BONUSES = {5:8, 10:20, 20:45, 40:90, 75:180};
+var SEC_STREAK_TIER_ICON = {5:'🥉', 10:'🥈', 20:'🥇', 40:'🏅', 75:'👑'};
 
 function calcSecretStreak(log) {
   var streak = 0;
@@ -7022,10 +7822,11 @@ function secretLog(status, when) {
     var streakBonusKey = logDate + '_milestone';
     if(!d.streakBonusByDate[streakBonusKey]) {
       var mBonus = 0, mLabel = 0;
-      if      (newStreak >= 30) { mBonus = SEC_STREAK_BONUSES[30]; mLabel = 30; }
-      else if (newStreak >= 14) { mBonus = SEC_STREAK_BONUSES[14]; mLabel = 14; }
-      else if (newStreak >= 7)  { mBonus = SEC_STREAK_BONUSES[7];  mLabel = 7;  }
-      else if (newStreak >= 3)  { mBonus = SEC_STREAK_BONUSES[3];  mLabel = 3;  }
+      if      (newStreak >= 75) { mBonus = SEC_STREAK_BONUSES[75]; mLabel = 75; }
+      else if (newStreak >= 40) { mBonus = SEC_STREAK_BONUSES[40]; mLabel = 40; }
+      else if (newStreak >= 20) { mBonus = SEC_STREAK_BONUSES[20]; mLabel = 20; }
+      else if (newStreak >= 10) { mBonus = SEC_STREAK_BONUSES[10]; mLabel = 10; }
+      else if (newStreak >= 5)  { mBonus = SEC_STREAK_BONUSES[5];  mLabel = 5;  }
       if(mBonus > 0) {
         d.streakBonusByDate[streakBonusKey] = mBonus; // rollback + spam himoya
         totalCoinGain += mBonus;
@@ -7210,7 +8011,14 @@ function renderSecretContent() {
   var el2=document.getElementById('sec-stat-total');  if(el2) el2.textContent=total;
   var el3=document.getElementById('sec-stat-best');   if(el3) el3.textContent=best;
   var badge=document.getElementById('secret-streak-badge');
-  if(badge) badge.textContent = streak>0 ? tr('sec_streak_badge_active').replace('{n}', streak) : tr('sec_streak_badge_none');
+  if(badge) {
+    var tierIcon = '';
+    var tierThresholds = [75,40,20,10,5];
+    for (var ti=0; ti<tierThresholds.length; ti++) {
+      if (streak >= tierThresholds[ti]) { tierIcon = SEC_STREAK_TIER_ICON[tierThresholds[ti]] + ' '; break; }
+    }
+    badge.textContent = streak>0 ? (tierIcon + tr('sec_streak_badge_active').replace('{n}', streak)) : tr('sec_streak_badge_none');
+  }
 
   // History list
   var histEl = document.getElementById('secret-history-list');
@@ -8591,6 +9399,19 @@ function calToggleTaskDone(id, dateStr) {
 // ============================================================
 // BADGE TIZIMI
 // ============================================================
+// Yashirin (PIN bilan yopiq) sahifadagi eng uzun streakni hisoblaydi —
+// asosiy "BADGELARIM" sahifasida neytral "Fokus" guruhi sifatida ko'rsatish uchun.
+function getSecretBestStreak() {
+  var d = S.secretHabit || {};
+  var log = d.log || {};
+  var best = 0, tmp = 0;
+  Object.keys(log).sort().forEach(function(k) {
+    if (log[k] === 'clean') { tmp++; if (tmp > best) best = tmp; }
+    else tmp = 0;
+  });
+  return best;
+}
+
 function buildAllBadges() {
   return [
   // 🔥 Streak
@@ -8627,6 +9448,13 @@ function buildAllBadges() {
   { id:'shop_500',  group:'shop', icon:'💸', label:'500 '+t('badge_unit_shop'),  desc:t('badge_desc_shop').replace('{n}','500'),  check: function(s){ return (s.totalPurchases||0) >= 500;  } },
   { id:'shop_1000', group:'shop', icon:'💎', label:'1000 '+t('badge_unit_shop'), desc:t('badge_desc_shop').replace('{n}','1000'), check: function(s){ return (s.totalPurchases||0) >= 1000; } },
   { id:'shop_2000', group:'shop', icon:'👑', label:'2000 '+t('badge_unit_shop'), desc:t('badge_desc_shop').replace('{n}','2000'), check: function(s){ return (s.totalPurchases||0) >= 2000; } },
+
+  // 🧘 Fokus (neytral nom — boshqalar ko'rsa shubhalanmaydi)
+  { id:'focus_5',  group:'focus', icon:'🥉', label:'5 '+t('badge_unit_days'),  desc:t('badge_desc_focus').replace('{n}','5'),  check: function(s){ return getSecretBestStreak() >= 5;  } },
+  { id:'focus_10', group:'focus', icon:'🥈', label:'10 '+t('badge_unit_days'), desc:t('badge_desc_focus').replace('{n}','10'), check: function(s){ return getSecretBestStreak() >= 10; } },
+  { id:'focus_20', group:'focus', icon:'🥇', label:'20 '+t('badge_unit_days'), desc:t('badge_desc_focus').replace('{n}','20'), check: function(s){ return getSecretBestStreak() >= 20; } },
+  { id:'focus_40', group:'focus', icon:'🏅', label:'40 '+t('badge_unit_days'), desc:t('badge_desc_focus').replace('{n}','40'), check: function(s){ return getSecretBestStreak() >= 40; } },
+  { id:'focus_75', group:'focus', icon:'👑', label:'75 '+t('badge_unit_days'), desc:t('badge_desc_focus').replace('{n}','75'), check: function(s){ return getSecretBestStreak() >= 75; } },
   ];
 }
 
@@ -8636,6 +9464,7 @@ var BADGE_GROUP_META = {
   coins:  { label:'🪙 '+t('badge_group_coins'),   targets:[1000,2500,5000,15000,30000],getValue: function(s){ return s.totalCoins||0; },            unit:'🪙'  },
   hard:   { label:'⚡ '+t('badge_group_hard'),      targets:[30,60,150,300,500],         getValue: function(s){ return s.hardTasksDone||0; },         unit:t('badge_unit_shop')  },
   shop:   { label:'🛒 '+t('badge_group_shop'), targets:[100,300,500,1000,2000],     getValue: function(s){ return s.totalPurchases||0; },       unit:t('badge_unit_shop')  },
+  focus:  { label:'🧘 '+t('badge_group_focus'), targets:[5,10,20,40,75],             getValue: function(s){ return getSecretBestStreak(); },     unit:t('badge_unit_days')  },
 };
 
 function renderBadges() {
@@ -8650,11 +9479,34 @@ function renderBadges() {
     coins:  { label:'🪙 '+t('badge_group_coins'),   targets:[1000,2500,5000,15000,30000],getValue: function(s){ return s.totalCoins||0; },            unit:'🪙'  },
     hard:   { label:'⚡ '+t('badge_group_hard'),      targets:[30,60,150,300,500],         getValue: function(s){ return s.hardTasksDone||0; },         unit:t('badge_unit_shop')  },
     shop:   { label:'🛒 '+t('badge_group_shop'), targets:[100,300,500,1000,2000],     getValue: function(s){ return s.totalPurchases||0; },       unit:t('badge_unit_shop')  },
+    focus:  { label:'🧘 '+t('badge_group_focus'), targets:[5,10,20,40,75],             getValue: function(s){ return getSecretBestStreak(); },     unit:t('badge_unit_days')  },
   };
+
+  // ── Har bir badge uchun: yangi ochilganini tekshirish va +25 tanga berish ──
+  // S.badgesUnlocked — allaqachon mukofot berilgan badge id'lari (bir marta
+  // beriladi, keyingi render'larda qayta berilmaydi).
+  if (!S.badgesUnlocked) S.badgesUnlocked = {};
+  var newlyEarned = [];
+  allBadges.forEach(function(b) {
+    var earned = b.check(S);
+    if (earned && !S.badgesUnlocked[b.id]) {
+      S.badgesUnlocked[b.id] = true;
+      S.coins      = (S.coins||0)      + 25;
+      S.totalCoins = (S.totalCoins||0) + 25;
+      addTarixLog('in', b.icon + ' ' + b.label + ' — ' + t('badge_earned_toast').replace('🏅 ', '').replace(' +25 🪙',''), 25, 'badge_reward_'+b.id);
+      newlyEarned.push(b);
+    }
+  });
+  if (newlyEarned.length) {
+    save();
+    newlyEarned.forEach(function(b, i) {
+      setTimeout(function() { toast(t('badge_earned_toast')); confetti(); }, i * 500);
+    });
+  }
 
   // Render badge cards grouped by category
   grid.innerHTML = '';
-  var groups = ['streak','tasks','coins','hard','shop'];
+  var groups = ['streak','tasks','coins','hard','shop','focus'];
   groups.forEach(function(gk) {
     var meta = groupMeta[gk];
     var groupBadges = allBadges.filter(function(b){ return b.group === gk; });
@@ -10129,33 +10981,49 @@ function renderIeltsDetailContent(sec) {
   var parts = cfg.items.filter(function(i) { return i.key !== 'all'; });
   var anyData = false;
 
+  // Moving-average oynasi: Listening/Reading uchun oxirgi 5 ta,
+  // Writing/Speaking uchun oxirgi 3 ta natija asosida hisoblanadi.
+  var windowSize = (sec === 'listening' || sec === 'reading') ? 5 : 3;
+
   parts.forEach(function(p) {
     var entries = results.filter(function(r) {
       return r.section === sec && r.subSection === p.key &&
         (isRaw ? (r.raw !== null && !isNaN(Number(r.raw))) : (r.band !== null && !isNaN(Number(r.band))));
     }).sort(_ieltsSortByTimeAsc).reverse(); // eng yangi tepada
 
-    var vals = entries.map(function(r) { return isRaw ? Number(r.raw) : Number(r.band); });
-    var avg  = vals.length ? (vals.reduce(function(a,b){ return a+b; }, 0) / vals.length) : null;
+    // Faqat oxirgi N ta natija (eng yangilari) o'rtachaga kiradi.
+    // Agar jami natijalar soni N dan kam bo'lsa, borining o'rtachasi olinadi.
+    var lastN = entries.slice(0, windowSize);
+    var vals  = lastN.map(function(r) { return isRaw ? Number(r.raw) : Number(r.band); });
+    var avg   = vals.length ? (vals.reduce(function(a,b){ return a+b; }, 0) / vals.length) : null;
     var avgRounded = avg !== null ? (Math.round(avg * 10) / 10) : null;
     if (entries.length) anyData = true;
+
+    var lastNLabel = t('ielts_detail_last_n_label').replace('{n}', vals.length);
 
     html += '<div style="margin-bottom:24px">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;flex-wrap:wrap;gap:6px">' +
         '<div style="font-size:14.5px;font-weight:700;color:var(--text)">' + p.label + '</div>' +
         '<div style="font-size:13px;font-weight:700;color:' + color + '">' +
           (avgRounded !== null
-            ? (t('ielts_detail_avg_label') + ': ' + avgRounded + (isRaw ? ('/' + p.max) : '') + ' (' + vals.length + t('ielts_detail_times_suffix') + ')')
+            ? (t('ielts_detail_avg_label') + ' (' + lastNLabel + '): ' + avgRounded + (isRaw ? ('/' + p.max) : ''))
             : t('ielts_detail_no_part_data')) +
         '</div>' +
       '</div>';
 
     if (entries.length > 0) {
       html += '<div style="display:flex;flex-direction:column;gap:8px">' +
-        entries.map(function(r) {
+        entries.map(function(r, idx) {
           var val = isRaw ? (r.raw + '/' + p.max + " to'g'ri") : ('band ' + r.band);
-          return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--surface2);border-radius:10px;font-size:13px">' +
-            '<span style="color:var(--text-muted)">' + t('ielts_date_label') + ': ' + _ieltsPrettyDate(r.date) + '</span>' +
+          var isHighlighted = idx < windowSize; // o'rtachaga kirgan oxirgi natijalar
+          var cardStyle = isHighlighted
+            ? 'background:rgba(' + IELTS_DETAIL_COLORS[sec].rgb + ',0.14);border:1px solid rgba(' + IELTS_DETAIL_COLORS[sec].rgb + ',0.55);box-shadow:0 0 0 1px rgba(' + IELTS_DETAIL_COLORS[sec].rgb + ',0.18);'
+            : 'background:var(--surface2);border:1px solid var(--border);opacity:0.55;';
+          var badge = isHighlighted
+            ? '<span style="font-size:9px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:' + color + ';background:rgba(' + IELTS_DETAIL_COLORS[sec].rgb + ',0.16);border:1px solid rgba(' + IELTS_DETAIL_COLORS[sec].rgb + ',0.4);border-radius:999px;padding:2px 7px;margin-right:8px">' + t('ielts_detail_last_n_label').replace('{n}', windowSize) + '</span>'
+            : '';
+          return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:10px;font-size:13px;' + cardStyle + '">' +
+            '<span style="color:var(--text-muted);display:flex;align-items:center">' + badge + t('ielts_date_label') + ': ' + _ieltsPrettyDate(r.date) + '</span>' +
             '<span style="color:var(--text);font-weight:700">→ ' + val + '</span>' +
           '</div>';
         }).join('') +
