@@ -889,20 +889,27 @@ if ('serviceWorker' in navigator) {
   <div id="view-ielts" style="display:none;padding:4px 0">
 
     <!-- Overall average card -->
-    <div id="ielts-overall-card" style="background:linear-gradient(135deg,rgba(124,92,252,0.18),rgba(180,142,255,0.08));border:1px solid rgba(124,92,252,0.4);border-radius:16px;padding:16px 20px;margin-bottom:14px;text-align:center;display:none">
+    <div id="ielts-overall-card" onclick="onIeltsOverallCardClick()" style="background:linear-gradient(135deg,rgba(124,92,252,0.18),rgba(180,142,255,0.08));border:1px solid rgba(124,92,252,0.4);border-radius:16px;padding:16px 20px;margin-bottom:14px;text-align:center;display:none;transition:transform 0.15s,border-color 0.15s" onmouseover="this.style.borderColor='rgba(124,92,252,0.7)'" onmouseout="this.style.borderColor='rgba(124,92,252,0.4)'">
       <div id="ielts-overall-label" style="font-size:11px;color:#B48EFF;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px" data-i18n="ielts_overall_avg">📊 O'rtacha Overall</div>
       <div id="ielts-overall-val" style="font-family:Syne,sans-serif;font-size:52px;font-weight:700;color:#B48EFF;line-height:1">—</div>
       <div id="ielts-overall-sub" style="font-size:12px;color:var(--text-muted);margin-top:4px"></div>
+      <div id="ielts-overall-tap-hint" style="font-size:11px;color:rgba(180,142,255,0.65);margin-top:8px;display:none" data-i18n="ielts_detail_tap_hint">👆 Batafsil tahlil uchun bosing</div>
     </div>
 
-    <!-- Add result button -->
-    <button onclick="openIeltsResultModal()" style="width:100%;padding:13px;border-radius:14px;border:2px dashed rgba(124,92,252,0.4);background:rgba(124,92,252,0.06);color:#B48EFF;font-size:14px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;margin-bottom:16px;transition:all 0.2s" onmouseover="this.style.borderColor='rgba(124,92,252,0.8)'" onmouseout="this.style.borderColor='rgba(124,92,252,0.4)'" data-i18n="ielts_add_result_btn">
-      + Yangi natija qo'shish
-    </button>
+    <!-- Add result + Filter buttons -->
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <button onclick="openIeltsResultModal()" style="flex:1;padding:13px;border-radius:14px;border:2px dashed rgba(124,92,252,0.4);background:rgba(124,92,252,0.06);color:#B48EFF;font-size:14px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;transition:all 0.2s" onmouseover="this.style.borderColor='rgba(124,92,252,0.8)'" onmouseout="this.style.borderColor='rgba(124,92,252,0.4)'" data-i18n="ielts_add_result_btn">
+        + Yangi natija qo'shish
+      </button>
+      <button onclick="openIeltsFilterModal()" style="position:relative;padding:13px 16px;border-radius:14px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:14px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;transition:all 0.2s;white-space:nowrap" onmouseover="this.style.borderColor='var(--border-hover)'" onmouseout="this.style.borderColor='var(--border)'">
+        🔎 <span data-i18n="ielts_filter_btn">Filtr</span>
+        <span id="ielts-filter-dot" style="display:none;position:absolute;top:7px;right:7px;width:8px;height:8px;border-radius:50%;background:var(--accent)"></span>
+      </button>
+    </div>
 
     <!-- History -->
     <div style="font-size:11px;color:var(--text-dim);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:10px" data-i18n="ielts_history_title">📋 Natijalar tarixi</div>
-    <div id="ielts-history-list" style="display:flex;flex-direction:column;gap:8px"></div>
+    <div id="ielts-history-list" style="display:flex;flex-direction:column;gap:14px"></div>
     <div id="ielts-history-empty" style="text-align:center;padding:40px 20px;color:var(--text-dim);font-size:14px">
       <div style="font-size:40px;margin-bottom:12px;opacity:0.5">📊</div>
       <span data-i18n="ielts_history_empty">Hali natija kiritilmagan</span>
@@ -975,8 +982,8 @@ if ('serviceWorker' in navigator) {
     <!-- PIN overlay -->
     <div id="secret-pin-overlay" style="position:fixed;inset:0;background:var(--bg);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px">
       <div style="font-size:40px;margin-bottom:4px">🔒</div>
-      <div style="font-family:Syne,sans-serif;font-size:18px;font-weight:700;color:var(--text)">Yashirin sahifa</div>
-      <div style="font-size:13px;color:var(--text-muted);margin-bottom:8px">PIN kiriting</div>
+      <div style="font-family:Syne,sans-serif;font-size:18px;font-weight:700;color:var(--text)" data-i18n="secret_locked_title">Yashirin sahifa</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:8px" data-i18n="secret_enter_pin">PIN kiriting</div>
       <div style="display:flex;gap:10px;margin-bottom:8px" id="pin-dots">
         <div style="width:14px;height:14px;border-radius:50%;border:2px solid var(--border);background:transparent" id="pd0"></div>
         <div style="width:14px;height:14px;border-radius:50%;border:2px solid var(--border);background:transparent" id="pd1"></div>
@@ -1005,8 +1012,8 @@ if ('serviceWorker' in navigator) {
     <div id="secret-content" style="display:none">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
         <div>
-          <div style="font-family:Syne,sans-serif;font-size:20px;font-weight:700;color:var(--text)">🔐 Shaxsiy nazorat</div>
-          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Shaxsiy odat kuzatuvi</div>
+          <div style="font-family:Syne,sans-serif;font-size:20px;font-weight:700;color:var(--text)" data-i18n="sec_page_title">🔐 Shaxsiy nazorat</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px" data-i18n="sec_page_subtitle">Shaxsiy odat kuzatuvi</div>
         </div>
         <div id="secret-streak-badge" style="background:rgba(52,211,153,0.15);border:1px solid rgba(52,211,153,0.3);border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;color:#34D399"></div>
       </div>
@@ -1015,20 +1022,20 @@ if ('serviceWorker' in navigator) {
       <div id="secret-log-section" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:14px">
         <div id="secret-log-label" style="font-size:12px;color:var(--text-muted);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:14px">Kecha</div>
         <div style="display:flex;gap:10px">
-          <button id="sec-btn-yes" onclick="secretLogCurrent('clean')" style="flex:1;padding:14px 10px;border-radius:12px;border:2px solid rgba(52,211,153,0.3);background:rgba(52,211,153,0.08);color:#34D399;font-size:14px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;transition:all 0.2s">✅ Qilmadim (yaxshi)</button>
-          <button id="sec-btn-no"  onclick="secretLogCurrent('fail')"  style="flex:1;padding:14px 10px;border-radius:12px;border:2px solid rgba(248,113,113,0.3);background:rgba(248,113,113,0.08);color:#F87171;font-size:14px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;transition:all 0.2s">❌ Qildim (yiqildim)</button>
+          <button id="sec-btn-yes" onclick="secretLogCurrent('clean')" style="flex:1;padding:14px 10px;border-radius:12px;border:2px solid rgba(52,211,153,0.3);background:rgba(52,211,153,0.08);color:#34D399;font-size:14px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;transition:all 0.2s" data-i18n="sec_btn_yes">✅ Qilmadim (yaxshi)</button>
+          <button id="sec-btn-no"  onclick="secretLogCurrent('fail')"  style="flex:1;padding:14px 10px;border-radius:12px;border:2px solid rgba(248,113,113,0.3);background:rgba(248,113,113,0.08);color:#F87171;font-size:14px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;transition:all 0.2s" data-i18n="sec_btn_no">❌ Qildim (yiqildim)</button>
         </div>
         <div id="secret-today-status" style="text-align:center;margin-top:12px;font-size:13px;color:var(--text-muted)"></div>
       </div>
 
       <!-- Calendar last 30 days -->
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:14px">
-        <div style="font-size:12px;color:var(--text-muted);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:12px">Oxirgi 30 kun</div>
+        <div style="font-size:12px;color:var(--text-muted);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:12px" data-i18n="sec_last30_title">Oxirgi 30 kun</div>
         <div id="secret-calendar" style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px"></div>
         <div style="display:flex;gap:12px;margin-top:12px;justify-content:center">
-          <span style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:#34D399;display:inline-block"></span>Qilmadim</span>
-          <span style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:#F87171;display:inline-block"></span>Qildim</span>
-          <span style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:var(--surface2);display:inline-block"></span>Kiritilmagan</span>
+          <span style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:#34D399;display:inline-block"></span><span data-i18n="sec_legend_clean">Qilmadim</span></span>
+          <span style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:#F87171;display:inline-block"></span><span data-i18n="sec_legend_fail">Qildim</span></span>
+          <span style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:var(--surface2);display:inline-block"></span><span data-i18n="sec_legend_empty">Kiritilmagan</span></span>
         </div>
       </div>
 
@@ -1055,25 +1062,25 @@ if ('serviceWorker' in navigator) {
         </div>
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center">
           <div id="sec-stat-total" style="font-size:24px;font-weight:700;color:var(--accent);font-family:Syne,sans-serif">0</div>
-          <div style="font-size:11px;color:var(--text-muted);margin-top:3px">Jami kun</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:3px" data-i18n="sec_total_days_label">Jami kun</div>
         </div>
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center">
           <div id="sec-stat-best" style="font-size:24px;font-weight:700;color:var(--gold);font-family:Syne,sans-serif">0</div>
-          <div style="font-size:11px;color:var(--text-muted);margin-top:3px">🏆 Record</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:3px" data-i18n="sec_record_label">🏆 Record</div>
         </div>
       </div>
 
       <!-- Haftalik trend -->
       <div id="sec-weekly-trend" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px 18px;margin-bottom:14px">
-        <div style="font-size:12px;color:var(--text-muted);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:12px">📈 Haftalik trend</div>
+        <div style="font-size:12px;color:var(--text-muted);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:12px" data-i18n="sec_weekly_trend_title">📈 Haftalik trend</div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
           <div style="text-align:center">
-            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">O'tgan hafta</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px" data-i18n="sec_last_week_label">O'tgan hafta</div>
             <div id="sec-trend-last" style="font-size:22px;font-weight:700;font-family:Syne,sans-serif;color:var(--text)">0/7</div>
           </div>
           <div id="sec-trend-arrow" style="font-size:28px">➡️</div>
           <div style="text-align:center">
-            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">Bu hafta</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px" data-i18n="sec_this_week_label">Bu hafta</div>
             <div id="sec-trend-this" style="font-size:22px;font-weight:700;font-family:Syne,sans-serif;color:var(--text)">0/7</div>
           </div>
         </div>
@@ -1082,12 +1089,12 @@ if ('serviceWorker' in navigator) {
 
       <!-- Tarix -->
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px 18px;margin-bottom:14px">
-        <div style="font-size:12px;color:var(--text-muted);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:10px">📋 Tarix</div>
+        <div style="font-size:12px;color:var(--text-muted);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:10px" data-i18n="sec_history_title">📋 Tarix</div>
         <div id="secret-history-list" style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto"></div>
       </div>
 
-      <button onclick="openChangePinModal()" style="width:100%;padding:12px;border-radius:12px;border:1px solid rgba(124,92,252,0.3);background:rgba(124,92,252,0.08);color:var(--accent);font-size:13px;cursor:pointer;font-family:DM Sans,sans-serif;margin-bottom:8px">🔑 PIN ni o'zgartirish</button>
-      <button onclick="lockSecret()" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:13px;cursor:pointer;font-family:DM Sans,sans-serif">🔒 Qulflash</button>
+      <button onclick="openChangePinModal()" style="width:100%;padding:12px;border-radius:12px;border:1px solid rgba(124,92,252,0.3);background:rgba(124,92,252,0.08);color:var(--accent);font-size:13px;cursor:pointer;font-family:DM Sans,sans-serif;margin-bottom:8px" data-i18n="sec_change_pin_btn">🔑 PIN ni o'zgartirish</button>
+      <button onclick="lockSecret()" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:13px;cursor:pointer;font-family:DM Sans,sans-serif" data-i18n="sec_lock_btn">🔒 Qulflash</button>
     </div>
   </div>
 
@@ -1463,6 +1470,15 @@ const I18N = {
     ielts_add_result_btn: "+ Yangi natija qo'shish",
     ielts_history_title: '📋 Natijalar tarixi',
     ielts_history_empty: 'Hali natija kiritilmagan',
+    ielts_detail_title: '📊 Chuqur tahlil',
+    ielts_detail_section_score: 'Joriy section bali',
+    ielts_detail_no_data: 'Bu modul uchun hali natija kiritilmagan',
+    ielts_detail_no_part_data: "Ma'lumot yo'q",
+    ielts_detail_avg_label: "O'rtacha",
+    ielts_detail_times_suffix: ' ta natija',
+    ielts_detail_all_title: "🧾 To'liq test (All) natijalari",
+    ielts_detail_hint: "Har bir qismning o'rtachasi shu qismga kiritilgan BARCHA natijalar asosida hisoblanadi",
+    ielts_detail_tap_hint: '👆 Batafsil tahlil uchun bosing',
     ielts_raw_correct_suffix: " to'g'ri",
     ielts_modal_title: '📊 IELTS Natija',
     ielts_modal_sub: 'Bitta section natijasini kiriting',
@@ -1476,6 +1492,16 @@ const I18N = {
     ielts_raw_ph: 'masalan: 19',
     ielts_band_label: 'Band score (0-9, masalan: 6.5)',
     ielts_band_ph: 'masalan: 6.5',
+    ielts_filter_btn: 'Filtr',
+    ielts_filter_title: "🔎 Natijalarni filtrlash",
+    ielts_filter_module_label: 'Modul',
+    ielts_filter_section_label: 'Qism',
+    ielts_filter_all: 'Hammasi',
+    ielts_filter_reset_btn: 'Tozalash',
+    ielts_filter_apply_btn: "Qo'llash",
+    ielts_filter_no_match: "Filtrga mos natija topilmadi",
+    ielts_no_date_label: 'Sanasiz',
+    ielts_today_label: 'Bugun',
     btn_save_disk: '💾 Saqlash',
     // Tarix (History)
     tarix_back_title: 'Orqaga',
@@ -1842,6 +1868,34 @@ const I18N = {
     ki_fail_label: 'Yiqildim.',
     ki_not_entered_yet: 'Kecha hali kiritilmagan',
     btn_edit: "O'zgartir",
+    // Secret Place — qo'shimcha i18n (til almashtirish tuzatildi)
+    secret_locked_title: 'Yashirin sahifa',
+    secret_enter_pin: 'PIN kiriting',
+    pin_wrong_error: "Noto'g'ri PIN!",
+    sec_btn_yes: '✅ Qilmadim (yaxshi)',
+    sec_btn_no: '❌ Qildim (yiqildim)',
+    sec_last30_title: 'Oxirgi 30 kun',
+    sec_legend_clean: 'Qilmadim',
+    sec_legend_fail: 'Qildim',
+    sec_legend_empty: 'Kiritilmagan',
+    sec_page_title: '🔐 Shaxsiy nazorat',
+    sec_page_subtitle: 'Shaxsiy odat kuzatuvi',
+    sec_total_days_label: 'Jami kun',
+    sec_record_label: '🏆 Record',
+    sec_weekly_trend_title: '📈 Haftalik trend',
+    sec_last_week_label: "O'tgan hafta",
+    sec_this_week_label: 'Bu hafta',
+    sec_history_title: '📋 Tarix',
+    sec_change_pin_btn: "🔑 PIN ni o'zgartirish",
+    sec_lock_btn: '🔒 Qulflash',
+    sec_streak_badge_active: '🔥 {n} kun streak!',
+    sec_streak_badge_none: "Streak yo'q hali",
+    sec_history_empty: "Hali tarix yo'q",
+    sec_history_2x_label: '2x jazo',
+    sec_trend_up: "🎉 Yaxshi! O'tgan haftadan +{diff} kun ko'proq bardosh saqladingiz!",
+    sec_trend_down: "💪 O'tgan haftadan {diff} kun kam. Yana harakat!",
+    sec_trend_no_data: "Hali ma'lumot yetarli emas.",
+    sec_trend_same: "👍 O'tgan hafta bilan bir xil — {n}/7 kun!",
     // Change PIN modal
     chpin_enter_old: 'Eski PIN ni kiriting',
     chpin_enter_new: 'Yangi PIN ni kiriting',
@@ -1994,6 +2048,15 @@ const I18N = {
     ielts_add_result_btn: '+ Add new result',
     ielts_history_title: '📋 Result history',
     ielts_history_empty: 'No results yet',
+    ielts_detail_title: '📊 Detailed analysis',
+    ielts_detail_section_score: 'Current section score',
+    ielts_detail_no_data: 'No results entered for this module yet',
+    ielts_detail_no_part_data: 'No data',
+    ielts_detail_avg_label: 'Average',
+    ielts_detail_times_suffix: ' entries',
+    ielts_detail_all_title: '🧾 Full test (All) results',
+    ielts_detail_hint: "Each part's average is calculated from ALL results entered for that part",
+    ielts_detail_tap_hint: '👆 Tap for detailed analysis',
     ielts_raw_correct_suffix: ' correct',
     ielts_modal_title: '📊 IELTS Result',
     ielts_modal_sub: 'Enter one section result',
@@ -2007,6 +2070,16 @@ const I18N = {
     ielts_raw_ph: 'e.g: 19',
     ielts_band_label: 'Band score (0-9, e.g: 6.5)',
     ielts_band_ph: 'e.g: 6.5',
+    ielts_filter_btn: 'Filter',
+    ielts_filter_title: '🔎 Filter results',
+    ielts_filter_module_label: 'Module',
+    ielts_filter_section_label: 'Section',
+    ielts_filter_all: 'All',
+    ielts_filter_reset_btn: 'Clear',
+    ielts_filter_apply_btn: 'Apply',
+    ielts_filter_no_match: 'No results match this filter',
+    ielts_no_date_label: 'No date',
+    ielts_today_label: 'Today',
     btn_save_disk: '💾 Save',
     // Tarix (History)
     tarix_back_title: 'Back',
@@ -2378,6 +2451,34 @@ const I18N = {
     ki_fail_label: 'Slipped up.',
     ki_not_entered_yet: 'Yesterday not logged yet',
     btn_edit: 'Edit',
+    // Secret Place — additional i18n (language switch fix)
+    secret_locked_title: 'Secret page',
+    secret_enter_pin: 'Enter PIN',
+    pin_wrong_error: 'Wrong PIN!',
+    sec_btn_yes: "✅ Didn't do it (good)",
+    sec_btn_no: '❌ Did it (slipped up)',
+    sec_last30_title: 'Last 30 days',
+    sec_legend_clean: "Didn't do it",
+    sec_legend_fail: 'Did it',
+    sec_legend_empty: 'Not logged',
+    sec_page_title: '🔐 Personal check',
+    sec_page_subtitle: 'Personal habit tracking',
+    sec_total_days_label: 'Total days',
+    sec_record_label: '🏆 Record',
+    sec_weekly_trend_title: '📈 Weekly trend',
+    sec_last_week_label: 'Last week',
+    sec_this_week_label: 'This week',
+    sec_history_title: '📋 History',
+    sec_change_pin_btn: '🔑 Change PIN',
+    sec_lock_btn: '🔒 Lock',
+    sec_streak_badge_active: '🔥 {n} day streak!',
+    sec_streak_badge_none: 'No streak yet',
+    sec_history_empty: 'No history yet',
+    sec_history_2x_label: '2x penalty',
+    sec_trend_up: '🎉 Great! You stayed strong +{diff} more days than last week!',
+    sec_trend_down: '💪 {diff} fewer days than last week. Keep trying!',
+    sec_trend_no_data: 'Not enough data yet.',
+    sec_trend_same: '👍 Same as last week — {n}/7 days!',
     // Change PIN modal
     chpin_enter_old: 'Enter old PIN',
     chpin_enter_new: 'Enter new PIN',
@@ -2528,6 +2629,15 @@ const I18N = {
     ielts_add_result_btn: '+ Добавить результат',
     ielts_history_title: '📋 История результатов',
     ielts_history_empty: 'Результатов пока нет',
+    ielts_detail_title: '📊 Подробный анализ',
+    ielts_detail_section_score: 'Текущий балл секции',
+    ielts_detail_no_data: 'Для этого модуля пока нет результатов',
+    ielts_detail_no_part_data: 'Нет данных',
+    ielts_detail_times_suffix: ' результатов',
+    ielts_detail_avg_label: 'Среднее',
+    ielts_detail_all_title: '🧾 Результаты полного теста (All)',
+    ielts_detail_hint: 'Среднее по каждой части рассчитывается по ВСЕМ введённым результатам этой части',
+    ielts_detail_tap_hint: '👆 Нажмите для подробного анализа',
     ielts_raw_correct_suffix: ' правильных',
     ielts_modal_title: '📊 Результат IELTS',
     ielts_modal_sub: 'Введите результат одной секции',
@@ -2541,6 +2651,16 @@ const I18N = {
     ielts_raw_ph: 'например: 19',
     ielts_band_label: 'Band score (0-9, например: 6.5)',
     ielts_band_ph: 'например: 6.5',
+    ielts_filter_btn: 'Фильтр',
+    ielts_filter_title: '🔎 Фильтр результатов',
+    ielts_filter_module_label: 'Модуль',
+    ielts_filter_section_label: 'Раздел',
+    ielts_filter_all: 'Все',
+    ielts_filter_reset_btn: 'Сбросить',
+    ielts_filter_apply_btn: 'Применить',
+    ielts_filter_no_match: 'Нет результатов по этому фильтру',
+    ielts_no_date_label: 'Без даты',
+    ielts_today_label: 'Сегодня',
     btn_save_disk: '💾 Сохранить',
     // История
     tarix_back_title: 'Назад',
@@ -2914,6 +3034,34 @@ const I18N = {
     ki_fail_label: 'Сорвался.',
     ki_not_entered_yet: 'Вчера ещё не введено',
     btn_edit: 'Изменить',
+    // Secret Place — доп. переводы (исправление переключения языка)
+    secret_locked_title: 'Секретная страница',
+    secret_enter_pin: 'Введите PIN',
+    pin_wrong_error: 'Неверный PIN!',
+    sec_btn_yes: '✅ Не сделал (хорошо)',
+    sec_btn_no: '❌ Сделал (сорвался)',
+    sec_last30_title: 'Последние 30 дней',
+    sec_legend_clean: 'Не сделал',
+    sec_legend_fail: 'Сделал',
+    sec_legend_empty: 'Не введено',
+    sec_page_title: '🔐 Личный контроль',
+    sec_page_subtitle: 'Отслеживание личной привычки',
+    sec_total_days_label: 'Всего дней',
+    sec_record_label: '🏆 Рекорд',
+    sec_weekly_trend_title: '📈 Недельный тренд',
+    sec_last_week_label: 'Прошлая неделя',
+    sec_this_week_label: 'Эта неделя',
+    sec_history_title: '📋 История',
+    sec_change_pin_btn: '🔑 Изменить PIN',
+    sec_lock_btn: '🔒 Заблокировать',
+    sec_streak_badge_active: '🔥 {n} дн. streak!',
+    sec_streak_badge_none: 'Пока нет streak',
+    sec_history_empty: 'Истории пока нет',
+    sec_history_2x_label: '2x штраф',
+    sec_trend_up: '🎉 Отлично! На +{diff} дн. больше продержались, чем на прошлой неделе!',
+    sec_trend_down: '💪 На {diff} дн. меньше, чем на прошлой неделе. Не сдавайтесь!',
+    sec_trend_no_data: 'Пока недостаточно данных.',
+    sec_trend_same: '👍 Так же, как на прошлой неделе — {n}/7 дн.!',
     // PIN
     chpin_enter_old: 'Введите старый PIN',
     chpin_enter_new: 'Введите новый PIN',
@@ -3812,7 +3960,11 @@ window.addEventListener('storage', function(e) {
       if (Array.isArray(fresh)) {
         console.log('🔄 Boshqa oynada tasklar o\'zgardi — sinxronlanmoqda (' + fresh.length + ' ta).');
         S.tasks = fresh;
-        S.taskOrder = fresh.map(function(t){ return t.id; });
+        // MUHIM (BUG TUZATILDI): taskOrder'ni tasklarning tabiiy (yaratilgan)
+        // tartibiga qaytarib tashlash kerak EMAS — bu foydalanuvchi drag-and-drop
+        // orqali belgilagan tartibni yo'qqa chiqarardi. ensureFullTaskOrder()
+        // mavjud S.taskOrder'ni saqlab, faqat yangi/yo'q id'larni moslaydi.
+        ensureFullTaskOrder();
         _lastSyncedTasks = {};
         fresh.forEach(function(t){ _lastSyncedTasks[t.id] = JSON.stringify(t); });
         render();
@@ -3852,7 +4004,10 @@ document.addEventListener('visibilitychange', function() {
       // demak boshqa oynada yangilanish bo'lgan, o'shani olamiz.
       console.log('🔄 Oyna faollashdi — tasklar diskdagi so\'nggi nusxa bilan sinxronlandi.');
       S.tasks = fresh;
-      S.taskOrder = fresh.map(function(t){ return t.id; });
+      // MUHIM (BUG TUZATILDI): taskOrder'ni qayta yaratish o'rniga saqlab qolamiz —
+      // aks holda foydalanuvchi belgilagan tartib ilova fonga/oldinga
+      // o'tgan sayin tabiiy tartibga qaytib ketardi.
+      ensureFullTaskOrder();
       render();
     }
   } catch(err) { console.warn('Faollashuvda sinxronlash xatosi:', err); }
@@ -3876,7 +4031,7 @@ function _restoreTasksFromPlainKeyIfNeeded() {
     if (Array.isArray(parsed) && parsed.length > 0 && (!S.tasks || S.tasks.length === 0)) {
       console.warn('DOMContentLoaded: vazifalar "tasks" kalitidan qo\u2019shimcha tiklandi:', parsed.length);
       S.tasks = parsed;
-      S.taskOrder = parsed.map(function(t){ return t.id; });
+      ensureFullTaskOrder();
       render();
     }
   } catch(e) {
@@ -6174,6 +6329,7 @@ function showProfileEdit() {
     renderCalendar();
     renderIeltsCountdown();
     renderIeltsTab();
+    if (_secretUnlocked) renderSecretContent();
     render();
     toast(t('profile_saved_toast'));
   };
@@ -6633,6 +6789,12 @@ function getSecretData() {
   if (!S.secretHabit) {
     S.secretHabit = {log:{}, pin:DEFAULT_PIN};
   }
+  // logCoins: har bir sana uchun AYNAN qo'llanilgan tanga miqdorini (earnedOrPenalizedCoins)
+  // saqlaydi (masalan 'clean' uchun +3, 'fail' uchun -5, 'fail2x' uchun -10 — streak bonusi
+  // bundan mustasno, u alohida streakBonusByDate ichida saqlanadi).
+  // Edit/rollback paytida aynan shu qiymatdan foydalaniladi — shu tufayli har doim
+  // AYNAN o'sha paytda ta'sir qilgan tanga miqdori qaytariladi (masalan -10 bo'lsa, +10 qaytadi).
+  if (!S.secretHabit.logCoins) S.secretHabit.logCoins = {};
   return S.secretHabit;
 }
 function saveSecretData(d) {
@@ -6662,7 +6824,7 @@ function pinKey(k) {
       document.getElementById('secret-content').style.display = '';
       renderSecretContent();
     } else {
-      document.getElementById('pin-error').textContent = "Noto'g'ri PIN!";
+      document.getElementById('pin-error').textContent = t('pin_wrong_error');
       _pinBuffer = '';
       // shake dots
       var dots = document.getElementById('pin-dots');
@@ -6791,8 +6953,12 @@ function yesterday() {
 
 function secretLog(status, when) {
   var d = getSecretData();
-  var t = (when === 'yesterday') ? yesterday() : today();
-  var prevStatus = d.log[t];
+  // MUHIM TUZATISH: bu o'zgaruvchi ilgari "t" deb nomlangan edi va shu funksiya
+  // ichidagi setTimeout callback'larda global tarjima funksiyasi t()ni "soyalab"
+  // qo'yardi (chaqirilganda "t is not a function" xatosi berardi, natijada
+  // jazo/bonus toast xabarlari umuman chiqmasdi). Endi nom to'qnashuvi yo'q.
+  var logDate = (when === 'yesterday') ? yesterday() : today();
+  var prevStatus = d.log[logDate];
 
   // Streak bonus: sana+milestone bo'yicha saqlash (e.g. "2026-06-11_3")
   if(!d.streakBonusGiven) d.streakBonusGiven = {};
@@ -6800,12 +6966,19 @@ function secretLog(status, when) {
 
   // ── 1. ROLLBACK: avvalgi tanlov effektlarini bekor qilish ──────────────────
   if(prevStatus) {
+    // AYNAN o'sha paytda ta'sir qilgan tanga miqdori (earnedOrPenalizedCoins).
+    // Eski (logCoins yozilmasdan oldingi) yozuvlar uchun fallback sifatida
+    // standart qiymatlar ishlatiladi — orqaga moslik uchun.
+    var prevAmount = d.logCoins[logDate];
+    if (prevAmount === undefined) {
+      prevAmount = prevStatus === 'clean' ? 3 : (prevStatus === 'fail2x' ? -10 : -5);
+    }
     if(prevStatus === 'clean') {
-      // Kunlik +3 va streak bonuslarini qaytarish
-      S.coins      = (S.coins||0)      - 3;
-      S.totalCoins = (S.totalCoins||0) - 3;
+      // Kunlik tangani (earnedOrPenalizedCoins) va streak bonuslarini qaytarish
+      S.coins      = (S.coins||0)      - prevAmount;
+      S.totalCoins = (S.totalCoins||0) - prevAmount;
       // Shu kun uchun berilgan streak bonusini qaytarish (bitta kalit)
-      var bonusKey = t + '_milestone';
+      var bonusKey = logDate + '_milestone';
       if(d.streakBonusByDate[bonusKey]) {
         var mB = d.streakBonusByDate[bonusKey];
         S.coins      = (S.coins||0)      - mB;
@@ -6814,38 +6987,39 @@ function secretLog(status, when) {
       }
       // Tarixdan shu kunga tegishli yozuvlarni o'chirish (spam oldini olish)
       if(S.tarix) S.tarix = S.tarix.filter(function(r){
-        return r.uniqueKey !== 'secret_clean_'+t && r.uniqueKey !== 'secret_bonus_'+t;
+        return r.uniqueKey !== 'secret_clean_'+logDate && r.uniqueKey !== 'secret_bonus_'+logDate;
       });
     } else if(prevStatus === 'fail' || prevStatus === 'fail2x') {
-      var prevPenalty = prevStatus === 'fail2x' ? 10 : 5;
-      // coins va totalCoins ikkalasini ham qaytarish
-      S.coins      = (S.coins||0)      + prevPenalty;
-      S.totalCoins = (S.totalCoins||0) + prevPenalty;
+      // coins va totalCoins ikkalasini ham aynan o'sha paytda yechilgan miqdorda qaytarish
+      S.coins      = (S.coins||0)      - prevAmount; // prevAmount manfiy, shuning uchun ayirish = qo'shish
+      S.totalCoins = (S.totalCoins||0) - prevAmount;
       // Tarixdan shu kunga tegishli jazo yozuvini o'chirish
-      if(S.tarix) S.tarix = S.tarix.filter(function(r){ return r.uniqueKey !== 'secret_fail_'+t; });
+      if(S.tarix) S.tarix = S.tarix.filter(function(r){ return r.uniqueKey !== 'secret_fail_'+logDate; });
     }
+    delete d.logCoins[logDate];
     // secret history dan bu kun yozuvini o'chirish
-    if(d.history) d.history = d.history.filter(function(h){ return h.date !== t; });
+    if(d.history) d.history = d.history.filter(function(h){ return h.date !== logDate; });
     save();
   }
 
-  d.log[t] = status;
+  d.log[logDate] = status;
 
   // ── 2. YANGI TANLOV effektlarini qo'llash ────────────────────────────────────
   if(status === 'clean') {
     var coinGain = 3;
+    d.logCoins[logDate] = coinGain; // earnedOrPenalizedCoins — aynan shu kun uchun (streak bonusisiz)
     S.coins      = (S.coins||0)      + coinGain;
     S.totalCoins = (S.totalCoins||0) + coinGain;
     // uniqueKey bilan yozsak, fikr o'zgartirish tarixga spam qilmaydi
-    addTarixLog('in', tr('secret_clean_log'), coinGain, 'secret_clean_'+t);
+    addTarixLog('in', tr('secret_clean_log'), coinGain, 'secret_clean_'+logDate);
 
-    // Streak bonuslarini tekshir (d.log[t] allaqachon 'clean' qilib yozilgan)
+    // Streak bonuslarini tekshir (d.log[logDate] allaqachon 'clean' qilib yozilgan)
     var newStreak = calcSecretStreak(d.log);
     var totalCoinGain = coinGain;
     // Faqat bitta — ENG YUQORI milestone bonusi beriladi (if-else if zanjiri).
-    // streakBonusByDate[t+'_m']: bu kun uchun bonus allaqachon berilganini tekshiradi
+    // streakBonusByDate[logDate+'_m']: bu kun uchun bonus allaqachon berilganini tekshiradi
     // (toggle/fikr o'zgartirish holatida spam oldini oladi va rollback uchun kerak).
-    var streakBonusKey = t + '_milestone';
+    var streakBonusKey = logDate + '_milestone';
     if(!d.streakBonusByDate[streakBonusKey]) {
       var mBonus = 0, mLabel = 0;
       if      (newStreak >= 30) { mBonus = SEC_STREAK_BONUSES[30]; mLabel = 30; }
@@ -6857,7 +7031,7 @@ function secretLog(status, when) {
         totalCoinGain += mBonus;
         S.coins      = (S.coins||0)      + mBonus;
         S.totalCoins = (S.totalCoins||0) + mBonus;
-        addTarixLog('in', tr('secret_streak_bonus_log').replace('{label}', mLabel), mBonus, 'secret_bonus_'+t);
+        addTarixLog('in', tr('secret_streak_bonus_log').replace('{label}', mLabel), mBonus, 'secret_bonus_'+logDate);
         setTimeout(function(ml, mb){ return function(){ toast(t('secret_streak_bonus_toast').replace('{ml}', ml).replace('{mb}', mb)); }; }(mLabel, mBonus), 400);
       }
     }
@@ -6865,7 +7039,7 @@ function secretLog(status, when) {
 
     if(!d.history) d.history = [];
     // unshift (filter yuqorida allaqachon bajarildi) — bir kunda bitta yozuv
-    d.history.unshift({date: t, status: 'clean', coins: totalCoinGain, streak: newStreak});
+    d.history.unshift({date: logDate, status: 'clean', coins: totalCoinGain, streak: newStreak});
     if(d.history.length > 60) d.history = d.history.slice(0, 60);
 
   } else if(status === 'fail') {
@@ -6874,14 +7048,18 @@ function secretLog(status, when) {
     checkDate.setDate(checkDate.getDate() - 1);
     for(var ci = 0; ci < 30; ci++) {
       var ck = checkDate.getFullYear()+'-'+String(checkDate.getMonth()+1).padStart(2,'0')+'-'+String(checkDate.getDate()).padStart(2,'0');
-      if(d.log[ck] === 'fail') { consecutiveFails++; checkDate.setDate(checkDate.getDate()-1); }
+      // MUHIM TUZATISH: 'fail2x' ham ketma-ket zanjirning davomi hisoblanishi kerak,
+      // aks holda 3-kundan keyin zanjir noto'g'ri uzilib, 4-, 5-kunlar yana oddiy
+      // -5 jazo bilan hisoblanib qolardi.
+      if(d.log[ck] === 'fail' || d.log[ck] === 'fail2x') { consecutiveFails++; checkDate.setDate(checkDate.getDate()-1); }
       else break;
     }
     var penalty = (consecutiveFails >= 2) ? 10 : 5;
+    d.logCoins[logDate] = -penalty; // earnedOrPenalizedCoins — aynan shu kun uchun yechilgan miqdor
     S.coins      = (S.coins||0)      - penalty;
     S.totalCoins = (S.totalCoins||0) - penalty;
     // uniqueKey bilan: bir kunda faqat bitta jazo yozuvi
-    addTarixLog('out', tr('secret_fail_penalty_log').replace('{x2}', consecutiveFails >= 2 ? tr('secret_fail_2x_suffix') : ''), -penalty, 'secret_fail_'+t);
+    addTarixLog('out', tr('secret_fail_penalty_log').replace('{x2}', consecutiveFails >= 2 ? tr('secret_fail_2x_suffix') : ''), -penalty, 'secret_fail_'+logDate);
     save();
     setTimeout(function(){
       if(consecutiveFails >= 2) toast(t('secret_2x_penalty_toast').replace('{penalty}', penalty));
@@ -6894,7 +7072,7 @@ function secretLog(status, when) {
     if(!d.history) d.history = [];
     var failLabel = consecutiveFails >= 2 ? 'fail2x' : 'fail';
     // bir kunda bitta yozuv (filter yuqorida allaqachon bajarildi)
-    d.history.unshift({date: t, status: failLabel, coins: -penalty, streak: 0});
+    d.history.unshift({date: logDate, status: failLabel, coins: -penalty, streak: 0});
     if(d.history.length > 60) d.history = d.history.slice(0, 60);
   }
 
@@ -6928,10 +7106,17 @@ function secretEditLog() {
   var prevStatus = d.log[yday];
   if(!d.streakBonusByDate) d.streakBonusByDate = {};
   if(!d.streakBonusGiven) d.streakBonusGiven = {};
+  if(!d.logCoins) d.logCoins = {};
+  // AYNAN o'sha paytda ta'sir qilgan tanga miqdori (earnedOrPenalizedCoins).
+  // Eski (logCoins yozilmasdan oldingi) yozuvlar uchun fallback standart qiymatlar.
+  var prevAmount = d.logCoins[yday];
+  if (prevAmount === undefined && prevStatus) {
+    prevAmount = prevStatus === 'clean' ? 3 : (prevStatus === 'fail2x' ? -10 : -5);
+  }
   if(prevStatus === 'clean') {
-    // Kunlik +3 tangani qaytarish
-    S.coins = (S.coins||0) - 3;
-    S.totalCoins = (S.totalCoins||0) - 3;
+    // Kunlik tangani (earnedOrPenalizedCoins) qaytarish
+    S.coins = (S.coins||0) - prevAmount;
+    S.totalCoins = (S.totalCoins||0) - prevAmount;
     // Shu kun uchun berilgan streak bonusini qaytarish (bitta kalit)
     var bonusKey = yday + '_milestone';
     if(d.streakBonusByDate[bonusKey]) {
@@ -6942,11 +7127,13 @@ function secretEditLog() {
     }
     save();
   } else if(prevStatus === 'fail' || prevStatus === 'fail2x') {
-    var refund = prevStatus === 'fail2x' ? 10 : 5;
+    // AYNAN o'sha paytda yechilgan miqdor qaytariladi (masalan -10 bo'lsa, +10 qaytadi)
+    var refund = -prevAmount;
     S.coins = (S.coins||0) + refund;
     S.totalCoins = (S.totalCoins||0) + refund;
     save();
   }
+  delete d.logCoins[yday];
   // Log va historydan o'chirish
   delete d.log[yday];
   if(d.history) d.history = d.history.filter(function(h){ return h.date !== yday; });
@@ -7023,14 +7210,14 @@ function renderSecretContent() {
   var el2=document.getElementById('sec-stat-total');  if(el2) el2.textContent=total;
   var el3=document.getElementById('sec-stat-best');   if(el3) el3.textContent=best;
   var badge=document.getElementById('secret-streak-badge');
-  if(badge) badge.textContent = streak>0 ? '🔥 '+streak+' kun streak!' : "Streak yo'q hali";
+  if(badge) badge.textContent = streak>0 ? tr('sec_streak_badge_active').replace('{n}', streak) : tr('sec_streak_badge_none');
 
   // History list
   var histEl = document.getElementById('secret-history-list');
   if(histEl) {
     var hist = d.history || [];
     if(hist.length === 0) {
-      histEl.innerHTML = '<div style="color:var(--text-dim);font-size:13px;text-align:center;padding:12px 0">Hali tarix yoq</div>';
+      histEl.innerHTML = '<div style="color:var(--text-dim);font-size:13px;text-align:center;padding:12px 0">'+tr('sec_history_empty')+'</div>';
     } else {
       var hhtml = '';
       hist.forEach(function(item) {
@@ -7040,7 +7227,7 @@ function renderSecretContent() {
         var icon = isClean ? '✅' : (is2x ? '⚠️' : '❌');
         var coinStr = (item.coins > 0 ? '+' : '') + item.coins + ' 🪙';
         var coinColor = item.coins > 0 ? '#34D399' : '#F87171';
-        var streakStr = isClean && item.streak > 0 ? ' · 🔥'+item.streak : (is2x ? ' · 2x jazo' : '');
+        var streakStr = isClean && item.streak > 0 ? ' · 🔥'+item.streak : (is2x ? ' · '+tr('sec_history_2x_label') : '');
         hhtml += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--surface2);border-radius:10px">'
           + '<div style="display:flex;align-items:center;gap:8px">'
           + '<span style="font-size:15px">'+icon+'</span>'
@@ -7081,16 +7268,16 @@ function renderSecretContent() {
     var arrow, color, bg, msg;
     if (diff > 0) {
       arrow = '📈'; color = '#34D399'; bg = 'rgba(52,211,153,0.1)';
-      msg = '🎉 Yaxshi! O\'tgan haftadan +' + diff + ' kun ko\'proq bardosh saqladingiz!';
+      msg = tr('sec_trend_up').replace('{diff}', diff);
     } else if (diff < 0) {
       arrow = '📉'; color = '#F87171'; bg = 'rgba(248,113,113,0.1)';
-      msg = '💪 O\'tgan haftadan ' + Math.abs(diff) + ' kun kam. Yana harakat!';
+      msg = tr('sec_trend_down').replace('{diff}', Math.abs(diff));
     } else if (thisWeek === 0 && lastWeek === 0) {
       arrow = '➡️'; color = 'var(--text-muted)'; bg = 'var(--surface2)';
-      msg = 'Hali ma\'lumot yetarli emas.';
+      msg = tr('sec_trend_no_data');
     } else {
       arrow = '➡️'; color = '#F5A623'; bg = 'rgba(245,166,35,0.1)';
-      msg = '👍 O\'tgan hafta bilan bir xil — ' + thisWeek + '/7 kun!';
+      msg = tr('sec_trend_same').replace('{n}', thisWeek);
     }
 
     elArrow.textContent = arrow;
@@ -7390,9 +7577,15 @@ function renderStats() {
     }
   });
 
-  // weekDoneLog dan haqiqiy haftalik bajarilgan soni
-  var wLog = S.weekDoneLog || {};
-  var weekDone = weekDays.reduce(function(s,d){ return s+(wLog[d]||0); }, 0);
+  // Haftalik bajarilgan son — taskDoneLog'dan (dayTaskCounts) hisoblanadi,
+  // chunki bu YAGONA manba: uni ham asosiy Tasks bo'limidagi toggleTask(),
+  // ham Kalendar bo'limidagi calToggleTaskDone() bir xil tarzda yangilaydi.
+  // Ilgari bu yerda alohida S.weekDoneLog counteri ishlatilardi — u faqat
+  // toggleTask() orqali yangilanardi, shu sababli kalendardan o'tgan kunni
+  // tahrirlash "DONE THIS WEEK" ko'rsatkichiga ta'sir qilmasdi. Endi ikkala
+  // joydan ham bitta manbaga yozilgani uchun statistikalar avtomatik va
+  // to'liq sinxron bo'ladi.
+  var weekDone = weekDays.reduce(function(s,d){ return s+(dayTaskCounts[d]||0); }, 0);
   var weekCoins = weekDays.reduce(function(s,d){ return s+(dayCoinCounts[d]||0); }, 0);
 
   var wdEl = document.getElementById('stats-week-done');
@@ -8318,6 +8511,15 @@ function calToggleTaskDone(id, dateStr) {
     addTarixLog('out', t('task_cancelled_log').replace('{name}', tk.name).replace('{date}', dateStr), -takeBack);
     addTarixLog('out', t('penalty_reapplied_log'), -PENALTY);
     var msg1 = '↩️ Bekor qilindi, -' + totalDeduct + ' 🪙';
+    // Umumiy statistika hisoblagichlarini ham sinxronlashtiramiz — kalendar
+    // orqali o'tgan kun bekor qilinganda ular ham kamayishi kerak, aks holda
+    // "Jami bajarilgan" / badge progresslari asosiy Tasks bo'limidagi
+    // toggleTask() bilan mos kelmay qoladi.
+    if (S.totalTasksDone > 0) S.totalTasksDone--;
+    if (tk.diff === 3 && S.hardTasksDone > 0) S.hardTasksDone--;
+    if (S.taskDoneCount && S.taskDoneCount[id] > 0) S.taskDoneCount[id]--;
+    if (!S.weekDoneLog) S.weekDoneLog = {};
+    if (S.weekDoneLog[dateStr] > 0) S.weekDoneLog[dateStr]--;
     // MUHIM TUZATISH: "har N kunda" vazifa kalendar orqali shu sanada
     // bekor qilinsa, "Keyingisi" sanasi ham shu kunga qaytarilishi kerak
     // (toggleTask() bugungi kun uchun xuddi shu tarzda ishlaydi).
@@ -8332,6 +8534,17 @@ function calToggleTaskDone(id, dateStr) {
     addTarixLog('in', t('task_late_done_log').replace('{name}', tk.name).replace('{date}', dateStr), diffCoins);
     addTarixLog('in', t('penalty_returned_log'), PENALTY);
     var msg1 = '✅ Belgilandi, +' + total + ' 🪙';
+    // Umumiy statistika hisoblagichlarini ham sinxronlashtiramiz — kalendar
+    // orqali o'tgan kun kechiktirib bajarilganda ham ular oshishi kerak,
+    // aks holda "Jami bajarilgan" / badge progresslari asosiy Tasks
+    // bo'limidagi toggleTask() bilan mos kelmay qoladi.
+    if (!S.totalTasksDone) S.totalTasksDone = 0;
+    S.totalTasksDone++;
+    if (tk.diff === 3) { if (!S.hardTasksDone) S.hardTasksDone = 0; S.hardTasksDone++; }
+    if (!S.taskDoneCount) S.taskDoneCount = {};
+    S.taskDoneCount[id] = (S.taskDoneCount[id] || 0) + 1;
+    if (!S.weekDoneLog) S.weekDoneLog = {};
+    S.weekDoneLog[dateStr] = (S.weekDoneLog[dateStr] || 0) + 1;
     // MUHIM TUZATISH: avvalgi versiyada "har N kunda" vazifa kalendar
     // orqali (bugundan boshqa kun uchun) bajarilgan deb belgilanganda
     // t.nextDate UMUMAN yangilanmasdi — natijada u eski (masalan, vazifa
@@ -9255,6 +9468,57 @@ setTimeout(function(){ updateMoodBtn(); }, 100);
     </div>
   </div>
 
+  <!-- IELTS Filter Modal -->
+  <div id="ielts-filter-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:300;align-items:center;justify-content:center;padding:20px">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:24px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto">
+      <div style="font-family:Syne,sans-serif;font-size:18px;font-weight:700;margin-bottom:18px" data-i18n="ielts_filter_title">🔎 Natijalarni filtrlash</div>
+
+      <div style="margin-bottom:14px">
+        <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:8px" data-i18n="ielts_filter_module_label">Modul</label>
+        <div id="ielts-filter-module-btns" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
+      </div>
+
+      <div id="ielts-filter-sub-row" style="display:none;margin-bottom:14px">
+        <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:8px" data-i18n="ielts_filter_section_label">Qism</label>
+        <div id="ielts-filter-sub-btns" style="display:flex;gap:7px;flex-wrap:wrap"></div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:6px">
+        <button onclick="resetIeltsFilter()" style="flex:1;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:14px;cursor:pointer" data-i18n="ielts_filter_reset_btn">Tozalash</button>
+        <button onclick="applyIeltsFilter()" style="flex:2;padding:12px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:600;cursor:pointer" data-i18n="ielts_filter_apply_btn">Qo'llash</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- IELTS Detailed Analysis Modal -->
+  <div id="ielts-detail-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:300;align-items:flex-end;justify-content:center;padding:0" onclick="if(event.target===this)closeIeltsDetailModal()">
+    <div style="background:var(--surface);border:1px solid rgba(124,92,252,0.3);border-radius:24px 24px 0 0;padding:0;width:100%;max-width:560px;max-height:94vh;display:flex;flex-direction:column;overflow:hidden;animation:slideUp 0.25s ease">
+      <!-- Handle -->
+      <div style="display:flex;justify-content:center;padding:12px 0 0;flex-shrink:0">
+        <div style="width:40px;height:4px;border-radius:999px;background:var(--border-hover)"></div>
+      </div>
+      <!-- Header -->
+      <div style="padding:16px 22px 16px;display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0;border-bottom:1px solid var(--border)">
+        <div>
+          <div style="font-family:Syne,sans-serif;font-size:19px;font-weight:700;color:var(--text)" data-i18n="ielts_detail_title">📊 Chuqur tahlil</div>
+          <div id="ielts-detail-overall-sub" style="font-size:13px;color:var(--text-muted);margin-top:5px"></div>
+        </div>
+        <button onclick="closeIeltsDetailModal()" style="background:var(--surface2);border:none;width:34px;height:34px;border-radius:50%;color:var(--text-muted);font-size:16px;cursor:pointer;flex-shrink:0">✕</button>
+      </div>
+      <!-- Module tabs -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:16px 22px 0;flex-shrink:0">
+        <button id="ielts-dtab-listening" onclick="selectIeltsDetailSection('listening')" style="padding:13px 6px;border-radius:12px;border:2px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif;line-height:1.3" data-i18n="ielts_sec_listening">🎧 Listening</button>
+        <button id="ielts-dtab-reading" onclick="selectIeltsDetailSection('reading')" style="padding:13px 6px;border-radius:12px;border:2px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif;line-height:1.3" data-i18n="ielts_sec_reading">📖 Reading</button>
+        <button id="ielts-dtab-writing" onclick="selectIeltsDetailSection('writing')" style="padding:13px 6px;border-radius:12px;border:2px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif;line-height:1.3" data-i18n="ielts_sec_writing">✍️ Writing</button>
+        <button id="ielts-dtab-speaking" onclick="selectIeltsDetailSection('speaking')" style="padding:13px 6px;border-radius:12px;border:2px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif;line-height:1.3" data-i18n="ielts_sec_speaking">🗣️ Speaking</button>
+      </div>
+      <!-- Hint -->
+      <div style="padding:12px 22px 0;font-size:12.5px;color:var(--text-dim);line-height:1.5" data-i18n="ielts_detail_hint">Har bir qismning o'rtachasi shu qismga kiritilgan BARCHA natijalar asosida hisoblanadi</div>
+      <!-- Content -->
+      <div id="ielts-detail-content" style="flex:1;overflow-y:auto;padding:18px 22px 30px"></div>
+    </div>
+  </div>
+
   <!-- SAT Result Modal -->
   <div id="sat-result-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:300;align-items:center;justify-content:center;padding:20px">
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:24px;width:100%;max-width:360px">
@@ -9342,8 +9606,11 @@ var _ieltsSection = null;
 var _ieltsSubSection = null; // 'all' | 'part1'..'part4' | 'passage1'..'passage3'
 
 // Sub-section config
+// type:'raw'  -> Listening/Reading: son (0..max) kiritiladi, keyin band'ga aylantiriladi
+// type:'band' -> Writing/Speaking: to'g'ridan band (0-9) kiritiladi, subsection faqat teg sifatida saqlanadi
 var IELTS_SUBSEC = {
   listening: {
+    type: 'raw',
     label: 'Qaysi part?',
     items: [
       { key: 'part1', label: '1-part',  max: 10 },
@@ -9354,12 +9621,32 @@ var IELTS_SUBSEC = {
     ]
   },
   reading: {
+    type: 'raw',
     label: 'Qaysi passage?',
     items: [
       { key: 'passage1', label: '1-passage', max: 13 },
       { key: 'passage2', label: '2-passage', max: 13 },
       { key: 'passage3', label: '3-passage', max: 14 },
       { key: 'all',      label: 'All (0-40)', max: 40 }
+    ]
+  },
+  writing: {
+    type: 'band',
+    label: 'Qaysi task?',
+    items: [
+      { key: 'task1', label: 'Task 1' },
+      { key: 'task2', label: 'Task 2' },
+      { key: 'all',   label: 'All' }
+    ]
+  },
+  speaking: {
+    type: 'band',
+    label: 'Qaysi part?',
+    items: [
+      { key: 'part1', label: '1-part' },
+      { key: 'part2', label: '2-part' },
+      { key: 'part3', label: '3-part' },
+      { key: 'all',   label: 'All' }
     ]
   }
 };
@@ -9437,9 +9724,10 @@ function selectIeltsSection(sec) {
   if (preview)  preview.textContent = '—';
   if (hint)     hint.textContent    = '';
 
-  if (sec === 'listening' || sec === 'reading') {
-    // Show sub-section row
-    var cfg = IELTS_SUBSEC[sec];
+  // Barcha 4 skill uchun ham endi sub-section (qism) tanlanadi — Listening/Reading
+  // uchun raw-score, Writing/Speaking uchun to'g'ridan band kiritiladi.
+  var cfg = IELTS_SUBSEC[sec];
+  if (cfg) {
     var labelEl = document.getElementById('ielts-subsec-label');
     if (labelEl) labelEl.textContent = cfg.label;
 
@@ -9459,11 +9747,6 @@ function selectIeltsSection(sec) {
     if (subsecRow) subsecRow.style.display = 'block';
     if (rawRow)    rawRow.style.display    = 'none';
     if (bandRow)   bandRow.style.display   = 'none';
-  } else {
-    // Writing / Speaking → faqat band score
-    if (subsecRow) subsecRow.style.display = 'none';
-    if (rawRow)    rawRow.style.display    = 'none';
-    if (bandRow)   bandRow.style.display   = 'block';
   }
 }
 
@@ -9490,10 +9773,21 @@ function selectIeltsSubSection(subKey) {
     }
   });
 
-  // Update raw input max
+  var rawRow  = document.getElementById('ielts-raw-row');
+  var bandRow = document.getElementById('ielts-band-row');
+
+  if (cfg.type === 'band') {
+    // Writing / Speaking — to'g'ridan band (0-9) kiritiladi, raw kerak emas
+    if (rawRow)  rawRow.style.display  = 'none';
+    if (bandRow) bandRow.style.display = 'block';
+    var bandInp = document.getElementById('ielts-res-band');
+    if (bandInp) bandInp.value = '';
+    return;
+  }
+
+  // Listening / Reading — raw score kiritiladi
   var rawInp  = document.getElementById('ielts-res-raw');
   var hint    = document.getElementById('ielts-raw-max-hint');
-  var rawRow  = document.getElementById('ielts-raw-row');
   var rawLbl  = document.getElementById('ielts-raw-label');
   if (rawInp) {
     rawInp.max = item.max;
@@ -9514,7 +9808,8 @@ function selectIeltsSubSection(subKey) {
   if (rawLbl) {
     rawLbl.textContent = 'Raw score (0-' + item.max + ')';
   }
-  if (rawRow) rawRow.style.display = 'block';
+  if (bandRow) bandRow.style.display = 'none';
+  if (rawRow)  rawRow.style.display  = 'block';
 }
 
 function calcIeltsBandLive() {
@@ -9576,11 +9871,12 @@ function saveIeltsResult() {
   var band   = null;
   var rawVal = null;
   var subKey = _ieltsSubSection;
+  var cfg    = IELTS_SUBSEC[_ieltsSection];
 
-  if (_ieltsSection === 'listening' || _ieltsSection === 'reading') {
+  if (cfg && cfg.type === 'raw') {
+    // Listening / Reading
     if (!subKey) { toast(t('ielts_select_part_toast')); return; }
 
-    var cfg  = IELTS_SUBSEC[_ieltsSection];
     var item = cfg.items.find(function(i){ return i.key === subKey; });
     var raw  = parseInt(document.getElementById('ielts-res-raw').value);
 
@@ -9598,10 +9894,11 @@ function saveIeltsResult() {
       band = null;
     }
   } else {
-    // Writing / Speaking
+    // Writing / Speaking — to'g'ridan band kiritiladi, lekin qaysi
+    // task/part ekanligi ham (filtr uchun) belgilanishi shart
+    if (!subKey) { toast(t('ielts_select_part_toast')); return; }
     band = parseFloat(document.getElementById('ielts-res-band').value);
     if (isNaN(band) || band < 0 || band > 9) { toast(t('ielts_enter_band_toast')); return; }
-    subKey = null;
   }
 
   if (!S.ieltsResults) S.ieltsResults = [];
@@ -9634,9 +9931,9 @@ function saveIeltsResult() {
 // Writing/Speaking: FAQAT oxirgi 3 ta kiritilgan band ballarning
 // o'rtachasi olinadi, standart 0.5 ga yaxlitlanadi.
 function calcSectionBandFromParts(sec, results) {
-  // Writing / Speaking: IELTS_SUBSEC da yo'q, to'g'ridan band kiritiladi
+  // Writing / Speaking: band to'g'ridan kiritiladi (subsection faqat teg)
   var cfg = IELTS_SUBSEC[sec];
-  if (!cfg) {
+  if (!cfg || cfg.type === 'band') {
     var wEntries = results.filter(function(r) {
       return r.section === sec && r.band !== null && !isNaN(Number(r.band));
     }).sort(_ieltsSortByTimeAsc);
@@ -9735,6 +10032,170 @@ function calcSectionRawTotal(sec, results) {
   if (finalRaw === null) return null;
   return Math.min(Math.max(Math.round(finalRaw), 0), 40);
 }
+// ============ IELTS CHUQUR TAHLIL MODALI ============
+// "AVERAGE OVERALL" kartochkasi bosilganda ochiladigan modal. Asosiy
+// ekrandan yashirilgan L/R/W/S breakdown shu yerda 4 ta modul tugmasi
+// orqali, har bir part/passage/task kesimida o'rtacha ball + uni tasdiqlovchi
+// sana-sana tarix (log) bilan ko'rsatiladi.
+var _ieltsDetailSection = null;
+var IELTS_DETAIL_COLORS = {
+  listening: { hex: '#60A5FA', rgb: '96,165,250'  },
+  reading:   { hex: '#34D399', rgb: '52,211,153'  },
+  writing:   { hex: '#F5A623', rgb: '245,166,35'  },
+  speaking:  { hex: '#F87171', rgb: '248,113,113' }
+};
+
+// Sana chiroyli formatga o'tkazish (YYYY-MM-DD -> DD.MM.YYYY, bugun bo'lsa belgilanadi)
+function _ieltsPrettyDate(dateStr) {
+  if (!dateStr) return t('ielts_no_date_label');
+  var p = dateStr.split('-');
+  if (p.length !== 3) return dateStr;
+  var pretty = p[2] + '.' + p[1] + '.' + p[0];
+  return dateStr === today() ? (t('ielts_today_label') + ' · ' + pretty) : pretty;
+}
+
+// Overall kartochka bosilganda — faqat IELTS uchun modalni ochamiz (SAT
+// bo'lganda hech narsa qilmaymiz, SAT o'z eski xatti-harakatida qoladi).
+function onIeltsOverallCardClick() {
+  if (getExamType() === 'sat') return;
+  openIeltsDetailModal();
+}
+
+function openIeltsDetailModal() {
+  var modal = document.getElementById('ielts-detail-modal');
+  if (!modal) return;
+  var results = S.ieltsResults || [];
+
+  // Modal sarlavhasi ostida qisqa L/R/W/S xulosasi (context uchun)
+  var subEl = document.getElementById('ielts-detail-overall-sub');
+  if (subEl) {
+    var parts = [];
+    ['listening','reading','writing','speaking'].forEach(function(s) {
+      var b = calcSectionBandFromParts(s, results);
+      var short = {listening:'L', reading:'R', writing:'W', speaking:'S'}[s];
+      if (b !== null && !isNaN(b)) parts.push(short + ':' + b);
+    });
+    subEl.textContent = parts.join('   ·   ');
+  }
+
+  modal.style.display = 'flex';
+
+  // Ma'lumoti bor birinchi modulni ochamiz, aks holda Listening'dan boshlaymiz
+  var secs = ['listening','reading','writing','speaking'];
+  var defaultSec = secs.find(function(s){ return results.some(function(r){ return r.section === s; }); }) || 'listening';
+  selectIeltsDetailSection(defaultSec);
+}
+
+function closeIeltsDetailModal() {
+  var modal = document.getElementById('ielts-detail-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function selectIeltsDetailSection(sec) {
+  _ieltsDetailSection = sec;
+  ['listening','reading','writing','speaking'].forEach(function(s) {
+    var btn = document.getElementById('ielts-dtab-' + s);
+    if (!btn) return;
+    var c = IELTS_DETAIL_COLORS[s];
+    var active = s === sec;
+    btn.style.background   = active ? 'rgba(' + c.rgb + ',0.14)' : 'var(--surface2)';
+    btn.style.color        = active ? c.hex : 'var(--text-muted)';
+    btn.style.borderColor  = active ? 'rgba(' + c.rgb + ',0.55)' : 'var(--border)';
+  });
+  renderIeltsDetailContent(sec);
+}
+
+// Berilgan modul (sec) uchun to'liq breakdown HTML'ini quradi:
+//  - joriy section bali (asosiy kartochkadagi bilan bir xil, calcSectionBandFromParts)
+//  - har bir part/passage/task uchun: shu qismga kiritilgan BARCHA natijalarning
+//    o'rtachasi + har bir yozuvni sana bilan ko'rsatuvchi tarix (log) ro'yxati
+//  - "All" (to'liq test) sifatida kiritilgan natijalar bo'lsa, alohida bo'lim
+function renderIeltsDetailContent(sec) {
+  var content = document.getElementById('ielts-detail-content');
+  if (!content) return;
+
+  var results = S.ieltsResults || [];
+  var cfg = IELTS_SUBSEC[sec];
+  var color = IELTS_DETAIL_COLORS[sec].hex;
+  var isRaw = cfg.type === 'raw';
+  var overallBand = calcSectionBandFromParts(sec, results);
+
+  var html = '';
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;padding:16px 18px;background:rgba(' + IELTS_DETAIL_COLORS[sec].rgb + ',0.1);border:1px solid rgba(' + IELTS_DETAIL_COLORS[sec].rgb + ',0.3);border-radius:14px">' +
+    '<div style="font-size:13px;color:' + color + ';font-weight:600" data-i18n="ielts_detail_section_score">Joriy section bali</div>' +
+    '<div style="font-family:Syne,sans-serif;font-size:28px;font-weight:700;color:' + color + '">' + (overallBand !== null ? overallBand : '—') + '</div>' +
+  '</div>';
+
+  var parts = cfg.items.filter(function(i) { return i.key !== 'all'; });
+  var anyData = false;
+
+  parts.forEach(function(p) {
+    var entries = results.filter(function(r) {
+      return r.section === sec && r.subSection === p.key &&
+        (isRaw ? (r.raw !== null && !isNaN(Number(r.raw))) : (r.band !== null && !isNaN(Number(r.band))));
+    }).sort(_ieltsSortByTimeAsc).reverse(); // eng yangi tepada
+
+    var vals = entries.map(function(r) { return isRaw ? Number(r.raw) : Number(r.band); });
+    var avg  = vals.length ? (vals.reduce(function(a,b){ return a+b; }, 0) / vals.length) : null;
+    var avgRounded = avg !== null ? (Math.round(avg * 10) / 10) : null;
+    if (entries.length) anyData = true;
+
+    html += '<div style="margin-bottom:24px">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;flex-wrap:wrap;gap:6px">' +
+        '<div style="font-size:14.5px;font-weight:700;color:var(--text)">' + p.label + '</div>' +
+        '<div style="font-size:13px;font-weight:700;color:' + color + '">' +
+          (avgRounded !== null
+            ? (t('ielts_detail_avg_label') + ': ' + avgRounded + (isRaw ? ('/' + p.max) : '') + ' (' + vals.length + t('ielts_detail_times_suffix') + ')')
+            : t('ielts_detail_no_part_data')) +
+        '</div>' +
+      '</div>';
+
+    if (entries.length > 0) {
+      html += '<div style="display:flex;flex-direction:column;gap:8px">' +
+        entries.map(function(r) {
+          var val = isRaw ? (r.raw + '/' + p.max + " to'g'ri") : ('band ' + r.band);
+          return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--surface2);border-radius:10px;font-size:13px">' +
+            '<span style="color:var(--text-muted)">' + t('ielts_date_label') + ': ' + _ieltsPrettyDate(r.date) + '</span>' +
+            '<span style="color:var(--text);font-weight:700">→ ' + val + '</span>' +
+          '</div>';
+        }).join('') +
+      '</div>';
+    } else {
+      html += '<div style="font-size:13px;color:var(--text-dim);padding:12px 14px;background:var(--surface2);border-radius:10px">' + t('ielts_detail_no_part_data') + '</div>';
+    }
+    html += '</div>';
+  });
+
+  // "All" (to'liq test sifatida kiritilgan) natijalar — alohida ko'rsatiladi,
+  // chunki ular part/passage bo'yicha emas, butun section uchun kiritilgan.
+  var allEntries = results.filter(function(r) {
+    return r.section === sec && (r.subSection === 'all' || !r.subSection) &&
+      (isRaw ? (r.raw !== null && !isNaN(Number(r.raw))) : (r.band !== null && !isNaN(Number(r.band))));
+  }).sort(_ieltsSortByTimeAsc).reverse();
+
+  if (allEntries.length > 0) {
+    anyData = true;
+    html += '<div style="margin-top:8px;padding-top:18px;border-top:1px solid var(--border)">' +
+      '<div style="font-size:14.5px;font-weight:700;color:var(--text);margin-bottom:11px" data-i18n="ielts_detail_all_title">🧾 To\'liq test (All) natijalari</div>' +
+      '<div style="display:flex;flex-direction:column;gap:8px">' +
+        allEntries.map(function(r) {
+          var val = isRaw ? (r.raw + '/40 to\'g\'ri') : ('band ' + r.band);
+          return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--surface2);border-radius:10px;font-size:13px">' +
+            '<span style="color:var(--text-muted)">' + t('ielts_date_label') + ': ' + _ieltsPrettyDate(r.date) + '</span>' +
+            '<span style="color:var(--text);font-weight:700">→ ' + val + '</span>' +
+          '</div>';
+        }).join('') +
+      '</div>' +
+    '</div>';
+  }
+
+  if (!anyData) {
+    html = '<div style="text-align:center;padding:50px 20px;color:var(--text-dim);font-size:14px">' + t('ielts_detail_no_data') + '</div>';
+  }
+
+  content.innerHTML = html;
+}
+
 function renderIeltsTab() {
   var examType = getExamType();
   if (examType === 'sat') {
@@ -9821,7 +10282,13 @@ function renderIeltsTab() {
       var subText = subParts.join(' ');
       if (rawParts.length > 0) subText += ' · ' + rawParts.join(' · ');
       subEl.textContent = subText;
+      // Asosiy ekranda breakdown (L:6 R:5.5 ...) endi ko'rsatilmaydi — bu
+      // ma'lumot endi faqat "Chuqur tahlil" modalida (kartochka bosilganda)
+      // ko'rinadi, toza UI uchun.
+      subEl.style.display = 'none';
     }
+    var tapHint = document.getElementById('ielts-overall-tap-hint');
+    if (tapHint) tapHint.style.display = 'block';
   } else {
     if (overallCard) overallCard.style.display = 'none';
   }
@@ -9840,18 +10307,60 @@ function renderIeltsTab() {
     return item ? item.label : r.subSection;
   }
 
-  var sorted = results.slice().sort(function(a,b){
+  // ===== FILTR QO'LLASH (Modul + Qism) =====
+  var filtered = results.filter(function(r) {
+    if (_ieltsFilterModule !== 'all' && r.section !== _ieltsFilterModule) return false;
+    if (_ieltsFilterModule !== 'all' && _ieltsFilterSub !== 'all') {
+      var rSub = r.subSection || 'all';
+      if (rSub !== _ieltsFilterSub) return false;
+    }
+    return true;
+  });
+
+  // Filtr indikatorini yangilash (tugmadagi nuqta)
+  var filterDot = document.getElementById('ielts-filter-dot');
+  var filterActive = (_ieltsFilterModule !== 'all' || _ieltsFilterSub !== 'all');
+  if (filterDot) filterDot.style.display = filterActive ? 'inline-block' : 'none';
+
+  var sorted = filtered.slice().sort(function(a,b){
     var da = a.date || '';
     var db = b.date || '';
     if (db > da) return 1;
     if (db < da) return -1;
     return b.id - a.id;
   });
-  list.innerHTML = sorted.map(function(r) {
+
+  if (sorted.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:30px 20px;color:var(--text-dim);font-size:13px">' + t('ielts_filter_no_match') + '</div>';
+    return;
+  }
+
+  // ===== SANA BO'YICHA GURUHLASH =====
+  var groups = [];      // [{date:'2026-07-13', items:[...]}]
+  var groupByDate = {};
+  sorted.forEach(function(r) {
+    var d = r.date || '';
+    if (!groupByDate[d]) {
+      groupByDate[d] = { date: d, items: [] };
+      groups.push(groupByDate[d]);
+    }
+    groupByDate[d].items.push(r);
+  });
+
+  function fmtGroupDate(dateStr) {
+    if (!dateStr) return t('ielts_no_date_label');
+    var parts = dateStr.split('-'); // YYYY-MM-DD
+    if (parts.length !== 3) return dateStr;
+    var pretty = parts[2] + '.' + parts[1] + '.' + parts[0];
+    if (dateStr === today()) return t('ielts_today_label') + ' · ' + pretty;
+    return pretty;
+  }
+
+  function resultCard(r) {
     var sub    = subLabel(r);
     var isPartial = r.subSection && r.subSection !== 'all';
     var bandStr = (r.band !== null && r.band !== undefined)
-      ? '<div style="font-size:24px;font-weight:700;color:' + (secColors[r.section]||'var(--accent)') + ';font-family:Syne,sans-serif;line-height:1">' + r.band + '</div>'
+      ? '<div style="font-size:22px;font-weight:700;color:' + (secColors[r.section]||'var(--accent)') + ';font-family:Syne,sans-serif;line-height:1">' + r.band + '</div>'
       : '';
     var rawStr  = (r.raw !== null && r.raw !== undefined)
       ? ('<div style="font-size:11px;color:var(--text-dim);margin-top:2px">' +
@@ -9861,20 +10370,112 @@ function renderIeltsTab() {
     var subBadge = sub
       ? '<span style="font-size:10px;padding:2px 7px;border-radius:999px;background:rgba(124,92,252,0.12);color:#B48EFF;border:1px solid rgba(124,92,252,0.2);margin-left:4px">' + sub + '</span>'
       : '';
-    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between">' +
-      '<div style="display:flex;align-items:center;gap:10px">' +
-      '<span style="font-size:20px">' + (secEmoji[r.section]||'📊') + '</span>' +
-      '<div>' +
+    return '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 13px;display:flex;align-items:center;justify-content:space-between">' +
+      '<div style="display:flex;align-items:center;gap:9px;min-width:0">' +
+      '<span style="font-size:18px;flex-shrink:0">' + (secEmoji[r.section]||'📊') + '</span>' +
+      '<div style="min-width:0">' +
         '<div style="font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;flex-wrap:wrap;gap:3px">' + (secNames[r.section]||r.section) + subBadge + '</div>' +
-        '<div style="font-size:11px;color:var(--text-muted)">' + r.date + '</div>' +
       '</div>' +
       '</div>' +
-      '<div style="display:flex;align-items:center;gap:10px">' +
+      '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">' +
         '<div style="text-align:right">' + bandStr + rawStr + '</div>' +
-        '<button onclick="deleteIeltsResult(' + r.id + ')" style="background:none;border:none;color:var(--text-dim);font-size:16px;cursor:pointer;padding:4px">🗑️</button>' +
+        '<button onclick="deleteIeltsResult(' + r.id + ')" style="background:none;border:none;color:var(--text-dim);font-size:15px;cursor:pointer;padding:4px">🗑️</button>' +
       '</div>' +
       '</div>';
+  }
+
+  list.innerHTML = groups.map(function(g) {
+    return '<div style="margin-bottom:4px">' +
+      '<div style="display:flex;align-items:center;gap:8px;margin:0 0 8px 2px">' +
+        '<span style="font-family:Syne,sans-serif;font-size:13px;font-weight:700;color:var(--text)">' + fmtGroupDate(g.date) + '</span>' +
+        '<span style="height:1px;flex:1;background:var(--border)"></span>' +
+        '<span style="font-size:11px;color:var(--text-dim)">' + g.items.length + '</span>' +
+      '</div>' +
+      '<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:8px;display:flex;flex-direction:column;gap:6px">' +
+        g.items.map(resultCard).join('') +
+      '</div>' +
+    '</div>';
   }).join('');
+}
+
+// ============ IELTS FILTR (Modul + Qism) ============
+var _ieltsFilterModule = 'all';
+var _ieltsFilterSub    = 'all';
+
+function openIeltsFilterModal() {
+  var modal = document.getElementById('ielts-filter-modal');
+  if (!modal) return;
+  renderIeltsFilterModal();
+  modal.style.display = 'flex';
+}
+function closeIeltsFilterModal() {
+  var modal = document.getElementById('ielts-filter-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function renderIeltsFilterModal() {
+  var modMap = [
+    { key: 'all',       label: t('ielts_filter_all'), emoji: '🌐', color: '#B48EFF' },
+    { key: 'listening',  label: t('ielts_sec_listening'), emoji: '🎧', color: '#60A5FA' },
+    { key: 'reading',    label: t('ielts_sec_reading'),   emoji: '📖', color: '#34D399' },
+    { key: 'writing',    label: t('ielts_sec_writing'),   emoji: '✍️', color: '#F5A623' },
+    { key: 'speaking',   label: t('ielts_sec_speaking'),  emoji: '🗣️', color: '#F87171' }
+  ];
+  var modWrap = document.getElementById('ielts-filter-module-btns');
+  if (modWrap) {
+    modWrap.innerHTML = modMap.map(function(m) {
+      var sel = (m.key === _ieltsFilterModule);
+      return '<button onclick="selectIeltsFilterModule(\'' + m.key + '\')" style="' +
+        'padding:9px 8px;border-radius:11px;border:2px solid ' + (sel ? m.color : 'var(--border)') + ';' +
+        'background:' + (sel ? m.color + '22' : 'var(--surface2)') + ';' +
+        'color:' + (sel ? m.color : 'var(--text-muted)') + ';' +
+        'font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:DM Sans,sans-serif;text-align:center">' +
+        m.emoji + ' ' + m.label + '</button>';
+    }).join('');
+  }
+
+  var subRow  = document.getElementById('ielts-filter-sub-row');
+  var subWrap = document.getElementById('ielts-filter-sub-btns');
+  if (_ieltsFilterModule === 'all' || !IELTS_SUBSEC[_ieltsFilterModule]) {
+    if (subRow) subRow.style.display = 'none';
+  } else {
+    if (subRow) subRow.style.display = 'block';
+    var cfg = IELTS_SUBSEC[_ieltsFilterModule];
+    var items = [{ key: 'all', label: t('ielts_filter_all') }].concat(
+      cfg.items.filter(function(i){ return i.key !== 'all'; })
+    );
+    if (subWrap) {
+      subWrap.innerHTML = items.map(function(item) {
+        var sel = (item.key === _ieltsFilterSub);
+        return '<button onclick="selectIeltsFilterSub(\'' + item.key + '\')" style="' +
+          'padding:7px 12px;border-radius:999px;border:1px solid ' + (sel ? 'var(--accent)' : 'var(--border)') + ';' +
+          'background:' + (sel ? 'rgba(124,92,252,0.15)' : 'var(--surface2)') + ';' +
+          'color:' + (sel ? 'var(--accent)' : 'var(--text-muted)') + ';' +
+          'font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:DM Sans,sans-serif">' +
+          item.label + '</button>';
+      }).join('');
+    }
+  }
+}
+
+function selectIeltsFilterModule(key) {
+  _ieltsFilterModule = key;
+  _ieltsFilterSub = 'all';
+  renderIeltsFilterModal();
+}
+function selectIeltsFilterSub(key) {
+  _ieltsFilterSub = key;
+  renderIeltsFilterModal();
+}
+function applyIeltsFilter() {
+  closeIeltsFilterModal();
+  renderIeltsTab();
+}
+function resetIeltsFilter() {
+  _ieltsFilterModule = 'all';
+  _ieltsFilterSub = 'all';
+  renderIeltsFilterModal();
+  renderIeltsTab();
 }
 
 function deleteIeltsResult(id) {
@@ -9982,7 +10583,9 @@ function renderSatTab() {
     var valEl = document.getElementById('ielts-overall-val');
     var subEl = document.getElementById('ielts-overall-sub');
     if (valEl) { valEl.textContent = total; valEl.style.fontSize = '48px'; }
-    if (subEl) subEl.textContent = 'RW: ' + avgRw + ' · Math: ' + avgMath;
+    if (subEl) { subEl.textContent = 'RW: ' + avgRw + ' · Math: ' + avgMath; subEl.style.display = ''; }
+    var tapHint = document.getElementById('ielts-overall-tap-hint');
+    if (tapHint) tapHint.style.display = 'none';
   } else {
     if (overallCard) overallCard.style.display = 'none';
   }
