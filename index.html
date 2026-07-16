@@ -236,6 +236,11 @@
   .r-del:hover { color:var(--red); }
 
   .add-reward-section { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:20px; }
+  .reward-stats-section { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:20px; margin-top:16px; }
+  .rstat-filter-btn { padding:8px 14px; border-radius:8px; border:1px solid var(--border); background:var(--surface2); color:var(--text-muted); font-size:12px; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.2s; white-space:nowrap; }
+  .rstat-filter-btn.active { background:var(--accent); border-color:transparent; color:#fff; }
+  .rstat-date-select { padding:8px 10px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:12px; font-family:'DM Sans',sans-serif; outline:none; cursor:pointer; }
+  .rstat-stat-row, .rstat-day-item { display:flex; align-items:center; justify-content:space-between; background:var(--surface2); border-radius:10px; padding:10px 14px; margin-bottom:8px; font-size:13px; gap:10px; }
   .add-reward-section h3 { font-family:'Syne',sans-serif; font-size:15px; font-weight:600; margin-bottom:14px; color:var(--text); }
   .reward-inputs { display:flex; flex-direction:column; gap:10px; }
   .reward-inputs input { width:100%; padding:11px 14px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; color:var(--text); font-size:14px; font-family:'DM Sans',sans-serif; outline:none; transition:border-color 0.2s; }
@@ -1055,24 +1060,17 @@ if ('serviceWorker' in navigator) {
       </div>
     </div>
 
-    <!-- 5b. Insight kartalar — 3 ta yonma-yon -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">
+    <!-- 5b. Insight kartalar — 2 ta yonma-yon -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
       <!-- Eng ko'p bajariladigan vazifa -->
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px 12px">
+      <div id="top-task-card" onclick="openTopTaskModal()" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px 12px;cursor:pointer;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
         <div style="font-size:10px;color:var(--text-muted);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:10px" data-i18n="top_task_label">🏆 Top vazifa</div>
         <div id="stat-top-task-icon" style="font-size:22px;margin-bottom:6px">—</div>
         <div id="stat-top-task-name" style="font-size:12px;color:var(--text);font-weight:600;margin-bottom:3px;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">—</div>
         <div id="stat-top-task-count" style="font-size:11px;color:var(--text-muted)">—</div>
       </div>
-      <!-- Eng qiyin kun -->
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px 12px">
-        <div style="font-size:10px;color:var(--text-muted);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:10px" data-i18n="hard_day_label">😓 Eng qiyin kun</div>
-        <div id="stat-hard-day-icon" style="font-size:22px;margin-bottom:6px">—</div>
-        <div id="stat-hard-day-name" style="font-size:12px;color:var(--text);font-weight:600;margin-bottom:3px">—</div>
-        <div id="stat-hard-day-detail" style="font-size:11px;color:var(--text-muted);line-height:1.4">—</div>
-      </div>
       <!-- Eng samarali soat -->
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px 12px">
+      <div id="best-hour-card" onclick="openHourStatsModal()" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px 12px;cursor:pointer;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
         <div style="font-size:10px;color:var(--text-muted);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:10px" data-i18n="best_hour_label">⏰ Eng samarali soat</div>
         <div id="stat-best-hour-icon" style="font-size:22px;margin-bottom:4px">—</div>
         <div id="stat-best-hour-val" style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--accent);margin-bottom:3px">—</div>
@@ -1444,6 +1442,18 @@ if ('serviceWorker' in navigator) {
       <button class="btn-add-reward" onclick="addReward()" style="margin-top:4px" data-i18n="add_reward_btn">🎁 Mukofot qo'shish</button>
       </div><!-- /add-reward-body -->
     </div>
+
+    <!-- REWARD PURCHASE STATISTICS -->
+    <div class="reward-stats-section" id="reward-stats-section">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+        <h3 style="font-family:'Syne',sans-serif;font-size:15px;font-weight:600;color:var(--text);margin:0" data-i18n="reward_stats_title">📊 Statistika</h3>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="rstat-filter-btn active" id="rstat-btn-all" onclick="filterRewardStats('all')" data-i18n="reward_stats_filter_all">Hammasi</button>
+          <select class="rstat-date-select" id="rstat-date-select" onchange="filterRewardStats(this.value)"></select>
+        </div>
+      </div>
+      <div id="reward-stats-content"></div>
+    </div>
   </div>
 </div>
 
@@ -1637,6 +1647,58 @@ if ('serviceWorker' in navigator) {
   </div>
 </div>
 
+<!-- TOP TASK MODAL — barcha vazifalar bo'yicha "necha marta bajarilgan" statistikasi + sana filtri -->
+<div class="modal-overlay" id="top-task-modal-overlay">
+  <div class="modal" style="max-width:420px;max-height:88vh;overflow-y:auto">
+    <h2 data-i18n="top_task_modal_title">🏆 Barcha vazifalar statistikasi</h2>
+
+    <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+      <button class="rstat-filter-btn" id="tt-filter-toggle-btn" onclick="toggleTopTaskFilter()" data-i18n="top_task_filter_btn">📅 Sana bo'yicha filtr</button>
+    </div>
+
+    <!-- Filtr kalendar paneli — faqat filtr tugmasi bosilganda ko'rinadi -->
+    <div id="tt-filter-panel" style="display:none;background:var(--surface2);border-radius:14px;padding:14px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <button onclick="ttCalPrevMonth()" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center">‹</button>
+        <div id="tt-cal-month-label" style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text)"></div>
+        <button onclick="ttCalNextMonth()" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center">›</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:3px">
+        <div style="text-align:center;font-size:10px;color:var(--text-dim);padding:2px 0">Du</div>
+        <div style="text-align:center;font-size:10px;color:var(--text-dim);padding:2px 0">Se</div>
+        <div style="text-align:center;font-size:10px;color:var(--text-dim);padding:2px 0">Ch</div>
+        <div style="text-align:center;font-size:10px;color:var(--text-dim);padding:2px 0">Pa</div>
+        <div style="text-align:center;font-size:10px;color:var(--text-dim);padding:2px 0">Ju</div>
+        <div style="text-align:center;font-size:10px;color:var(--text-dim);padding:2px 0">Sh</div>
+        <div style="text-align:center;font-size:10px;color:var(--accent);padding:2px 0">Ya</div>
+      </div>
+      <div id="tt-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;user-select:none;-webkit-user-select:none;touch-action:none"></div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn-cancel" style="flex:1" onclick="ttFilterClear()" data-i18n="top_task_filter_clear">Tozalash</button>
+        <button class="btn-save" style="flex:2" onclick="ttFilterApply()" data-i18n="top_task_filter_apply">✅ Saqlash</button>
+      </div>
+      <div id="tt-filter-summary" style="margin-top:10px;font-size:12px;color:var(--accent);text-align:center;font-weight:600"></div>
+    </div>
+
+    <div id="top-task-list" style="display:flex;flex-direction:column;gap:8px"></div>
+
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn-cancel" style="flex:1" onclick="closeTopTaskModal()" data-i18n="btn_close">Yopish</button>
+    </div>
+  </div>
+</div>
+
+<!-- HOUR STATS MODAL — barcha soatlar bo'yicha "nechta vazifa bajarilgan" ketma-ketligi -->
+<div class="modal-overlay" id="hour-stats-modal-overlay">
+  <div class="modal" style="max-width:400px;max-height:88vh;overflow-y:auto">
+    <h2 data-i18n="hour_stats_modal_title">⏰ Soatlar bo'yicha statistika</h2>
+    <div id="hour-stats-list" style="display:flex;flex-direction:column;gap:2px"></div>
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn-cancel" style="flex:1" onclick="closeHourStatsModal()" data-i18n="btn_close">Yopish</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1687,6 +1749,13 @@ const I18N = {
     reward_remaining_label: 'Qolgan:',
     reward_unit_count: 'ta',
     claim_summary_title: '🛒 Sotib olingan vaqtlar',
+    // Reward statistics
+    reward_stats_title: '📊 Statistika',
+    reward_stats_filter_all: 'Hammasi',
+    reward_stats_pick_date: 'Sana tanlang',
+    reward_stats_empty: "Hali xarid tarixi yo'q.",
+    reward_stats_purchased_suffix: 'sotib olingan',
+    reward_stats_day_total: "Jami sarflandi:",
     // Reward add form
     rewards_intro: 'Vazifalarni bajarsangiz tanga topasiz. Tangalarni mukofotlarga almashtirasiz!',
     add_reward_toggle: "➕ Yangi mukofot qo'shish",
@@ -1738,6 +1807,7 @@ const I18N = {
     ct_diff_medium: "🟡 O'rta",
     ct_diff_hard: '🔴 Qiyin',
     btn_cancel: 'Bekor',
+    btn_close: 'Yopish',
     btn_save_check: '✓ Saqlash',
     // IELTS
     ielts_overall_avg: "📊 O'rtacha Overall",
@@ -1839,6 +1909,17 @@ const I18N = {
     hard_day_label: '😓 Eng qiyin kun',
     best_hour_label: '⏰ Eng samarali soat',
     stat_times_done: ' marta bajarildi',
+    // Top vazifa modali
+    top_task_modal_title: '🏆 Barcha vazifalar statistikasi',
+    top_task_filter_btn: '📅 Sana bo\'yicha filtr',
+    top_task_filter_clear: 'Tozalash',
+    top_task_filter_apply: '✅ Saqlash',
+    top_task_filter_pick_toast: 'Avval kamida bitta kunni tanlang!',
+    top_task_filter_applied: '📅 {n} kun tanlandi',
+    top_task_filter_applied_toast: '✅ {n} kun bo\'yicha filtr qo\'llandi',
+    top_task_empty: "Hali vazifa yo'q.",
+    top_task_times_short: ' marta',
+    hour_stats_modal_title: "⏰ Soatlar bo'yicha statistika",
     stat_no_data: "Hali ma'lumot yo'q",
     stat_do_tasks: 'Vazifa bajaring!',
     stat_all_great: "Hammasi zo'r!",
@@ -2294,6 +2375,13 @@ const I18N = {
     reward_remaining_label: 'Remaining:',
     reward_unit_count: '',
     claim_summary_title: '🛒 Purchased time',
+    // Reward statistics
+    reward_stats_title: '📊 Statistics',
+    reward_stats_filter_all: 'All',
+    reward_stats_pick_date: 'Pick a date',
+    reward_stats_empty: 'No purchase history yet.',
+    reward_stats_purchased_suffix: 'purchased',
+    reward_stats_day_total: 'Total spent:',
     // Reward add form
     rewards_intro: 'Complete tasks to earn coins. Trade coins for rewards!',
     add_reward_toggle: '➕ Add new reward',
@@ -2345,6 +2433,7 @@ const I18N = {
     ct_diff_medium: '🟡 Medium',
     ct_diff_hard: '🔴 Hard',
     btn_cancel: 'Cancel',
+    btn_close: 'Close',
     btn_save_check: '✓ Save',
     // IELTS
     ielts_overall_avg: '📊 Average Overall',
@@ -2451,6 +2540,17 @@ const I18N = {
     hard_day_label: '😓 Hardest day',
     best_hour_label: '⏰ Most productive hour',
     stat_times_done: ' times done',
+    // Top task modal
+    top_task_modal_title: '🏆 All tasks statistics',
+    top_task_filter_btn: '📅 Filter by date',
+    top_task_filter_clear: 'Clear',
+    top_task_filter_apply: '✅ Save',
+    top_task_filter_pick_toast: 'Pick at least one day first!',
+    top_task_filter_applied: '📅 {n} days selected',
+    top_task_filter_applied_toast: '✅ Filter applied for {n} days',
+    top_task_empty: 'No tasks yet.',
+    top_task_times_short: ' times',
+    hour_stats_modal_title: '⏰ Hourly statistics',
     stat_no_data: 'No data yet',
     stat_do_tasks: 'Complete some tasks!',
     stat_all_great: 'All great!',
@@ -2904,6 +3004,13 @@ const I18N = {
     reward_remaining_label: 'Осталось:',
     reward_unit_count: 'шт',
     claim_summary_title: '🛒 История покупок',
+    // Статистика наград
+    reward_stats_title: '📊 Статистика',
+    reward_stats_filter_all: 'Все',
+    reward_stats_pick_date: 'Выберите дату',
+    reward_stats_empty: 'История покупок пуста.',
+    reward_stats_purchased_suffix: 'куплено',
+    reward_stats_day_total: 'Всего потрачено:',
     // Форма добавления награды
     rewards_intro: 'Выполняй задачи и зарабатывай монеты. Обменивай монеты на награды!',
     add_reward_toggle: '➕ Добавить новую награду',
@@ -2955,6 +3062,7 @@ const I18N = {
     ct_diff_medium: '🟡 Средне',
     ct_diff_hard: '🔴 Сложно',
     btn_cancel: 'Отмена',
+    btn_close: 'Закрыть',
     btn_save_check: '✓ Сохранить',
     // IELTS
     ielts_overall_avg: '📊 Средний Overall',
@@ -3057,6 +3165,17 @@ const I18N = {
     hard_day_label: '😓 Самый сложный день',
     best_hour_label: '⏰ Самый продуктивный час',
     stat_times_done: ' раз выполнено',
+    // Модальное окно "Лучшая задача"
+    top_task_modal_title: '🏆 Статистика всех задач',
+    top_task_filter_btn: '📅 Фильтр по дате',
+    top_task_filter_clear: 'Очистить',
+    top_task_filter_apply: '✅ Сохранить',
+    top_task_filter_pick_toast: 'Сначала выберите хотя бы один день!',
+    top_task_filter_applied: '📅 Выбрано дней: {n}',
+    top_task_filter_applied_toast: '✅ Фильтр применён ({n} дн.)',
+    top_task_empty: 'Пока нет задач.',
+    top_task_times_short: ' раз',
+    hour_stats_modal_title: '⏰ Статистика по часам',
     stat_no_data: 'Нет данных',
     stat_do_tasks: 'Выполняйте задачи!',
     stat_all_great: 'Всё отлично!',
@@ -3574,11 +3693,20 @@ function addXP(amount, reason) {
   if(!S.xp) S.xp = 0;
   const oldLevel = getLevel(S.xp).level;
   S.xp += amount;
+  if(S.xp < 0) S.xp = 0; // XP manfiy bo'lib qolmasin (Undone qaytarilganda)
   const newLevel = getLevel(S.xp).level;
   if(newLevel > oldLevel) {
     const lv = getLevel(S.xp);
     setTimeout(function(){ showLevelUpModal(lv); }, 400);
   }
+}
+
+// Vazifaning qiyinlik darajasiga (diff) qarab qancha XP berilishi/ayirilishi
+// kerakligini hisoblaydi. Bitta manba — toggleTask() va calToggleTaskDone()
+// ikkalasi ham shu funksiyadan foydalanadi, shu sababli Done<->Undone
+// o'rtasida XP miqdori doim bir xil (simmetrik) bo'ladi.
+function taskXPValue(tsk) {
+  return tsk.diff===3 ? XP_PER_TASK_HARD : tsk.diff===2 ? XP_PER_TASK_MED : XP_PER_TASK_EASY;
 }
 
 function showLevelUpModal(lv) {
@@ -4722,7 +4850,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   // Close on Escape key
   document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') { closeModal(); closeRewardModal(); }
+    if (e.key === 'Escape') { closeModal(); closeRewardModal(); closeTopTaskModal(); closeHourStatsModal(); }
   });
   // Close reward modal on overlay click
   const rOverlay = document.getElementById('reward-modal-overlay');
@@ -4832,6 +4960,11 @@ function saveTask() {
     emoji: mEmoji || null,
   };
   S.tasks.push(task);
+  // Yangi task har doim mavjud tartibning OXIRIGA qo'shiladi, avvalgi
+  // tartib esa (taskOrder ichida) hech qanday sabab bilan ham qayta
+  // generatsiya qilinmaydi — shu bilan foydalanuvchi ilgari sudrab
+  // joylashtirgan tartib yangi task qo'shilganda ham saqlanib qoladi.
+  ensureFullTaskOrder();
   save(); render(); closeModal();
   toast(t('task_added_toast'));
 }
@@ -4865,7 +4998,7 @@ function toggleTask(id) {
     if(!S.totalCoins) S.totalCoins=0; S.totalCoins+=tsk.coins;
     addTarixLog('in', tsk.name, tsk.coins);
     // XP qo'shish
-    var xpGain = tsk.diff===3 ? XP_PER_TASK_HARD : tsk.diff===2 ? XP_PER_TASK_MED : XP_PER_TASK_EASY;
+    var xpGain = taskXPValue(tsk);
     addXP(xpGain, tsk.name);
     toast(t('task_done_xp_toast').replace('{coins}', tsk.coins).replace('{xp}', xpGain)); confetti();
     // Kunlik 100% tekshiruvi (kechiktirib)
@@ -4883,8 +5016,19 @@ function toggleTask(id) {
     if(S.weekDoneLog && S.weekDoneLog[today()] > 0) S.weekDoneLog[today()]--;
     if(tsk.diff===3 && S.hardTasksDone>0) S.hardTasksDone--;
     if(S.totalCoins>0) S.totalCoins -= tsk.coins;
+    // MUHIM TUZATISH: vazifa "Bajarilgan" dan "Bajarilmagan"ga qaytarilganda
+    // avval berilgan XP ham qaytarib olinishi kerak (true -> false o'tishi),
+    // aks holda foydalanuvchi Done/Undone ni cheksiz bosib XP yig'ib olishi mumkin edi.
+    var xpLoss = taskXPValue(tsk);
+    addXP(-xpLoss, tsk.name + ' (bekor qilindi)');
   }
   save(); render();
+  // Statistika sahifasi va nishonlar (badges) darhol yangilanishi/tekshirilishi
+  // uchun — bu elementlar Profile bo'limida DOM'da doim mavjud (faqat
+  // ko'rinmasligi mumkin), shu sababli qaysi tab ochiq bo'lishidan qat'iy
+  // nazar xavfsiz chaqiriladi.
+  renderStats();
+  renderBadges();
 }
 
 function checkDailyComplete() {
@@ -5099,16 +5243,16 @@ if (document.readyState !== 'loading') initTaskSortable();
 
 
 function moveTask(id, dir) {
-  // Ensure taskOrder exists and is complete
-  if (!S.taskOrder || S.taskOrder.length < S.tasks.length) {
-    S.taskOrder = S.tasks.map(function(x){ return x.id; });
-  }
+  // MUHIM (BUG TUZATILDI): bu yerda ilgari "S.taskOrder.length < S.tasks.length"
+  // bo'lishi bilanoq (masalan yangi task qo'shilgandan keyin, chunki addTask
+  // S.taskOrder'ni kengaytirmaydi) BUTUN taskOrder foydalanuvchining tabiiy
+  // (ID bo'yicha) tartibiga qaytarib TASHLAB YUBORILARDI — bu esa oldin
+  // drag-and-drop yoki yuqoriga/pastga tugmalar orqali qo'lda belgilangan
+  // tartibni to'liq yo'qqa chiqarardi. Endi ensureFullTaskOrder() ishlatiladi:
+  // u mavjud S.taskOrder'ni SAQLAB QOLADI, faqat yangi/yetishmayotgan
+  // id'larni oxiriga qo'shadi va o'chirilgan tasklarni olib tashlaydi.
+  ensureFullTaskOrder();
   var idx = S.taskOrder.indexOf(id);
-  if (idx === -1) {
-    // add missing
-    S.taskOrder = S.tasks.map(function(x){ return x.id; });
-    idx = S.taskOrder.indexOf(id);
-  }
   var newIdx = idx + dir;
   if (newIdx < 0 || newIdx >= S.taskOrder.length) return;
   // Swap
@@ -5341,6 +5485,7 @@ function claimReward(id) {
   var addCount = (r.amount>0) ? r.amount : 1;
   S.rewardClaims[r.id]=(S.rewardClaims[r.id]||0)+addCount;
   S.totalPurchases=(S.totalPurchases||0)+1;
+  recordPurchase(r, r.cost);
   addTarixLog('out',r.icon+' '+r.name+' sotib olindi',-r.cost);
   toast(t('reward_claimed_toast').replace('{icon}', r.icon).replace('{name}', r.name).replace('{cost}', r.cost)); confetti(); save(); render();
   _claimingRewardIds[id] = false;
@@ -5604,7 +5749,7 @@ function makeTaskEl(t) {
 
 function renderRewards() {
   const grid=document.getElementById('rewards-grid'); grid.innerHTML='';
-  if(S.rewards.length===0){grid.innerHTML='<p style="color:var(--text-muted);font-size:14px">'+t('rewards_empty')+'</p>';return;}
+  if(S.rewards.length===0){grid.innerHTML='<p style="color:var(--text-muted);font-size:14px">'+t('rewards_empty')+'</p>';renderClaimSummary();renderRewardStats();return;}
   S.rewards.forEach(function(r){
     const cant=S.coins<r.cost;
     const div=document.createElement('div');
@@ -5704,6 +5849,7 @@ function renderRewards() {
     grid.appendChild(div);
   });
   renderClaimSummary();
+  renderRewardStats();
 }
 function renderClaimSummary() {
   const panel = document.getElementById('claim-summary');
@@ -5747,6 +5893,138 @@ function renderClaimSummary() {
   });
   html += '</div>';
   panel.innerHTML = html;
+}
+
+// ================= REWARD PURCHASE HISTORY & STATISTICS =================
+// Har bir reward sotib olinganda shu yerga yozuv qo'shiladi. Alohida
+// 'todolist_purchase_history' kaliti ostida saqlanadi (asosiy S holatidan
+// mustaqil), shunda statistika tarixi asosiy backup/eksport jarayoniga
+// bog'liq bo'lmaydi.
+const PURCHASE_HISTORY_KEY = 'todolist_purchase_history';
+
+function loadPurchaseHistory() {
+  try {
+    var raw = localStorage.getItem(PURCHASE_HISTORY_KEY);
+    var arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch(e) {
+    console.warn('todolist_purchase_history o\'qish xatosi:', e);
+    return [];
+  }
+}
+
+function savePurchaseHistory(history) {
+  try {
+    localStorage.setItem(PURCHASE_HISTORY_KEY, JSON.stringify(history));
+  } catch(e) {
+    console.warn('todolist_purchase_history yozish xatosi:', e);
+  }
+}
+
+// reward - S.rewards ichidagi obyekt, coinsSpent - sotib olishga sarflangan tanga
+function recordPurchase(reward, coinsSpent) {
+  var history = loadPurchaseHistory();
+  history.push({
+    id: Date.now() + '-' + Math.floor(Math.random()*100000),
+    rewardTitle: reward.name,
+    coinsSpent: coinsSpent,
+    timestamp: new Date().toISOString(),
+    // Qo'shimcha maydonlar - statistikani to'g'ri hisoblash uchun:
+    rtype: reward.rtype || 'count',
+    amount: (reward.amount>0) ? reward.amount : 1,
+    icon: reward.icon || '🎁'
+  });
+  savePurchaseHistory(history);
+}
+
+function dayKeyFromTimestamp(ts) {
+  var d = new Date(ts);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+var _rstatCurrentFilter = 'all';
+
+function populateRewardStatsDateSelect() {
+  var sel = document.getElementById('rstat-date-select');
+  if (!sel) return;
+  var history = loadPurchaseHistory();
+  var dateSet = {};
+  history.forEach(function(entry){ dateSet[dayKeyFromTimestamp(entry.timestamp)] = true; });
+  var dates = Object.keys(dateSet).sort().reverse();
+  var prevValue = sel.value;
+  sel.innerHTML = '<option value="">'+t('reward_stats_pick_date')+'</option>' +
+    dates.map(function(d){
+      var parts = d.split('-');
+      var label = parts[2]+'.'+parts[1]+'.'+parts[0];
+      return '<option value="'+d+'">'+label+'</option>';
+    }).join('');
+  if (dates.indexOf(prevValue) !== -1) sel.value = prevValue;
+}
+
+function filterRewardStats(value) {
+  _rstatCurrentFilter = value || 'all';
+  var allBtn = document.getElementById('rstat-btn-all');
+  var sel = document.getElementById('rstat-date-select');
+  if (_rstatCurrentFilter === 'all') {
+    if (allBtn) allBtn.className = 'rstat-filter-btn active';
+    if (sel) sel.value = '';
+  } else {
+    if (allBtn) allBtn.className = 'rstat-filter-btn';
+  }
+  renderRewardStats();
+}
+
+function renderRewardStats() {
+  var content = document.getElementById('reward-stats-content');
+  if (!content) return;
+  populateRewardStatsDateSelect();
+  var history = loadPurchaseHistory();
+
+  if (history.length === 0) {
+    content.innerHTML = '<p style="color:var(--text-muted);font-size:13px">'+t('reward_stats_empty')+'</p>';
+    return;
+  }
+
+  if (_rstatCurrentFilter === 'all') {
+    // "Hammasi" - har bir mukofot bo'yicha JAMI (butun tarix davomida)
+    // qancha vaqt yoki nechta sotib olinganini hisoblaymiz.
+    var agg = {};
+    var order = [];
+    history.forEach(function(entry){
+      var key = entry.rewardTitle;
+      if (!agg[key]) { agg[key] = { icon: entry.icon||'🎁', rtype: entry.rtype||'count', amount:0, count:0 }; order.push(key); }
+      agg[key].amount += (entry.amount>0 ? entry.amount : 1);
+      agg[key].count += 1;
+    });
+    var html = '';
+    order.forEach(function(title){
+      var a = agg[title];
+      var qtyLabel = a.rtype === 'time' ? formatMinutes(a.amount) : (a.count + ' ' + t('reward_unit_count'));
+      html += '<div class="rstat-stat-row"><span>'+a.icon+' '+esc(title)+'</span><span style="color:var(--accent);font-weight:600">'+qtyLabel+' '+t('reward_stats_purchased_suffix')+'</span></div>';
+    });
+    content.innerHTML = html;
+  } else {
+    // Muayyan sana tanlangan - o'sha kunda nima sotib olingani, soni va
+    // sarflangan tangalar tarixi ko'rsatiladi.
+    var dayEntries = history.filter(function(entry){
+      return dayKeyFromTimestamp(entry.timestamp) === _rstatCurrentFilter;
+    }).sort(function(a,b){ return new Date(b.timestamp) - new Date(a.timestamp); });
+
+    if (dayEntries.length === 0) {
+      content.innerHTML = '<p style="color:var(--text-muted);font-size:13px">'+t('reward_stats_empty')+'</p>';
+      return;
+    }
+    var totalCoins = 0;
+    var html = '';
+    dayEntries.forEach(function(entry){
+      totalCoins += (entry.coinsSpent||0);
+      var d = new Date(entry.timestamp);
+      var timeStr = String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+      html += '<div class="rstat-day-item"><span>'+(entry.icon||'🎁')+' '+esc(entry.rewardTitle)+' <span style="color:var(--text-dim);font-size:11px">('+timeStr+')</span></span><span style="color:#F5A623;font-weight:600">-'+entry.coinsSpent+' 🪙</span></div>';
+    });
+    html += '<div class="rstat-stat-row" style="margin-top:4px;border-top:1px solid var(--border);padding-top:12px;background:transparent"><span style="font-weight:600">'+t('reward_stats_day_total')+'</span><span style="color:#F87171;font-weight:700">'+totalCoins+' 🪙</span></div>';
+    content.innerHTML = html;
+  }
 }
 
 function toggleLevelPanel() {
@@ -5935,7 +6213,7 @@ setInterval(function(){ if (S.isDead) updateDeathOverlay(); }, 60000);
 //   negDiff manfiy bo'lsa -> jon ketadi (negDiff * 2 = manfiy son, HP'ga qo'shiladi).
 //   negDiff musbat bo'lsa -> minus hududda qisman tiklanish (jon qaytadi).
 var HP_LOSS_PER_NEGATIVE_COIN = 2;   // 1 ta minus tanga = shuncha HP ketadi/qaytadi (0 dan pastdagi qism uchun)
-var HP_GAIN_PER_POSITIVE_COIN = 0.5; // 1 ta musbat tanga (balans 0/musbat hududda o'sganda) = shuncha HP tiklanadi
+var HP_GAIN_PER_POSITIVE_COIN = 0.5; // ESLATMA: endi ishlatilmaydi — musbat/0 hududdagi tanga harakati HP'ga umuman ta'sir qilmaydi (yangi qat'iy qoida)
 
 // Berilgan eski/yangi tanga balansidan qancha HP o'zgarishi kerakligini hisoblaydi.
 // BU FUNKSIYA HECH QANDAY YON TA'SIRGA (side effect) EGA EMAS — faqat sof
@@ -5955,11 +6233,10 @@ function calcHpDeltaFromCoinDiff(diff, oldCoins, newCoins) {
     return negDiff * HP_LOSS_PER_NEGATIVE_COIN;
   }
 
-  // Balans butunlay 0/musbat hududda qolgan holat: faqat ko'payganda
-  // (diff>0) jon sekin tiklanadi.
-  if (oldCoins >= 0 && newCoins >= 0 && diff > 0) {
-    return diff * HP_GAIN_PER_POSITIVE_COIN;
-  }
+  // Balans butunlay 0/musbat hududda qolgan holat: tanga qancha ko'paysa
+  // ham (yoki kamaysa ham) bu HP tizimiga MUTLAQO daxl qilmaydi — jarima
+  // yo'q, sun'iy tiklanish ham yo'q. HP faqat minus hududdagi harakatdan
+  // ta'sirlanadi (yuqoridagi negDiff shoxobchasi).
   return 0;
 }
 
@@ -6151,7 +6428,6 @@ function render() {
   recordIntervalDueLog(today());
   recalcStreakFromLog();
   document.getElementById('coins-display').textContent=S.coins;
-  checkNegativeCoins();
   renderHp();
   document.getElementById('streak-display').textContent=S.streak||0;
   renderLevel();
@@ -6866,57 +7142,9 @@ function requestNotifPermission() {
 // Sahifa yuklanganda ruxsat so'raymiz
 setTimeout(requestNotifPermission, 3000);
 
-// -- Instagram block notification yuborish --
-var _negNotifSent = false;
-var _negModalShown = false;
-function sendInstagramBlockNotif(coins) {
-  if (!('Notification' in window)) return;
-  if (Notification.permission !== 'granted') return;
-  if (_negNotifSent) return;
-  _negNotifSent = true;
-  try {
-    var n = new Notification(t('ig_block_notif_title'), {
-      body: t('ig_block_notif_body').replace('{coins}', coins),
-      icon: 'https://cdn-icons-png.flaticon.com/512/174/174855.png',
-      requireInteraction: true,
-      tag: 'instagram-block'
-    });
-    n.onclick = function() { window.focus(); n.close(); };
-  } catch(e) {}
-}
-
-// -- MUAMMO 2: coins negative => Instagram block --
-function checkNegativeCoins() {
-  if(S.coins<0){
-    // Notification faqat bir marta
-    sendInstagramBlockNotif(S.coins);
-    // Modal faqat bir marta
-    if(_negModalShown) return;
-    var ov=document.getElementById('neg-modal'); if(ov) return;
-    _negModalShown = true;
-    var overlay=document.createElement('div');
-    overlay.id='neg-modal';
-    overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:400;display:flex;align-items:center;justify-content:center;padding:20px';
-    var box=document.createElement('div');
-    box.style.cssText='background:#1C1C25;border:2px solid #F87171;border-radius:20px;padding:28px 24px;width:100%;max-width:340px;text-align:center;position:relative';
-    box.innerHTML=
-      '<div style="position:absolute;top:12px;right:14px"><button onclick="document.getElementById(\'neg-modal\').remove()" style="background:none;border:none;color:var(--text-dim);font-size:20px;cursor:pointer;line-height:1;padding:4px">✕</button></div>'+
-      '<div style="font-size:48px;margin-bottom:12px">🚫</div>'+
-      '<h3 style="font-family:Syne,sans-serif;font-size:18px;font-weight:700;color:#F87171;margin-bottom:8px">Instagram bloklandi!</h3>'+
-      '<p style="font-size:14px;color:var(--text-muted);margin-bottom:6px;line-height:1.6">Tangangiz <b style="color:#F87171">'+S.coins+'</b> ga tushdi.</p>'+
-      '<p style="font-size:13px;color:var(--text-muted);margin-bottom:20px">Instagramni faqat tanga + ga chiqqanidan keyin ochasiz!</p>'+
-      '<div style="background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:12px;padding:12px;font-size:13px;color:#F87171">'+
-        'Vazifalarni bajaring va + ga chiqaring '+'🪙'+
-      '</div>';
-    overlay.appendChild(box);
-    document.body.appendChild(overlay);
-  } else {
-    // Tanga + ga chiqqanda flaglarni reset
-    _negNotifSent = false;
-    _negModalShown = false;
-    var ov=document.getElementById('neg-modal'); if(ov) ov.remove();
-  }
-}
+// -- "Instagram bloklandi" xabari (bildirishnoma + modal) foydalanuvchi
+// so'roviga ko'ra OLIB TASHLANDI — endi coins manfiy bo'lganda hech qanday
+// bloklovchi popup yoki notification ko'rsatilmaydi.
 
 // -- MUAMMO 3: Profile --
 function viewProfilePhoto() {
@@ -7349,9 +7577,18 @@ function drawWheel(canvas, angle) {
 // doSpin is defined above in renderSpin section
 
 // == TARIX ==
-function addTarixLog(type, desc, amount, uniqueKey) {
+function addTarixLog(type, desc, amount, uniqueKey, forceDate) {
   if(!S.tarix) S.tarix=[];
-  var t = today();
+  // MUHIM TUZATISH: ilgari bu yerda har doim `today()` ishlatilardi — hatto
+  // Kalendar bo'limidan O'TGAN kun uchun (masalan, 3 kun oldingi vazifani
+  // "Done" deb belgilanganda) yozuv baribir "bugungi sana" bilan saqlanardi.
+  // Natijada "LAST 7 DAYS — COIN HISTORY" grafigi item.date ni haftaning
+  // haqiqiy kuni bilan solishtirganda, o'tgan kunlar uchun yozuv topilmay,
+  // ularning ustuni doim 0 bo'lib qolar, butun tanga esa noto'g'ri ravishda
+  // "bugun" ustuniga uyulib qolardi. Endi chaqiruvchi aniq sana (forceDate)
+  // uzatishi mumkin — shunda tarix item.date shu sanaga to'g'ri yoziladi va
+  // grafikdagi kun indeksi bilan 100% mos keladi.
+  var t = forceDate || today();
   // Agar uniqueKey berilsa -- bugun shu kalit bilan yozuv bor bo'lsa yangilasin, yangi qo'shmasin
   if(uniqueKey) {
     var idx = S.tarix.findIndex(function(r){ return r.uniqueKey===uniqueKey && r.date===t; });
@@ -7458,6 +7695,7 @@ function confirmRestart() {
     S.hardTasksDone = 0;
     S.taskDoneLog = {};
     S.taskDoneHourLog = {};
+    S.calDoneHour = {};
     S.taskSkipLog = {};
     S.weekDoneLog = {};
     S.tarix = [];
@@ -7528,6 +7766,7 @@ function resetApp() {
   S.taskDoneLog = {};
   S.taskSkipLog = {};
   S.taskDoneHourLog = {};
+  S.calDoneHour = {};
   S.weekDoneLog = {};
   S.taskDoneCount = {};
 
@@ -7586,7 +7825,19 @@ var SECRET_KEY = 'secret_habit_v1';
 function getSecretData() {
   // S.secretHabit — asosiy manba (LocalStorage orqali saqlanadi)
   if (!S.secretHabit) {
-    S.secretHabit = {log:{}, pin:DEFAULT_PIN};
+    S.secretHabit = {log:{}, pin:DEFAULT_PIN, startDate: today()};
+  }
+  // MUHIM TUZATISH: "Jami kun" statistikasi avval faqat log ichidagi 'clean'
+  // yozuvlar sonini ko'rsatardi (masalan hali hech narsa kiritilmagan bo'lsa 0),
+  // lekin foydalanuvchi "jami qilinmagan kun / KUZATUV BOSHLANGANDAN BUYON
+  // o'tgan jami kun" nisbatini ko'rishni xohlaydi. Shuning uchun har bir
+  // secretHabit obyekti uchun aniq boshlanish sanasi (startDate) kerak.
+  // Eski (startDate maydoni yo'q) foydalanuvchilar uchun orqaga moslik:
+  // agar log ichida allaqachon yozuvlar bo'lsa — eng birinchi (eng eski)
+  // sanani boshlanish deb olamiz; aks holda bugungi kunni boshlanish deb olamiz.
+  if (!S.secretHabit.startDate) {
+    var logKeys = Object.keys(S.secretHabit.log || {}).sort();
+    S.secretHabit.startDate = logKeys.length ? logKeys[0] : today();
   }
   // logCoins: har bir sana uchun AYNAN qo'llanilgan tanga miqdorini (earnedOrPenalizedCoins)
   // saqlaydi (masalan 'clean' uchun +3, 'fail' uchun -5, 'fail2x' uchun -10 — streak bonusi
@@ -8007,8 +8258,21 @@ function renderSecretContent() {
     else tmpStreak=0;
   });
 
+  // MUHIM TUZATISH: "Jami kun" kartasi ilgari faqat 'clean' deb belgilangan
+  // yozuvlar sonini ko'rsatardi — agar hali kam kun kiritilgan bo'lsa (yoki
+  // umuman kiritilmagan bo'lsa) doim 0 bo'lib ko'rinardi, garchi kuzatuv
+  // allaqachon bir necha kundan beri davom etayotgan bo'lsa ham. Endi
+  // kuzatuv boshlangan sanadan (d.startDate) buyon o'tgan JAMI kun bilan
+  // solishtirib, "qilinmagan kun / boshidan o'tgan jami kun" nisbatida
+  // ko'rsatiladi (masalan "3/12").
+  var startDateStr = d.startDate || allDays[0] || t;
+  var startDateObj = new Date(startDateStr + 'T00:00:00');
+  var todayObj = new Date(t + 'T00:00:00');
+  var daysSinceStart = Math.round((todayObj - startDateObj) / 86400000) + 1;
+  if (daysSinceStart < 1) daysSinceStart = 1;
+
   var el1=document.getElementById('sec-stat-streak'); if(el1) el1.textContent=streak;
-  var el2=document.getElementById('sec-stat-total');  if(el2) el2.textContent=total;
+  var el2=document.getElementById('sec-stat-total');  if(el2) el2.textContent=total + '/' + daysSinceStart;
   var el3=document.getElementById('sec-stat-best');   if(el3) el3.textContent=best;
   var badge=document.getElementById('secret-streak-badge');
   if(badge) {
@@ -8533,78 +8797,6 @@ function renderStats() {
     }
   })();
 
-  // ── Eng qiyin kun (hafta kuni bo'yicha) ────────────────────
-  (function() {
-    var DAY_KEYS = ['day_name_0','day_name_1','day_name_2','day_name_3','day_name_4','day_name_5','day_name_6'];
-    var DAY_EMOJI    = ['☀️','🌅','🌤️','⛅','🌥️','🌙','🎉'];
-
-    // Oxirgi 30 kun: har kun uchun o'rtacha completion rate
-    // dowRates[i] = [rate1, rate2, ...] — o'sha DOW har kuni uchun completion rate
-    var dowRates = [[],[],[],[],[],[],[]];
-
-    var doneLog = S.taskDoneLog || {};
-    var nowD = new Date();
-
-    // Oxirgi 30 kun ro'yxati (bugun bunday)
-    for(var li=29; li>=1; li--) {
-      var ld = new Date(nowD.getFullYear(), nowD.getMonth(), nowD.getDate() - li);
-      var dateStr = ld.getFullYear()+'-'+String(ld.getMonth()+1).padStart(2,'0')+'-'+String(ld.getDate()).padStart(2,'0');
-      var dow = ld.getDay();
-
-      // O'sha kuni aktiv bo'lgan daily/weekday/weekly vazifalar
-      var activeCount = 0;
-      var doneCount   = 0;
-      S.tasks.forEach(function(tk) {
-        var rep = tk.repeat || 'once';
-        var isActive = (rep==='daily') ||
-          (rep==='weekdays' && dow>=1 && dow<=5) ||
-          (rep==='weekly' && tk.days && tk.days.indexOf(String(dow))!==-1);
-        if(!isActive) return;
-        activeCount++;
-        var dDates = doneLog[tk.id] || [];
-        if(dDates.indexOf(dateStr) !== -1) doneCount++;
-      });
-
-      if(activeCount === 0) continue;
-      dowRates[dow].push(doneCount / activeCount);
-    }
-
-    // Har DOW uchun o'rtacha rate
-    var rates = dowRates.map(function(arr, i) {
-      if(arr.length === 0) return null;
-      var avg = arr.reduce(function(s,v){ return s+v; }, 0) / arr.length;
-      if(avg >= 1.0) return null; // Hammasi zo'r
-      var bestTotal = Math.round(arr[0] * 19); // taxminiy, display uchun
-      // Eng yomon kunni topamiz (eng past rate bo'lgan sana)
-      var minRate = Math.min.apply(null, arr);
-      return { dow:i, rate: avg, minRate: minRate, days: arr.length };
-    }).filter(function(x){ return x !== null; });
-
-    var iconEl   = document.getElementById('stat-hard-day-icon');
-    var nameEl   = document.getElementById('stat-hard-day-name');
-    var detailEl = document.getElementById('stat-hard-day-detail');
-    if (!iconEl || !nameEl || !detailEl) return;
-
-    if (rates.length === 0) {
-      var hasData = dowRates.some(function(arr){ return arr.length > 0; });
-      iconEl.textContent   = hasData ? '🏆' : '📅';
-      nameEl.textContent   = hasData ? t('stat_all_great') : t('stat_no_data');
-      detailEl.textContent = hasData ? t('stat_all_100') : t('stat_do_tasks');
-      if(hasData) detailEl.style.color = '#34D399';
-      return;
-    }
-
-    // Eng past o'rtacha rate = eng qiyin kun
-    rates.sort(function(a,b){ return a.rate - b.rate; });
-    var hardest = rates[0];
-    var pct = Math.round(hardest.rate * 100);
-
-    iconEl.textContent   = DAY_EMOJI[hardest.dow];
-    nameEl.textContent   = t(DAY_KEYS[hardest.dow]);
-    detailEl.textContent = t('stat_avg_done') + pct + t('stat_avg_done_suffix') + hardest.days + t('stat_avg_done_days_suffix');
-    detailEl.style.color = pct < 50 ? '#F87171' : pct < 75 ? '#F5A623' : '#34D399';
-  })();
-
   // ── Eng samarali soat ──────────────────────────────────────
   (function() {
     var hourLog = S.taskDoneHourLog || {};
@@ -8673,7 +8865,290 @@ function renderStats() {
 
 }
 
-// Goal modal close on overlay click
+// ============================================================
+// TOP TASK MODALI — barcha vazifalar bo'yicha "necha marta bajarilgan"
+// hisoboti + sana oralig'i bo'yicha filtr (drag-select kalendar)
+// ============================================================
+var _ttCalYear = null, _ttCalMonth = null;
+var _ttFilterDates = new Set();   // tanlangan sanalar (YYYY-MM-DD)
+var _ttFilterActive = false;      // "Saqlash" bosilgandan keyin true bo'ladi
+var _ttIsDragging = false;
+var _ttDragMode = 'select';       // 'select' | 'deselect' — drag boshlangan katakning holatiga qarab
+
+function openTopTaskModal() {
+  renderTopTaskList();
+  var panel = document.getElementById('tt-filter-panel');
+  if (panel) panel.style.display = 'none';
+  document.getElementById('top-task-modal-overlay').classList.add('open');
+}
+
+function closeTopTaskModal() {
+  document.getElementById('top-task-modal-overlay').classList.remove('open');
+  _ttIsDragging = false;
+}
+
+function toggleTopTaskFilter() {
+  var panel = document.getElementById('tt-filter-panel');
+  if (!panel) return;
+  var willOpen = panel.style.display === 'none';
+  panel.style.display = willOpen ? '' : 'none';
+  if (willOpen) {
+    if (_ttCalYear === null) {
+      var now = new Date();
+      _ttCalYear = now.getFullYear();
+      _ttCalMonth = now.getMonth();
+    }
+    renderTTCalendar();
+  }
+}
+
+function ttCalPrevMonth() {
+  _ttCalMonth--;
+  if (_ttCalMonth < 0) { _ttCalMonth = 11; _ttCalYear--; }
+  renderTTCalendar();
+}
+function ttCalNextMonth() {
+  _ttCalMonth++;
+  if (_ttCalMonth > 11) { _ttCalMonth = 0; _ttCalYear++; }
+  renderTTCalendar();
+}
+
+function ttCellVisual(cell, isSelected, isFuture) {
+  cell.style.background = isSelected ? 'var(--accent)' : 'var(--surface)';
+  cell.style.color = isSelected ? '#fff' : (isFuture ? 'var(--text-dim)' : 'var(--text)');
+  cell.style.border = '1px solid ' + (isSelected ? 'transparent' : 'var(--border)');
+}
+
+// Sichqonchani bosib turib boshqa kunlar ustidan "sudralganda" (drag) o'sha
+// kunlar bittalab bosib o'tirmasdan TEZ belgilanishi (yoki bekor qilinishi)
+// uchun: mousedown boshlang'ich katakning holatini flip qiladi va shu
+// "rejim"ni (tanlash/bekor qilish) eslab qoladi, keyingi kataklar ustidan
+// o'tganda (mouseenter) xuddi shu rejim qo'llanadi.
+function ttApplyDragToCell(cell) {
+  if (!cell || !cell.dataset || !cell.dataset.ttDate) return;
+  var ds = cell.dataset.ttDate;
+  if (cell.dataset.ttFuture === '1') return;
+  if (_ttDragMode === 'select') { if (!_ttFilterDates.has(ds)) _ttFilterDates.add(ds); }
+  else { if (_ttFilterDates.has(ds)) _ttFilterDates.delete(ds); }
+  ttCellVisual(cell, _ttFilterDates.has(ds), false);
+}
+
+function renderTTCalendar() {
+  var label = document.getElementById('tt-cal-month-label');
+  if (label) label.textContent = getMonthsFullArr()[_ttCalMonth] + ' ' + _ttCalYear;
+
+  var grid = document.getElementById('tt-cal-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  var firstDay = new Date(_ttCalYear, _ttCalMonth, 1).getDay();
+  var startOffset = (firstDay === 0) ? 6 : firstDay - 1;
+  var daysInMonth = new Date(_ttCalYear, _ttCalMonth + 1, 0).getDate();
+  var todayStr = today();
+
+  for (var i = 0; i < startOffset; i++) {
+    var empty = document.createElement('div');
+    empty.style.cssText = 'aspect-ratio:1;';
+    grid.appendChild(empty);
+  }
+
+  for (var day = 1; day <= daysInMonth; day++) {
+    var dateStr = getDateStr(_ttCalYear, _ttCalMonth, day);
+    var isFuture = dateStr > todayStr;
+    var isSelected = _ttFilterDates.has(dateStr);
+
+    var cell = document.createElement('div');
+    cell.dataset.ttDate = dateStr;
+    cell.dataset.ttFuture = isFuture ? '1' : '0';
+    cell.textContent = day;
+    cell.style.cssText =
+      'aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;' +
+      'font-size:11px;font-weight:600;user-select:none;-webkit-user-select:none;' +
+      'cursor:' + (isFuture ? 'default' : 'pointer') + ';' +
+      'opacity:' + (isFuture ? '0.35' : '1') + ';';
+    ttCellVisual(cell, isSelected, isFuture);
+
+    if (!isFuture) {
+      cell.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        var ds = e.currentTarget.dataset.ttDate;
+        _ttDragMode = _ttFilterDates.has(ds) ? 'deselect' : 'select';
+        _ttIsDragging = true;
+        ttApplyDragToCell(e.currentTarget);
+      });
+      cell.addEventListener('mouseenter', function(e) {
+        if (!_ttIsDragging) return;
+        ttApplyDragToCell(e.currentTarget);
+      });
+      // Mobil qurilmalarda barmoq bilan "sudrab" tanlash uchun
+      cell.addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        var ds = e.currentTarget.dataset.ttDate;
+        _ttDragMode = _ttFilterDates.has(ds) ? 'deselect' : 'select';
+        _ttIsDragging = true;
+        ttApplyDragToCell(e.currentTarget);
+      }, {passive:false});
+    }
+
+    grid.appendChild(cell);
+  }
+}
+
+// Barmoq bilan sudrab tanlashda qaysi katak ustida turganini aniqlaymiz
+document.addEventListener('touchmove', function(e) {
+  if (!_ttIsDragging) return;
+  var grid = document.getElementById('tt-cal-grid');
+  if (!grid || grid.style.display === 'none') return;
+  var touch = e.touches[0]; if (!touch) return;
+  var el = document.elementFromPoint(touch.clientX, touch.clientY);
+  if (el && el.dataset && el.dataset.ttDate) { e.preventDefault(); ttApplyDragToCell(el); }
+}, {passive:false});
+
+// Sichqoncha/barmoq qo'yib yuborilganda drag-select rejimi tugaydi
+document.addEventListener('mouseup', function(){ _ttIsDragging = false; });
+document.addEventListener('touchend', function(){ _ttIsDragging = false; });
+
+function ttFilterClear() {
+  _ttFilterDates.clear();
+  _ttFilterActive = false;
+  renderTTCalendar();
+  var summary = document.getElementById('tt-filter-summary');
+  if (summary) summary.textContent = '';
+  renderTopTaskList();
+}
+
+function ttFilterApply() {
+  if (_ttFilterDates.size === 0) { toast(t('top_task_filter_pick_toast')); return; }
+  _ttFilterActive = true;
+  renderTopTaskList();
+  var summary = document.getElementById('tt-filter-summary');
+  if (summary) summary.textContent = t('top_task_filter_applied').replace('{n}', _ttFilterDates.size);
+  toast(t('top_task_filter_applied_toast').replace('{n}', _ttFilterDates.size));
+}
+
+// Har bir vazifa bo'yicha "necha marta bajarilgan" ro'yxatini chizadi.
+// Filtr faol bo'lsa — faqat tanlangan sanalar ichidagi bajarilishlar
+// hisoblanadi; aks holda — vazifaning butun tarix davomidagi jami soni.
+// 0 marta bajarilgan vazifalar ham ro'yxatdan chiqarilmaydi — ular eng
+// pastda (kamayish tartibida saralangani uchun tabiiy ravishda) turadi.
+function renderTopTaskList() {
+  var listEl = document.getElementById('top-task-list');
+  if (!listEl) return;
+
+  var doneLog   = S.taskDoneLog   || {};
+  var doneCount = S.taskDoneCount || {};
+
+  var rows = (S.tasks || []).map(function(tk) {
+    var cnt;
+    if (_ttFilterActive && _ttFilterDates.size > 0) {
+      var dates = doneLog[tk.id] || [];
+      cnt = dates.filter(function(d) { return _ttFilterDates.has(d); }).length;
+    } else {
+      cnt = doneCount[tk.id] != null ? doneCount[tk.id] : (doneLog[tk.id] || []).length;
+    }
+    return { task: tk, count: cnt };
+  });
+
+  // Ko'pdan kamga qarab saralanadi — 0 marta bajarilganlar tabiiy ravishda eng pastda qoladi
+  rows.sort(function(a, b) { return b.count - a.count; });
+
+  if (rows.length === 0) {
+    listEl.innerHTML = '<p style="color:var(--text-muted);font-size:13px;text-align:center;padding:14px 0">' + t('top_task_empty') + '</p>';
+    return;
+  }
+
+  var diffIcons = ['🟢', '🟡', '🔴'];
+  var html = '';
+  rows.forEach(function(r) {
+    var icon = r.task.emoji || diffIcons[(r.task.diff || 1) - 1];
+    var countColor = r.count > 0 ? 'var(--accent)' : 'var(--text-dim)';
+    html +=
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--surface2);border-radius:10px;padding:10px 14px">' +
+        '<span style="font-size:13px;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + icon + ' ' + esc(r.task.name) + '</span>' +
+        '<span style="font-size:12px;font-weight:700;color:' + countColor + ';white-space:nowrap;flex-shrink:0">' + r.count + t('top_task_times_short') + '</span>' +
+      '</div>';
+  });
+  listEl.innerHTML = html;
+}
+
+// Overlay tashqarisiga bosilganda Top Task modalini yopish
+document.addEventListener('DOMContentLoaded', function(){
+  var tto = document.getElementById('top-task-modal-overlay');
+  if (tto) {
+    var ttmd = false;
+    tto.addEventListener('mousedown', function(e){ ttmd = e.target===tto; });
+    tto.addEventListener('mouseup',   function(e){ if(ttmd && e.target===tto) closeTopTaskModal(); ttmd=false; });
+  }
+});
+
+// ============================================================
+// SOATLAR STATISTIKASI MODALI — "Eng samarali soat" kartasi bosilganda
+// barcha 24 soat, har birida nechta vazifa bajarilgani bo'yicha KO'PDAN
+// KAMGA saralangan holda ko'rsatiladi (masalan 15:00 — 10, 06:00 — 3, ...).
+// ============================================================
+function openHourStatsModal() {
+  renderHourStatsList();
+  document.getElementById('hour-stats-modal-overlay').classList.add('open');
+}
+
+function closeHourStatsModal() {
+  document.getElementById('hour-stats-modal-overlay').classList.remove('open');
+}
+
+function formatHourLabel12(h) {
+  var ampm = h < 12 ? 'AM' : 'PM';
+  var h12 = h % 12 || 12;
+  return h12 + ':00 ' + ampm;
+}
+
+function renderHourStatsList() {
+  var listEl = document.getElementById('hour-stats-list');
+  if (!listEl) return;
+
+  var hourLog = S.taskDoneHourLog || {};
+  var rows = [];
+  for (var h = 0; h < 24; h++) {
+    rows.push({ hour: h, count: hourLog[h] || 0 });
+  }
+  // Ko'pdan kamga qarab saralanadi — eng ko'p bajarilgan soat birinchi keladi
+  rows.sort(function(a, b) { return b.count - a.count; });
+
+  var maxCount = rows.length ? rows[0].count : 0;
+  if (maxCount === 0) {
+    listEl.innerHTML = '<p style="color:var(--text-muted);font-size:13px;text-align:center;padding:14px 0">' + t('stat_no_data') + '</p>';
+    return;
+  }
+
+  var html = '';
+  rows.forEach(function(r, idx) {
+    var pct = maxCount > 0 ? Math.round(r.count / maxCount * 100) : 0;
+    var isTop = idx === 0 && r.count > 0;
+    var barColor = isTop ? 'var(--accent)' : 'rgba(124,92,252,0.45)';
+    var countColor = r.count > 0 ? 'var(--text)' : 'var(--text-dim)';
+    var labelColor = isTop ? 'var(--accent)' : 'var(--text-muted)';
+    html +=
+      '<div style="display:flex;align-items:center;gap:10px;padding:7px 0">' +
+        '<span style="font-size:12px;color:' + labelColor + ';font-weight:' + (isTop ? '700' : '500') + ';width:78px;flex-shrink:0">' + (isTop ? '🏆 ' : '') + formatHourLabel12(r.hour) + '</span>' +
+        '<div style="flex:1;background:var(--surface2);border-radius:6px;height:16px;overflow:hidden">' +
+          '<div style="width:' + pct + '%;height:100%;background:' + barColor + ';border-radius:6px;transition:width 0.4s ease"></div>' +
+        '</div>' +
+        '<span style="font-size:12px;font-weight:700;color:' + countColor + ';width:24px;text-align:right;flex-shrink:0">' + r.count + '</span>' +
+      '</div>';
+  });
+  listEl.innerHTML = html;
+}
+
+// Overlay tashqarisiga bosilganda Soatlar statistikasi modalini yopish
+document.addEventListener('DOMContentLoaded', function(){
+  var hso = document.getElementById('hour-stats-modal-overlay');
+  if (hso) {
+    var hsmd = false;
+    hso.addEventListener('mousedown', function(e){ hsmd = e.target===hso; });
+    hso.addEventListener('mouseup',   function(e){ if(hsmd && e.target===hso) closeHourStatsModal(); hsmd=false; });
+  }
+});
+
+
 document.addEventListener('DOMContentLoaded', function(){
   var go = document.getElementById('goal-modal-overlay');
   if(go) {
@@ -9314,10 +9789,10 @@ function calToggleTaskDone(id, dateStr) {
     S.taskDoneLog[id].splice(idx, 1);
     var takeBack = diffCoins + PENALTY;
     var totalDeduct = takeBack + PENALTY; // = diffCoins + 2*PENALTY
-    S.coins = Math.max(0, (S.coins || 0) - totalDeduct);
-    S.totalCoins = Math.max(0, (S.totalCoins || 0) - totalDeduct);
-    addTarixLog('out', t('task_cancelled_log').replace('{name}', tk.name).replace('{date}', dateStr), -takeBack);
-    addTarixLog('out', t('penalty_reapplied_log'), -PENALTY);
+    S.coins = (S.coins || 0) - totalDeduct;
+    S.totalCoins = (S.totalCoins || 0) - totalDeduct;
+    addTarixLog('out', t('task_cancelled_log').replace('{name}', tk.name).replace('{date}', dateStr), -takeBack, null, dateStr);
+    addTarixLog('out', t('penalty_reapplied_log'), -PENALTY, null, dateStr);
     var msg1 = '↩️ Bekor qilindi, -' + totalDeduct + ' 🪙';
     // Umumiy statistika hisoblagichlarini ham sinxronlashtiramiz — kalendar
     // orqali o'tgan kun bekor qilinganda ular ham kamayishi kerak, aks holda
@@ -9328,6 +9803,22 @@ function calToggleTaskDone(id, dateStr) {
     if (S.taskDoneCount && S.taskDoneCount[id] > 0) S.taskDoneCount[id]--;
     if (!S.weekDoneLog) S.weekDoneLog = {};
     if (S.weekDoneLog[dateStr] > 0) S.weekDoneLog[dateStr]--;
+    // MUHIM TUZATISH: "Eng samarali soat" statistikasi kalendar orqali
+    // bekor qilinganda ham to'g'ri kamayishi kerak — buning uchun qaysi
+    // soatga yozilgan bo'lsa (calDoneHour orqali) o'sha aniq soatdan ayiramiz.
+    if (S.calDoneHour) {
+      var hourKey = id + '|' + dateStr;
+      var savedHour = S.calDoneHour[hourKey];
+      if (savedHour !== undefined && S.taskDoneHourLog && S.taskDoneHourLog[savedHour] > 0) {
+        S.taskDoneHourLog[savedHour]--;
+      }
+      delete S.calDoneHour[hourKey];
+    }
+    // MUHIM TUZATISH: kalendar orqali o'tgan kun "Done -> Undone" ga
+    // qaytarilganda, o'sha kuni berilgan XP ham qaytarib olinishi kerak —
+    // aks holda asosiy Tasks bo'limidagi toggleTask() bilan mos kelmay,
+    // foydalanuvchi kalendar orqali cheksiz XP yig'ib olishi mumkin edi.
+    addXP(-taskXPValue(tk), tk.name + ' (kalendardan bekor qilindi)');
     // MUHIM TUZATISH: "har N kunda" vazifa kalendar orqali shu sanada
     // bekor qilinsa, "Keyingisi" sanasi ham shu kunga qaytarilishi kerak
     // (toggleTask() bugungi kun uchun xuddi shu tarzda ishlaydi).
@@ -9339,8 +9830,8 @@ function calToggleTaskDone(id, dateStr) {
     var total = diffCoins + PENALTY;
     S.coins = (S.coins || 0) + total;
     S.totalCoins = (S.totalCoins || 0) + total;
-    addTarixLog('in', t('task_late_done_log').replace('{name}', tk.name).replace('{date}', dateStr), diffCoins);
-    addTarixLog('in', t('penalty_returned_log'), PENALTY);
+    addTarixLog('in', t('task_late_done_log').replace('{name}', tk.name).replace('{date}', dateStr), diffCoins, null, dateStr);
+    addTarixLog('in', t('penalty_returned_log'), PENALTY, null, dateStr);
     var msg1 = '✅ Belgilandi, +' + total + ' 🪙';
     // Umumiy statistika hisoblagichlarini ham sinxronlashtiramiz — kalendar
     // orqali o'tgan kun kechiktirib bajarilganda ham ular oshishi kerak,
@@ -9353,6 +9844,21 @@ function calToggleTaskDone(id, dateStr) {
     S.taskDoneCount[id] = (S.taskDoneCount[id] || 0) + 1;
     if (!S.weekDoneLog) S.weekDoneLog = {};
     S.weekDoneLog[dateStr] = (S.weekDoneLog[dateStr] || 0) + 1;
+    // MUHIM TUZATISH: "Eng samarali soat" (most productive hour) statistikasi
+    // avval faqat asosiy Tasks bo'limidagi toggleTask() orqali yangilanardi —
+    // kalendardan bajarilgan deb belgilanganda hisoblanmasdi. Endi xuddi
+    // toggleTask() dagidek, bosilgan paytdagi real soat qo'shiladi, va aynan
+    // shu soat calDoneHour orqali saqlanadi — keyin bekor qilinsa, aniq shu
+    // soatdan ayirib olish uchun.
+    var clickHour = new Date().getHours();
+    if (!S.taskDoneHourLog) S.taskDoneHourLog = {};
+    S.taskDoneHourLog[clickHour] = (S.taskDoneHourLog[clickHour] || 0) + 1;
+    if (!S.calDoneHour) S.calDoneHour = {};
+    S.calDoneHour[id + '|' + dateStr] = clickHour;
+    // MUHIM TUZATISH: kalendar orqali o'tgan kun kechiktirib "Done" deb
+    // belgilanganda ham tegishli XP berilishi kerak — aks holda asosiy
+    // Tasks bo'limidagi toggleTask() bilan mos kelmay qolar edi.
+    addXP(taskXPValue(tk), tk.name + ' (kalendardan bajarildi)');
     // MUHIM TUZATISH: avvalgi versiyada "har N kunda" vazifa kalendar
     // orqali (bugundan boshqa kun uchun) bajarilgan deb belgilanganda
     // t.nextDate UMUMAN yangilanmasdi — natijada u eski (masalan, vazifa
@@ -9394,6 +9900,16 @@ function calToggleTaskDone(id, dateStr) {
   render();
   renderCalendar();
   showDayDetail(dateStr);
+  // MUHIM: kalendar orqali o'tgan/kelajak kun uchun vazifa bajarilgan/bekor
+  // qilingan deb belgilanganda ham, xuddi asosiy Tasks bo'limidagi
+  // toggleTask() dagidek, statistika sahifasi (renderStats) va nishonlar
+  // tizimi (renderBadges — yangi ochilgan badge uchun +25 tanga va toast/
+  // confetti) DARHOL chaqirilishi shart. Bu funksiyalar Profile bo'limi
+  // DOM elementlariga yozadi — ular hozir ko'rinmasa ham (boshqa tab ochiq
+  // bo'lsa ham) DOM'da mavjud, shu sababli xavfsiz chaqiriladi va keyinroq
+  // Profile/Badges bo'limiga o'tilganda hamma narsa allaqachon sinxron bo'ladi.
+  renderStats();
+  renderBadges();
 }
 
 // ============================================================
