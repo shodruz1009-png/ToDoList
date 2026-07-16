@@ -1,10 +1,11 @@
 // ============================================================
 // ToDoList PWA — Service Worker
-// Har bir deploy'da CACHE_VERSION'ni oshiring (masalan v6 -> v7),
+// Har bir deploy'da CACHE_VERSION'ni oshiring (masalan v7 -> v8),
 // shunda eski kesh avtomatik "activate" bosqichida o'chib, yangi
 // fayllar bilan almashtiriladi.
-// MUHIM: index.html'ga (masalan Game Over "X" tugmasi, HP formulasi
-// tuzatishi va 3D aylanadigan xarakter kabi) yangi o'zgarish
+// MUHIM: index.html'ga (masalan kalendar orqali tanga/soat statistikasi
+// tuzatishlari, "Jami kun" hisoblagichi va Instagram bloklandi popup'ini
+// olib tashlash kabi) yangi o'zgarish
 // To'liq offline (LocalStorage asosidagi) ilova uchun.
 // Supabase olib tashlangan, SortableJS CDN orqali ulanadi.
 // ============================================================
@@ -13,7 +14,7 @@
 // uchun bu versiya raqami albatta oshirilishi shart — aks holda
 // Service Worker eski faylni keshdan qaytaraverib, yangi kod hech
 // qachon ishga tushmaydi.
-const CACHE_VERSION = 'v7';
+const CACHE_VERSION = 'v8';
 const CACHE_NAME = `todolist-cache-${CACHE_VERSION}`;
 
 // Ilova offline'da ishlashi uchun oldindan keshlanadigan fayllar.
