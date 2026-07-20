@@ -194,6 +194,8 @@
   .task-card.done { opacity:0.4; }
   .task-card.done .task-name { text-decoration:line-through; }
   .task-card.skipped { opacity:0.3; border-style:dashed; }
+  .task-card.overdue { border-color:rgba(248,113,113,0.45); }
+  .task-sub.overdue { color:#F87171; font-weight:600; }
 
   .check-btn { width:28px; height:28px; border-radius:50%; border:2px solid var(--border-hover); background:transparent; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all 0.2s; color:transparent; }
   .check-btn:hover { border-color:var(--green); }
@@ -1741,6 +1743,7 @@ const I18N = {
     // Rewards
     rewards_empty: 'Hali mukofot yoq.',
     reward_delete_title: "O'chirish",
+    reward_edit_title: "Tahrirlash",
     reward_not_enough: 'Tanga yetmaydi',
     reward_buy_btn: 'Olish 🛒',
     reward_use_btn: '✅ Ishlatdim',
@@ -1821,11 +1824,16 @@ const I18N = {
     ielts_detail_avg_label: "O'rtacha",
     ielts_detail_times_suffix: ' ta natija',
     ielts_detail_last_n_label: 'Oxirgi {n} ta',
+    ielts_detail_window_label: 'Oxirgi nechta urinish hisoblansin?',
+    ielts_detail_window_all: 'Barchasi',
+    ielts_detail_show_more: "Yana {n} ta eski urinish",
+    ielts_detail_show_less: 'Kamroq ko\'rsatish',
     ielts_detail_older_label: 'Eski natija',
     ielts_detail_all_title: "🧾 To'liq test (All) natijalari",
     ielts_detail_hint: "Listening/Reading: oxirgi 5 ta, Writing/Speaking: oxirgi 3 ta natija asosida hisoblanadi (eski natijalar hisobga olinmaydi)",
     ielts_detail_tap_hint: '👆 Batafsil tahlil uchun bosing',
     ielts_raw_correct_suffix: " to'g'ri",
+    ielts_band_prefix: 'band',
     ielts_modal_title: '📊 IELTS Natija',
     ielts_modal_sub: 'Bitta section natijasini kiriting',
     ielts_select_section: 'Section tanlang',
@@ -2168,6 +2176,8 @@ const I18N = {
     badge_weekdays: 'Hafta kunlari',
     badge_interval: 'Har {n} kunda',
     badge_once: 'Bir marta',
+    task_next_label: 'Keyingisi',
+    task_overdue_label: 'Muddati o\'tgan',
     diff_hard_title: 'Qiyin',
     diff_medium_title: "O'rtacha",
     diff_easy_title: 'Oson',
@@ -2367,6 +2377,7 @@ const I18N = {
     // Rewards
     rewards_empty: 'No rewards yet.',
     reward_delete_title: 'Delete',
+    reward_edit_title: 'Edit',
     reward_not_enough: 'Not enough coins',
     reward_buy_btn: 'Claim 🛒',
     reward_use_btn: '✅ Used it',
@@ -2447,11 +2458,16 @@ const I18N = {
     ielts_detail_avg_label: 'Average',
     ielts_detail_times_suffix: ' entries',
     ielts_detail_last_n_label: 'Last {n}',
+    ielts_detail_window_label: 'How many recent attempts to count?',
+    ielts_detail_window_all: 'All',
+    ielts_detail_show_more: 'Show {n} more',
+    ielts_detail_show_less: 'Show less',
     ielts_detail_older_label: 'Older entry',
     ielts_detail_all_title: '🧾 Full test (All) results',
     ielts_detail_hint: "Listening/Reading: based on the last 5 entries. Writing/Speaking: based on the last 3 entries (older entries don't count)",
     ielts_detail_tap_hint: '👆 Tap for detailed analysis',
     ielts_raw_correct_suffix: ' correct',
+    ielts_band_prefix: 'band',
     ielts_modal_title: '📊 IELTS Result',
     ielts_modal_sub: 'Enter one section result',
     ielts_select_section: 'Select section',
@@ -2799,6 +2815,8 @@ const I18N = {
     badge_weekdays: 'Weekdays',
     badge_interval: 'Every {n} days',
     badge_once: 'One-time',
+    task_next_label: 'Next',
+    task_overdue_label: 'Overdue',
     diff_hard_title: 'Hard',
     diff_medium_title: 'Medium',
     diff_easy_title: 'Easy',
@@ -2996,6 +3014,7 @@ const I18N = {
     // Награды
     rewards_empty: 'Наград пока нет.',
     reward_delete_title: 'Удалить',
+    reward_edit_title: 'Редактировать',
     reward_not_enough: 'Недостаточно монет',
     reward_buy_btn: 'Получить 🛒',
     reward_use_btn: '✅ Использовал',
@@ -3076,11 +3095,16 @@ const I18N = {
     ielts_detail_times_suffix: ' результатов',
     ielts_detail_avg_label: 'Среднее',
     ielts_detail_last_n_label: 'Последние {n}',
+    ielts_detail_window_label: 'Сколько последних попыток учитывать?',
+    ielts_detail_window_all: 'Все',
+    ielts_detail_show_more: 'Показать ещё {n}',
+    ielts_detail_show_less: 'Скрыть',
     ielts_detail_older_label: 'Старый результат',
     ielts_detail_all_title: '🧾 Результаты полного теста (All)',
     ielts_detail_hint: 'Listening/Reading: рассчитывается по последним 5 результатам. Writing/Speaking: по последним 3 (старые результаты не учитываются)',
     ielts_detail_tap_hint: '👆 Нажмите для подробного анализа',
     ielts_raw_correct_suffix: ' правильных',
+    ielts_band_prefix: 'band',
     ielts_modal_title: '📊 Результат IELTS',
     ielts_modal_sub: 'Введите результат одной секции',
     ielts_select_section: 'Выберите секцию',
@@ -3426,6 +3450,8 @@ const I18N = {
     badge_weekdays: 'Рабочие дни',
     badge_interval: 'Каждые {n} дней',
     badge_once: 'Один раз',
+    task_next_label: 'Следующий',
+    task_overdue_label: 'Просрочено',
     diff_hard_title: 'Сложная',
     diff_medium_title: 'Средняя',
     diff_easy_title: 'Лёгкая',
@@ -4562,6 +4588,67 @@ function wasTaskSkippedOnDate(t, dateStr) {
   return log.indexOf(dateStr) !== -1;
 }
 
+// ============ TANGA HOLATI: kunlik reward/penalty flag tizimi ============
+// Har bir (vazifa, sana) juftligi uchun LocalStorage'da aniq holat saqlanadi:
+// qancha mukofot berilgan (rewardGiven/rewardAmt) va qancha jazo yechilgan
+// (penaltyGiven/penaltyAmt). Bu tuzilma tufayli Done/Undone qayta-qayta
+// bosilsa ham (asosiy ro'yxatdan yoki kalendardan tahrirlansa ham) tanga
+// aniq va bir xilda qo'shiladi/qaytariladi — hech qachon cheksiz ko'payib
+// yoki kamayib ketmaydi, chunki miqdor birinchi marta hisoblanganda "muzlatiladi"
+// va keyingi barcha qo'shish/qaytarishlarda aynan o'sha qiymat ishlatiladi.
+function getTaskDayFlag(taskId, dateStr) {
+  if (!S.taskDayFlags) S.taskDayFlags = {};
+  if (!S.taskDayFlags[taskId]) S.taskDayFlags[taskId] = {};
+  if (!S.taskDayFlags[taskId][dateStr]) {
+    S.taskDayFlags[taskId][dateStr] = { rewardGiven:false, rewardAmt:0, penaltyGiven:false, penaltyAmt:0 };
+  }
+  return S.taskDayFlags[taskId][dateStr];
+}
+
+// Vazifaning qiyinligiga mos tanga qiymati (mukofot ham, jazo ham shu qiymatga teng)
+function taskCoinValue(tsk) {
+  return tsk.coins || (tsk.diff === 3 ? 3 : tsk.diff === 2 ? 2 : 1);
+}
+
+// Mukofot berish (Done qilinganda). Agar allaqachon berilgan bo'lsa — qayta bermaydi (0 qaytaradi).
+function grantTaskReward(tsk, dateStr) {
+  var f = getTaskDayFlag(tsk.id, dateStr);
+  if (f.rewardGiven) return 0;
+  var amt = f.rewardAmt || taskCoinValue(tsk);
+  f.rewardAmt = amt; f.rewardGiven = true;
+  S.coins = (S.coins||0) + amt;
+  S.totalCoins = (S.totalCoins||0) + amt;
+  return amt;
+}
+// Avval berilgan mukofotni qaytarib olish (Undone qilinganda). Agar berilmagan bo'lsa — 0 qaytaradi.
+function revokeTaskReward(tsk, dateStr) {
+  var f = getTaskDayFlag(tsk.id, dateStr);
+  if (!f.rewardGiven) return 0;
+  var amt = f.rewardAmt;
+  f.rewardGiven = false; // rewardAmt saqlanib qoladi — keyingi safar aynan shu qiymat qaytariladi
+  S.coins = (S.coins||0) - amt;
+  S.totalCoins = (S.totalCoins||0) - amt;
+  return amt;
+}
+// Jazo yechish (vazifa bajarilmay qolsa). Miqdor — vazifaning o'z qiyinlik/mukofot qiymatiga teng.
+function chargeTaskPenalty(tsk, dateStr) {
+  var f = getTaskDayFlag(tsk.id, dateStr);
+  if (f.penaltyGiven) return 0;
+  var amt = f.penaltyAmt || taskCoinValue(tsk);
+  f.penaltyAmt = amt; f.penaltyGiven = true;
+  S.coins = (S.coins||0) - amt;
+  return amt;
+}
+// Avval yechilgan jazoni qaytarib berish (kechiktirib bajarilgan/Done deb belgilanganda). Agar jazo yo'q bo'lsa — 0.
+function refundTaskPenalty(tsk, dateStr) {
+  var f = getTaskDayFlag(tsk.id, dateStr);
+  if (!f.penaltyGiven) return 0;
+  var amt = f.penaltyAmt;
+  f.penaltyGiven = false; // penaltyAmt saqlanib qoladi — qayta bajarilmay qolsa xuddi shu miqdor qaytadan yechiladi
+  S.coins = (S.coins||0) + amt;
+  return amt;
+}
+
 function taskWasDueOnDate(t, dateStr) {
   // Vazifa qo'shilguncha bo'lgan kunlarga ta'sir qilmasin
   if (t.createdAt && dateStr < t.createdAt) return false;
@@ -4736,13 +4823,32 @@ function checkReset() {
           // Bajarilmagan kun — jazo faqat eng oxirgi o'tgan kun uchun
           if (isLastDay) {
             var missedTasks = dueTasks.filter(function(t) {
-              return !wasTaskDoneOnDate(t, ps) && !wasTaskSkippedOnDate(t, ps);
+              if (wasTaskDoneOnDate(t, ps) || wasTaskSkippedOnDate(t, ps)) return false;
+              // MUHIM: interval vazifalar endi kun o'zgarganda avtomatik
+              // keyingi muddatga o'tmaydi — "Muddati o'tgan" holatda eski
+              // sanasi bilan qolib turadi (toki foydalanuvchi ⏩ Skip
+              // tugmasini bosmaguncha). Shu sababli, agar shu muddat
+              // (t.nextDate) uchun jarima allaqachon berilgan bo'lsa,
+              // uni har kuni qayta-qayta jarimalamaymiz — faqat foydalanuvchi
+              // vazifani qo'lda oldinga surgandan (yoki bajargandan) keyin,
+              // yangi muddat kelib, yana o'tkazib yuborilsagina qayta jarima olinadi.
+              if (t.repeat === 'interval' && t._lastPenalizedFor === t.nextDate) return false;
+              return true;
             });
             if (missedTasks.length > 0) {
-              var penalty = missedTasks.length;
-              S.coins = (S.coins || 0) - penalty;
-              addTarixLog('out', '😔 ' + t('missed_tasks_log').replace('{n}', penalty), -penalty);
-              if (!S.pendingMissedMsg) S.pendingMissedMsg = '😔 ' + t('missed_tasks_msg').replace('{n}', penalty).replace('{penalty}', penalty);
+              var penalty = 0;
+              missedTasks.forEach(function(t) {
+                // Jazo miqdori endi vazifaning o'z mukofot/qiyinlik qiymatiga teng
+                // (masalan +3🪙lik vazifa uchun -3, +2🪙lik uchun -2) va aynan
+                // shu (vazifa,sana) juftligi uchun bir marta "muzlatiladi" —
+                // keyinchalik kalendardan tahrirlansa ham aynan shu miqdor qaytariladi.
+                penalty += chargeTaskPenalty(t, ps);
+                if (t.repeat === 'interval') t._lastPenalizedFor = t.nextDate;
+              });
+              if (penalty > 0) {
+                addTarixLog('out', '😔 ' + t('missed_tasks_log').replace('{n}', missedTasks.length), -penalty);
+                if (!S.pendingMissedMsg) S.pendingMissedMsg = '😔 ' + t('missed_tasks_msg').replace('{n}', missedTasks.length).replace('{penalty}', penalty);
+              }
             }
           }
         }
@@ -4784,6 +4890,13 @@ function checkReset() {
           S[logKey][id] = (S[logKey][id]||[]).filter(function(d){ return d >= _cutoffStr; });
         });
       });
+      if (S.taskDayFlags) {
+        Object.keys(S.taskDayFlags).forEach(function(id){
+          Object.keys(S.taskDayFlags[id]).forEach(function(d){
+            if (d < _cutoffStr) delete S.taskDayFlags[id][d];
+          });
+        });
+      }
     } catch(e) { console.warn('eski log tozalash xatosi:', e); }
   }
   S.lastDate = td;
@@ -4988,19 +5101,18 @@ function toggleTask(id) {
     // Har safar bajarilganda alohida counter (streak log sanasi emas)
     if (!S.taskDoneCount) S.taskDoneCount = {};
     S.taskDoneCount[tsk.id] = (S.taskDoneCount[tsk.id]||0) + 1;
-    S.coins += tsk.coins;
+    var _grantedCoins = grantTaskReward(tsk, td0);
     if(!S.totalTasksDone) S.totalTasksDone=0; S.totalTasksDone++;
     // Haftalik haqiqiy counter (log emas, har bajarilganda +1)
     if(!S.weekDoneLog) S.weekDoneLog={};
     var wk = today();
     S.weekDoneLog[wk] = (S.weekDoneLog[wk]||0) + 1;
     if(tsk.diff===3){ if(!S.hardTasksDone) S.hardTasksDone=0; S.hardTasksDone++; }
-    if(!S.totalCoins) S.totalCoins=0; S.totalCoins+=tsk.coins;
-    addTarixLog('in', tsk.name, tsk.coins);
+    addTarixLog('in', tsk.name, _grantedCoins);
     // XP qo'shish
     var xpGain = taskXPValue(tsk);
     addXP(xpGain, tsk.name);
-    toast(t('task_done_xp_toast').replace('{coins}', tsk.coins).replace('{xp}', xpGain)); confetti();
+    toast(t('task_done_xp_toast').replace('{coins}', _grantedCoins).replace('{xp}', xpGain)); confetti();
     // Kunlik 100% tekshiruvi (kechiktirib)
     setTimeout(checkDailyComplete, 300);
   } else {
@@ -5011,11 +5123,10 @@ function toggleTask(id) {
       var td1 = today();
       S.taskDoneLog[tsk.id] = S.taskDoneLog[tsk.id].filter(function(d){ return d !== td1; });
     }
-    S.coins -= tsk.coins;
+    revokeTaskReward(tsk, today());
     if(S.totalTasksDone>0) S.totalTasksDone--;
     if(S.weekDoneLog && S.weekDoneLog[today()] > 0) S.weekDoneLog[today()]--;
     if(tsk.diff===3 && S.hardTasksDone>0) S.hardTasksDone--;
-    if(S.totalCoins>0) S.totalCoins -= tsk.coins;
     // MUHIM TUZATISH: vazifa "Bajarilgan" dan "Bajarilmagan"ga qaytarilganda
     // avval berilgan XP ham qaytarib olinishi kerak (true -> false o'tishi),
     // aks holda foydalanuvchi Done/Undone ni cheksiz bosib XP yig'ib olishi mumkin edi.
@@ -5152,6 +5263,7 @@ function deleteTask(id) {
     if(S.taskDoneLog) delete S.taskDoneLog[id];
     if(S.taskSkipLog) delete S.taskSkipLog[id];
     if(S.taskDoneCount) delete S.taskDoneCount[id];
+    if(S.taskDayFlags) delete S.taskDayFlags[id];
     S.tasks = S.tasks.filter(function(x){return x.id!==id;});
     save(); render();
     toast(_delToast);
@@ -5547,6 +5659,23 @@ function diffBadge(d) {
   return '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#34D399;flex-shrink:0" title="'+tr('diff_easy_title')+'"></span>';
 }
 
+var editingRewardId = null;
+
+// Tahrirlash oynasini ochib, joriy mukofot ma'lumotlarini forma
+// maydonlariga to'ldiradi. ID o'zgarmaydi — faqat name/cost/icon
+// yangilanadi, shu sababli rewardClaims, usageLog va statistikaga
+// bog'liq boshqa barcha yozuvlar (ular r.id bo'yicha saqlanadi)
+// butunligicha saqlanib qoladi.
+function openRewardEditModal(id) {
+  const r = S.rewards.find(x=>x.id===id);
+  if(!r){ toast(t('reward_not_found_toast')); return; }
+  editingRewardId = id;
+  document.getElementById('er-name').value = r.name;
+  document.getElementById('er-cost').value = r.cost;
+  document.getElementById('er-icon').value = r.icon;
+  document.getElementById('reward-modal-overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('er-name').focus(),150);
+}
 function closeRewardModal() {
   document.getElementById('reward-modal-overlay').classList.remove('open');
   editingRewardId = null;
@@ -5554,9 +5683,12 @@ function closeRewardModal() {
 function saveRewardEdit() {
   const r = S.rewards.find(x=>x.id===editingRewardId); if(!r) return;
   const name = document.getElementById('er-name').value.trim();
-  const cost = parseInt(document.getElementById('er-cost').value)||r.cost;
+  const cost = parseIntSafe(document.getElementById('er-cost').value)||r.cost;
   const icon = document.getElementById('er-icon').value.trim()||r.icon;
-  if(!name) return;
+  if(!name){ document.getElementById('er-name').focus(); toast(t('reward_name_required_toast')); return; }
+  // MUHIM: faqat name/cost/icon o'zgaradi. r.id, r.rtype, r.amount,
+  // r.baseName — hammasi saqlanib qoladi, shu bilan S.rewardClaims[r.id]
+  // va S.usageLog[r.id] (xarid tarixi, statistikasi) uzilmaydi.
   r.name=name; r.cost=cost; r.icon=icon;
   save(); renderRewards(); closeRewardModal();
   toast(t('reward_updated_toast'));
@@ -5701,8 +5833,20 @@ function makeTaskEl(t) {
 
   const rl = repeatLabel(t);
   let subText = '';
-  if (t.repeat==='interval' && t.nextDate) subText='Keyingisi: '+t.nextDate;
-  const canPostpone = !t.done && !t.skipped && (t.repeat==='interval'||t.repeat==='once');
+  let subOverdue = false;
+  if (t.repeat==='interval' && t.nextDate) {
+    // Muddati o'tgan (eski nextDate, hali bugungiga yetmagan) va bugun/kelajakdagi
+    // muddatni vizual jihatdan ajratamiz — eski sana o'z holicha qoladi,
+    // faqat foydalanuvchi ⏩ tugmasini bosgandagina oldinga suriladi.
+    if (!t.done && !t.skipped && t.nextDate < today()) {
+      subText = tr('task_overdue_label') + ': ' + t.nextDate;
+      subOverdue = true;
+    } else {
+      subText = tr('task_next_label') + ': ' + t.nextDate;
+    }
+  }
+  if (subOverdue) cls += ' overdue';
+  d.className = cls;
 
   d.innerHTML=`
     <div class="handle-stack">
@@ -5717,7 +5861,7 @@ function makeTaskEl(t) {
     <div class="task-info">
       <div class="task-name">${t.emoji ? `<span style="margin-right:5px;font-size:16px">${t.emoji}</span>` : ''}${esc(t.name)}</div>
       ${t.note ? `<div class="task-note task-note-collapsed" id="note-${t.id}">📝 ${esc(t.note)}</div><button class="task-note-toggle" onclick="toggleNote(${t.id},this)">${tr('note_more_btn')}</button>` : ''}
-      ${subText?`<div class="task-sub">${subText}</div>`:''}
+      ${subText?`<div class="task-sub${subOverdue?' overdue':''}">${subText}</div>`:''}
       <div class="task-info-badges" style="display:none">
         <span class="badge ${rl.cls}">${rl.text}</span>
         ${diffBadge(t.diff||1)}
@@ -5733,7 +5877,6 @@ function makeTaskEl(t) {
       
       ${!t.done&&!t.skipped?`<button class="act-btn" onclick="skipTask(${t.id})" title="Otkazib yuborish">&#9193;</button>`:''}
       ${t.skipped&&!t.done?`<button class="act-btn" onclick="unskipTask(${t.id})" title="Qaytarish" style="border-color:rgba(96,165,250,0.4);color:#60A5FA">&#8617;</button>`:''}
-      ${canPostpone?`<button class="act-btn" onclick="postponeTask(${t.id})" title="Ertaga o'tkazish">📅</button>`:''}
       <button class="act-btn" onclick="editTask(${t.id})" title="Tahrirlash">✏️</button>
       <button class="act-btn del" onclick="deleteTask(${t.id})">🗑</button>
     </div>
@@ -5840,7 +5983,10 @@ function renderRewards() {
     var useBtn = '<button onclick="logUsage('+r.id+')" style="width:100%;padding:7px;border-radius:8px;border:1px solid rgba(96,165,250,0.35);background:rgba(96,165,250,0.08);color:#60A5FA;font-size:12px;cursor:pointer;margin-top:6px;font-family:DM Sans,sans-serif">'+useBtnLabel+'</button>';
 
     div.innerHTML=
-      '<div style="display:flex;justify-content:flex-end;margin-bottom:-6px"><button onclick="deleteReward('+r.id+')" style="background:none;border:none;cursor:pointer;color:var(--text-dim);font-size:13px;padding:2px 4px;line-height:1" title="'+t('reward_delete_title')+'">🗑️</button></div>'+
+      '<div style="display:flex;justify-content:space-between;margin-bottom:-6px">'+
+        '<button onclick="openRewardEditModal('+r.id+')" style="background:none;border:none;cursor:pointer;color:var(--text-dim);font-size:13px;padding:2px 4px;line-height:1" title="'+t('reward_edit_title')+'">✏️</button>'+
+        '<button onclick="deleteReward('+r.id+')" style="background:none;border:none;cursor:pointer;color:var(--text-dim);font-size:13px;padding:2px 4px;line-height:1" title="'+t('reward_delete_title')+'">🗑️</button>'+
+      '</div>'+
       '<div class="r-icon">'+r.icon+'</div>'+
       '<div class="r-name">'+esc(r.name)+'</div>'+
       '<div class="r-cost">'+r.cost+' 🪙</div>'+
@@ -7274,6 +7420,12 @@ function showProfileEdit() {
     renderCalendar();
     renderIeltsCountdown();
     renderIeltsTab();
+    var _ieltsDetailModalEl = document.getElementById('ielts-detail-modal');
+    if (_ieltsDetailModalEl && _ieltsDetailModalEl.style.display !== 'none') {
+      _ieltsPopulateWindowSelect();
+      _ieltsDetailRefreshSubHeader();
+      if (_ieltsDetailSection) renderIeltsDetailContent(_ieltsDetailSection);
+    }
     if (_secretUnlocked) renderSecretContent();
     render();
     toast(t('profile_saved_toast'));
@@ -7698,6 +7850,7 @@ function confirmRestart() {
     S.calDoneHour = {};
     S.taskSkipLog = {};
     S.weekDoneLog = {};
+    S.taskDayFlags = {};
     S.tarix = [];
     S.rewardClaims = {};
     S.usageLog = {};
@@ -7722,6 +7875,7 @@ function confirmRestart() {
       tsk.skipped = false;
       tsk.skippedDate = null;
       tsk.lastDoneDate = null;
+      delete tsk._lastPenalizedFor;
       if (tsk.repeat === 'interval') {
         tsk.nextDate = todayStr;
       }
@@ -7757,6 +7911,7 @@ function resetApp() {
     tsk.skipped = false;
     tsk.skippedDate = null;
     tsk.lastDoneDate = null;
+    delete tsk._lastPenalizedFor;
     if (tsk.repeat === 'interval') {
       tsk.nextDate = todayStr; // interval hisob-kitobi ham noldan
     }
@@ -7769,6 +7924,7 @@ function resetApp() {
   S.calDoneHour = {};
   S.weekDoneLog = {};
   S.taskDoneCount = {};
+  S.taskDayFlags = {};
 
   // Streak/statistika ham davriylik bilan bog'liq bo'lgani uchun tozalanadi
   S.streak = 0;
@@ -9742,17 +9898,22 @@ function showDayDetail(dateStr) {
 // Kalendar kun-detali ichidagi ✅/⬜ belgisini bosganda ishlaydi.
 //  - Bugungi kun uchun: oddiy toggleTask() chaqiriladi (streak/XP bilan
 //    to'g'ri hisoblanishi uchun).
-//  - O'tgan kunlar uchun tanga mantig'i:
+//  - O'tgan kunlar uchun tanga mantig'i endi butunlay DINAMIK va HOLAT
+//    (flag) asosida ishlaydi (getTaskDayFlag / grantTaskReward / va h.k.):
 //      ⬜ → ✅ (kechiktirib bajarish):
-//        +qiyinlik tangasi (oson:1, o'rta:2, qiyin:3) + o'sha kun uchun
-//        avval yechilgan -1 jazo qaytarib beriladi. Jami: +(coins+1).
+//        vazifaning o'z qiyinlik/mukofot qiymati (masalan +3🪙) qo'shiladi;
+//        agar o'sha sana uchun avval jazo yechilgan bo'lsa — aynan o'sha
+//        (muzlatilgan) miqdor to'liq qaytarib beriladi.
 //      ✅ → ⬜ (bekor qilish):
-//        avval berilgan BARCHA tanga (qiyinlik + qaytarilgan jazo) qaytarib
-//        olinadi, so'ng kun yana bajarilmagan hisoblangani uchun -1 jazo
-//        qaytadan qo'llanadi. Jami: -(coins+1) - 1 = -(coins+2).
+//        avval berilgan mukofot aynan o'sha miqdorda qaytarib olinadi;
+//        agar bu sana asl holda jarima olgan bo'lsa (checkReset orqali),
+//        endi yana "bajarilmagan" hisoblanib, xuddi o'sha muzlatilgan
+//        miqdorda jazo qayta qo'llanadi.
 //  Har bir bosish taskDoneLog holatini bir marta flip qiladi (aniq toggle),
-//  shu sababli foydalanuvchi bosishlarni takrorlab tanga yig'a olmaydi —
-//  aksincha, bekor qilish har doim aniq belgilangan miqdorni yechadi.
+//  miqdorlar esa getTaskDayFlag orqali "muzlatilgan" holda saqlanadi — shu
+//  sababli foydalanuvchi qancha marta bossa ham tanga aniq va bir xil
+//  miqdorda qo'shiladi/qaytariladi, hech qachon cheksiz ko'payib yoki
+//  kamayib ketmaydi.
 function calToggleTaskDone(id, dateStr) {
   var tk = S.tasks.find(function(x){ return x.id === id; });
   if (!tk) return;
@@ -9777,22 +9938,21 @@ function calToggleTaskDone(id, dateStr) {
   if (!S.calPinnedDates[id]) S.calPinnedDates[id] = [];
   if (S.calPinnedDates[id].indexOf(dateStr) === -1) S.calPinnedDates[id].push(dateStr);
 
-  // Qiyinlik darajasiga qarab tanga: oson=1, o'rta=2, qiyin=3 (t.coins allaqachon shu qiymatga teng)
-  var diffCoins = tk.coins || (tk.diff === 3 ? 3 : tk.diff === 2 ? 2 : 1);
-  var PENALTY = 1; // bir kunda bajarilmagan har bir vazifa uchun standart jazo miqdori
   var streakBefore = S.streak || 0;
 
   if (wasDone) {
     // ✅ → ⬜: bekor qilish.
-    // 1) Avval berilgan barcha tanga (qiyinlik + qaytarilgan jazo) qaytarib olinadi: -(diffCoins + PENALTY)
-    // 2) Kun yana bajarilmagan hisoblangani uchun -1 jazo qaytadan qo'llanadi.
     S.taskDoneLog[id].splice(idx, 1);
-    var takeBack = diffCoins + PENALTY;
-    var totalDeduct = takeBack + PENALTY; // = diffCoins + 2*PENALTY
-    S.coins = (S.coins || 0) - totalDeduct;
-    S.totalCoins = (S.totalCoins || 0) - totalDeduct;
+    var takeBack = revokeTaskReward(tk, dateStr);
+    // Agar bu sana asl holda jarima olgan bo'lsa (hozircha qaytarilgan holatda,
+    // chunki Done deb belgilanganda refundTaskPenalty orqali yechilgan edi) —
+    // endi yana "bajarilmagan" hisoblanib, xuddi o'sha muzlatilgan miqdorda
+    // jazo qayta qo'llanadi.
+    var _f = getTaskDayFlag(id, dateStr);
+    var reapplied = (_f.penaltyAmt > 0 && !_f.penaltyGiven) ? chargeTaskPenalty(tk, dateStr) : 0;
+    var totalDeduct = takeBack + reapplied;
     addTarixLog('out', t('task_cancelled_log').replace('{name}', tk.name).replace('{date}', dateStr), -takeBack, null, dateStr);
-    addTarixLog('out', t('penalty_reapplied_log'), -PENALTY, null, dateStr);
+    if (reapplied > 0) addTarixLog('out', t('penalty_reapplied_log'), -reapplied, null, dateStr);
     var msg1 = '↩️ Bekor qilindi, -' + totalDeduct + ' 🪙';
     // Umumiy statistika hisoblagichlarini ham sinxronlashtiramiz — kalendar
     // orqali o'tgan kun bekor qilinganda ular ham kamayishi kerak, aks holda
@@ -9825,13 +9985,12 @@ function calToggleTaskDone(id, dateStr) {
     if (tk.repeat === 'interval') { tk.nextDate = dateStr; }
   } else {
     // ⬜ → ✅: kechiktirib bajarish.
-    // Vazifa tangasi (qiyinlikka mos) + o'sha kun uchun avval yechilgan jarima qaytariladi.
     S.taskDoneLog[id].push(dateStr);
-    var total = diffCoins + PENALTY;
-    S.coins = (S.coins || 0) + total;
-    S.totalCoins = (S.totalCoins || 0) + total;
-    addTarixLog('in', t('task_late_done_log').replace('{name}', tk.name).replace('{date}', dateStr), diffCoins, null, dateStr);
-    addTarixLog('in', t('penalty_returned_log'), PENALTY, null, dateStr);
+    var granted = grantTaskReward(tk, dateStr);
+    var refunded = refundTaskPenalty(tk, dateStr);
+    var total = granted + refunded;
+    addTarixLog('in', t('task_late_done_log').replace('{name}', tk.name).replace('{date}', dateStr), granted, null, dateStr);
+    if (refunded > 0) addTarixLog('in', t('penalty_returned_log'), refunded, null, dateStr);
     var msg1 = '✅ Belgilandi, +' + total + ' 🪙';
     // Umumiy statistika hisoblagichlarini ham sinxronlashtiramiz — kalendar
     // orqali o'tgan kun kechiktirib bajarilganda ham ular oshishi kerak,
@@ -10880,6 +11039,13 @@ setTimeout(function(){ updateMoodBtn(); }, 100);
         <button id="ielts-dtab-writing" onclick="selectIeltsDetailSection('writing')" style="padding:13px 6px;border-radius:12px;border:2px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif;line-height:1.3" data-i18n="ielts_sec_writing">✍️ Writing</button>
         <button id="ielts-dtab-speaking" onclick="selectIeltsDetailSection('speaking')" style="padding:13px 6px;border-radius:12px;border:2px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif;line-height:1.3" data-i18n="ielts_sec_speaking">🗣️ Speaking</button>
       </div>
+      <!-- Window-size filter: bu tanlov butun modalga (barcha 4 modul: L/R/W/S)
+           ta'sir qiladi — o'rtachalar, badge'lar va header'dagi Joriy section
+           bali/raw yig'indi shu filtrga qarab qayta hisoblanadi -->
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 22px 0;flex-shrink:0">
+        <label for="ielts-detail-window-select" style="font-size:12.5px;color:var(--text-muted);flex:1" data-i18n="ielts_detail_window_label">Oxirgi nechta urinish hisoblansin?</label>
+        <select id="ielts-detail-window-select" onchange="onIeltsDetailWindowChange(this.value)" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;font-weight:600;padding:8px 10px;font-family:'DM Sans',sans-serif;cursor:pointer"></select>
+      </div>
       <!-- Hint -->
       <div style="padding:12px 22px 0;font-size:12.5px;color:var(--text-dim);line-height:1.5" data-i18n="ielts_detail_hint">Har bir qismning o'rtachasi shu qismga kiritilgan BARCHA natijalar asosida hisoblanadi</div>
       <!-- Content -->
@@ -10940,7 +11106,6 @@ function openTaskSheet(id) {
   const t = S.tasks.find(x=>x.id===id);
   if (!t) return;
   const rl = repeatLabel(t);
-  const canPostpone = !t.done && !t.skipped && (t.repeat==='interval'||t.repeat==='once');
   document.getElementById('sheet-task-name').textContent = (t.emoji ? t.emoji+' ' : '') + t.name;
   document.getElementById('sheet-badge-row').innerHTML =
     `<span class="badge ${rl.cls}">${rl.text}</span>${diffBadge(t.diff||1)}<span class="badge badge-coins">+${t.coins}🪙</span>`;
@@ -10954,9 +11119,6 @@ function openTaskSheet(id) {
   }
   if (t.skipped && !t.done) {
     btns += `<button class="sheet-btn" onclick="closeTaskSheet();unskipTask(${id})">🔄 Qaytarish</button>`;
-  }
-  if (canPostpone) {
-    btns += `<button class="sheet-btn" onclick="closeTaskSheet();postponeTask(${id})">📅 Ertaga o'tkazish</button>`;
   }
   btns += `<button class="sheet-btn" onclick="closeTaskSheet();editTask(${id})">✏️ Tahrirlash</button>`;
   btns += `<button class="sheet-btn danger" onclick="closeTaskSheet();deleteTask(${id})">🗑 O'chirish</button>`;
@@ -11298,22 +11460,28 @@ function saveIeltsResult() {
 //  5) Shu raw (0-40) rasmiy jadval orqali Band Score'ga o'giriladi.
 // Writing/Speaking: FAQAT oxirgi 3 ta kiritilgan band ballarning
 // o'rtachasi olinadi, standart 0.5 ga yaxlitlanadi.
-function calcSectionBandFromParts(sec, results) {
+// windowSize (ixtiyoriy): nechta oxirgi urinish hisobga olinsin — 'all' bo'lsa
+// BARCHA urinishlar hisoblanadi. Berilmasa, eski standart qiymatlar ishlatiladi
+// (Writing/Speaking uchun 3, Listening/Reading part'lari uchun 5) — shu bilan
+// asosiy ekrandagi (modal tashqarisidagi) hisob-kitoblar o'zgarishsiz qoladi.
+// Chuqur tahlil modalidagi dropdown filtri shu parametr orqali uzatiladi.
+function calcSectionBandFromParts(sec, results, windowSize) {
   // Writing / Speaking: band to'g'ridan kiritiladi (subsection faqat teg)
   var cfg = IELTS_SUBSEC[sec];
   if (!cfg || cfg.type === 'band') {
+    var bWindow = (windowSize === undefined || windowSize === null) ? 3 : windowSize;
     var wEntries = results.filter(function(r) {
       return r.section === sec && r.band !== null && !isNaN(Number(r.band));
     }).sort(_ieltsSortByTimeAsc);
     if (wEntries.length === 0) return null;
-    var last3 = wEntries.slice(-3);
+    var last3 = (bWindow === 'all') ? wEntries : wEntries.slice(-bWindow);
     var wSum = last3.reduce(function(s, r) { return s + Number(r.band); }, 0);
     var wAvg = wSum / last3.length;
     return Math.round(wAvg * 2) / 2; // IELTS standart yaxlitlash: eng yaqin 0.5
   }
 
   // Listening / Reading
-  var finalRaw = calcSectionRawScore(sec, results);
+  var finalRaw = calcSectionRawScore(sec, results, windowSize);
   if (finalRaw === null) return null;
   var raw = Math.min(Math.max(Math.round(finalRaw), 0), 40);
   return rawToBand(raw, sec);
@@ -11335,10 +11503,11 @@ function _ieltsSortByTimeAsc(a, b) {
 // aks holda (masalan faqat Part 2 kiritilgan bo'lsa) natija HISOBLANMAYDI
 // (null qaytariladi), toki foydalanuvchi noto'g'ri/chala o'rtacha ko'rmasin.
 // "All" (to'liq test) natijasi bo'lsa, bu shartdan qat'iy nazar hisoblanadi.
-function calcSectionRawScore(sec, results) {
+function calcSectionRawScore(sec, results, windowSize) {
   var cfg = IELTS_SUBSEC[sec];
   if (!cfg) return null;
   var parts = cfg.items.filter(function(i) { return i.key !== 'all'; });
+  var pWindow = (windowSize === undefined || windowSize === null) ? 5 : windowSize;
 
   var filledCount = 0;
   var partsSum = 0;
@@ -11351,7 +11520,7 @@ function calcSectionRawScore(sec, results) {
     }).sort(_ieltsSortByTimeAsc);
     if (matching.length > 0) {
       filledCount++;
-      var last5 = matching.slice(-5); // oxirgi 5 ta natija (kam bo'lsa — borining o'rtachasi)
+      var last5 = (pWindow === 'all') ? matching : matching.slice(-pWindow); // oxirgi N ta natija (kam bo'lsa — borining o'rtachasi)
       var sum = last5.reduce(function(s, r) { return s + Number(r.raw); }, 0);
       partsSum += sum / last5.length;
     }
@@ -11406,6 +11575,10 @@ function calcSectionRawTotal(sec, results) {
 // orqali, har bir part/passage/task kesimida o'rtacha ball + uni tasdiqlovchi
 // sana-sana tarix (log) bilan ko'rsatiladi.
 var _ieltsDetailSection = null;
+// Modalning yuqorisidagi dropdown orqali tanlanadigan "oxirgi nechta urinish
+// hisoblansin" filtri. Butun modalga (barcha 4 modul) ta'sir qiladi.
+// Qiymati: 2..7 (son) yoki 'all' (barcha urinishlar). Default: 5.
+var _ieltsDetailWindowSize = 5;
 var IELTS_DETAIL_COLORS = {
   listening: { hex: '#60A5FA', rgb: '96,165,250'  },
   reading:   { hex: '#34D399', rgb: '52,211,153'  },
@@ -11422,6 +11595,71 @@ function _ieltsPrettyDate(dateStr) {
   return dateStr === today() ? (t('ielts_today_label') + ' · ' + pretty) : pretty;
 }
 
+// Bitta natija-kartochkasini quradi. `highlighted` — shu natija joriy
+// tanlangan filtrga (Last N) kirganmi (yorqin+badge) yoki eski/hidden
+// urinishmi (xira, badge'siz) ekanini belgilaydi.
+function _ieltsRenderEntryCard(r, p, sec, color, isRaw, highlighted, lastNLabel) {
+  var val = isRaw ? (r.raw + '/' + p.max + t('ielts_raw_correct_suffix')) : (t('ielts_band_prefix') + ' ' + r.band);
+  var cardStyle = highlighted
+    ? 'background:rgba(' + IELTS_DETAIL_COLORS[sec].rgb + ',0.14);border:1px solid rgba(' + IELTS_DETAIL_COLORS[sec].rgb + ',0.55);box-shadow:0 0 0 1px rgba(' + IELTS_DETAIL_COLORS[sec].rgb + ',0.18);'
+    : 'background:var(--surface2);border:1px solid var(--border);opacity:0.55;';
+  var badge = highlighted
+    ? '<span style="font-size:9px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:' + color + ';background:rgba(' + IELTS_DETAIL_COLORS[sec].rgb + ',0.16);border:1px solid rgba(' + IELTS_DETAIL_COLORS[sec].rgb + ',0.4);border-radius:999px;padding:2px 7px;margin-right:8px">' + lastNLabel + '</span>'
+    : '';
+  return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:10px;font-size:13px;' + cardStyle + '">' +
+    '<span style="color:var(--text-muted);display:flex;align-items:center">' + badge + t('ielts_date_label') + ': ' + _ieltsPrettyDate(r.date) + '</span>' +
+    '<span style="color:var(--text);font-weight:700">→ ' + val + '</span>' +
+  '</div>';
+}
+
+// Har bir part'ning "Show More / Show Less" akkordeon tugmasi bosilganda
+// chaqiriladi. Yashirin (eski) urinishlar blokini smooth tarzda ochib/yopadi
+// (max-height animatsiyasi) va tugma matni/strelkasini almashtiradi.
+function toggleIeltsPartHistory(uid) {
+  var wrap = document.getElementById('ielts-hist-wrap-' + uid);
+  var btn  = document.getElementById('ielts-hist-btn-' + uid);
+  if (!wrap || !btn) return;
+  var isOpen = wrap.getAttribute('data-open') === '1';
+  if (isOpen) {
+    wrap.style.maxHeight = '0px';
+    wrap.setAttribute('data-open', '0');
+    btn.innerHTML = '▼ ' + btn.getAttribute('data-more-label');
+  } else {
+    wrap.style.maxHeight = wrap.scrollHeight + 'px';
+    wrap.setAttribute('data-open', '1');
+    btn.innerHTML = '▲ ' + t('ielts_detail_show_less');
+  }
+}
+
+// Filtr dropdown'ini tarjima qilingan variantlar bilan to'ldiradi va joriy
+// tanlangan qiymatni belgilaydi (modal ochilganda hamda til almashganda ham
+// chaqirilishi mumkin, shuning uchun label'lar har doim t() orqali olinadi).
+function _ieltsPopulateWindowSelect() {
+  var sel = document.getElementById('ielts-detail-window-select');
+  if (!sel) return;
+  var opts = [2, 3, 4, 5, 6, 7, 'all'];
+  sel.innerHTML = opts.map(function(v) {
+    var label = (v === 'all') ? t('ielts_detail_window_all') : t('ielts_detail_last_n_label').replace('{n}', v);
+    return '<option value="' + v + '">' + label + '</option>';
+  }).join('');
+  sel.value = String(_ieltsDetailWindowSize);
+}
+
+// Modal sarlavhasi ostidagi qisqa L/R/W/S xulosasini joriy filtr asosida
+// qayta hisoblab chiqadi (context uchun) — dropdown o'zgarganda ham chaqiriladi.
+function _ieltsDetailRefreshSubHeader() {
+  var subEl = document.getElementById('ielts-detail-overall-sub');
+  if (!subEl) return;
+  var results = S.ieltsResults || [];
+  var parts = [];
+  ['listening','reading','writing','speaking'].forEach(function(s) {
+    var b = calcSectionBandFromParts(s, results, _ieltsDetailWindowSize);
+    var short = {listening:'L', reading:'R', writing:'W', speaking:'S'}[s];
+    if (b !== null && !isNaN(b)) parts.push(short + ':' + b);
+  });
+  subEl.textContent = parts.join('   ·   ');
+}
+
 // Overall kartochka bosilganda — faqat IELTS uchun modalni ochamiz (SAT
 // bo'lganda hech narsa qilmaymiz, SAT o'z eski xatti-harakatida qoladi).
 function onIeltsOverallCardClick() {
@@ -11434,17 +11672,10 @@ function openIeltsDetailModal() {
   if (!modal) return;
   var results = S.ieltsResults || [];
 
-  // Modal sarlavhasi ostida qisqa L/R/W/S xulosasi (context uchun)
-  var subEl = document.getElementById('ielts-detail-overall-sub');
-  if (subEl) {
-    var parts = [];
-    ['listening','reading','writing','speaking'].forEach(function(s) {
-      var b = calcSectionBandFromParts(s, results);
-      var short = {listening:'L', reading:'R', writing:'W', speaking:'S'}[s];
-      if (b !== null && !isNaN(b)) parts.push(short + ':' + b);
-    });
-    subEl.textContent = parts.join('   ·   ');
-  }
+  // Modal har safar ochilganda filtr default holatga (Last 5) qaytariladi
+  _ieltsDetailWindowSize = 5;
+  _ieltsPopulateWindowSelect();
+  _ieltsDetailRefreshSubHeader();
 
   modal.style.display = 'flex';
 
@@ -11457,6 +11688,14 @@ function openIeltsDetailModal() {
 function closeIeltsDetailModal() {
   var modal = document.getElementById('ielts-detail-modal');
   if (modal) modal.style.display = 'none';
+}
+
+// Dropdown'dan yangi qiymat tanlanganda — sahifa yangilanmasdan, joriy ochiq
+// modul va sub-header shu zahoti qayta chiziladi.
+function onIeltsDetailWindowChange(val) {
+  _ieltsDetailWindowSize = (val === 'all') ? 'all' : parseInt(val, 10);
+  _ieltsDetailRefreshSubHeader();
+  if (_ieltsDetailSection) renderIeltsDetailContent(_ieltsDetailSection);
 }
 
 function selectIeltsDetailSection(sec) {
@@ -11486,36 +11725,62 @@ function renderIeltsDetailContent(sec) {
   var cfg = IELTS_SUBSEC[sec];
   var color = IELTS_DETAIL_COLORS[sec].hex;
   var isRaw = cfg.type === 'raw';
-  var overallBand = calcSectionBandFromParts(sec, results);
-
-  var html = '';
-  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;padding:16px 18px;background:rgba(' + IELTS_DETAIL_COLORS[sec].rgb + ',0.1);border:1px solid rgba(' + IELTS_DETAIL_COLORS[sec].rgb + ',0.3);border-radius:14px">' +
-    '<div style="font-size:13px;color:' + color + ';font-weight:600" data-i18n="ielts_detail_section_score">Joriy section bali</div>' +
-    '<div style="font-family:Syne,sans-serif;font-size:28px;font-weight:700;color:' + color + '">' + (overallBand !== null ? overallBand : '—') + '</div>' +
-  '</div>';
+  // Dropdown orqali tanlangan filtr (2..7 yoki 'all') — butun modalga bir xilda
+  // qo'llanadi, "Joriy section bali" ham shu filtrga mos hisoblanadi.
+  var windowSize = _ieltsDetailWindowSize;
+  var overallBand = calcSectionBandFromParts(sec, results, windowSize);
 
   var parts = cfg.items.filter(function(i) { return i.key !== 'all'; });
   var anyData = false;
 
-  // Moving-average oynasi: Listening/Reading uchun oxirgi 5 ta,
-  // Writing/Speaking uchun oxirgi 3 ta natija asosida hisoblanadi.
-  var windowSize = (sec === 'listening' || sec === 'reading') ? 5 : 3;
-
-  parts.forEach(function(p) {
+  // Har bir part/passage uchun "Average (Last N)" ballarini oldindan
+  // hisoblab olamiz — bu qiymatlar ham header'dagi umumiy raw yig'indi
+  // (masalan 26.0/40) uchun, ham pastdagi part-by-part ro'yxat uchun ishlatiladi.
+  var partAverages = parts.map(function(p) {
     var entries = results.filter(function(r) {
       return r.section === sec && r.subSection === p.key &&
         (isRaw ? (r.raw !== null && !isNaN(Number(r.raw))) : (r.band !== null && !isNaN(Number(r.band))));
     }).sort(_ieltsSortByTimeAsc).reverse(); // eng yangi tepada
 
-    // Faqat oxirgi N ta natija (eng yangilari) o'rtachaga kiradi.
-    // Agar jami natijalar soni N dan kam bo'lsa, borining o'rtachasi olinadi.
-    var lastN = entries.slice(0, windowSize);
+    // Faqat oxirgi N ta natija (eng yangilari) o'rtachaga kiradi (yoki
+    // "All" tanlangan bo'lsa — barchasi). Agar jami natijalar soni N dan
+    // kam bo'lsa, borining o'rtachasi olinadi.
+    var lastN = (windowSize === 'all') ? entries : entries.slice(0, windowSize);
     var vals  = lastN.map(function(r) { return isRaw ? Number(r.raw) : Number(r.band); });
     var avg   = vals.length ? (vals.reduce(function(a,b){ return a+b; }, 0) / vals.length) : null;
     var avgRounded = avg !== null ? (Math.round(avg * 10) / 10) : null;
+    return { part: p, entries: entries, avgRounded: avgRounded, lastNCount: vals.length };
+  });
+
+  // Raw jami (faqat Listening/Reading kabi "raw" turdagi bo'limlar uchun):
+  // barcha part'larning "Average (Last N)" ballari qo'shiladi va umumiy
+  // maksimal (masalan 4 part x 10 = 40) bilan birga ko'rsatiladi.
+  var rawSumInfo = null;
+  if (isRaw) {
+    var filledParts = partAverages.filter(function(x) { return x.avgRounded !== null; });
+    if (filledParts.length > 0) {
+      var rawSum = filledParts.reduce(function(acc, x) { return acc + x.avgRounded; }, 0);
+      var rawMax = parts.reduce(function(acc, p) { return acc + p.max; }, 0);
+      rawSumInfo = { sum: Math.round(rawSum * 10) / 10, max: rawMax };
+    }
+  }
+
+  var html = '';
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;padding:16px 18px;background:rgba(' + IELTS_DETAIL_COLORS[sec].rgb + ',0.1);border:1px solid rgba(' + IELTS_DETAIL_COLORS[sec].rgb + ',0.3);border-radius:14px">' +
+    '<div style="font-size:13px;color:' + color + ';font-weight:600" data-i18n="ielts_detail_section_score">' + t('ielts_detail_section_score') + '</div>' +
+    '<div style="display:flex;align-items:baseline;gap:10px">' +
+      (rawSumInfo ? '<span style="font-family:Syne,sans-serif;font-size:16px;font-weight:700;color:' + color + ';opacity:0.85">' + rawSumInfo.sum + ' / ' + rawSumInfo.max + '</span>' : '') +
+      '<span style="font-family:Syne,sans-serif;font-size:28px;font-weight:700;color:' + color + '">' + (overallBand !== null ? overallBand : '—') + '</span>' +
+    '</div>' +
+  '</div>';
+
+  partAverages.forEach(function(pa) {
+    var p = pa.part;
+    var entries = pa.entries;
+    var avgRounded = pa.avgRounded;
     if (entries.length) anyData = true;
 
-    var lastNLabel = t('ielts_detail_last_n_label').replace('{n}', vals.length);
+    var lastNLabel = (windowSize === 'all') ? t('ielts_detail_window_all') : t('ielts_detail_last_n_label').replace('{n}', pa.lastNCount);
 
     html += '<div style="margin-bottom:24px">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;flex-wrap:wrap;gap:6px">' +
@@ -11528,22 +11793,27 @@ function renderIeltsDetailContent(sec) {
       '</div>';
 
     if (entries.length > 0) {
+      // Tanlangan filtrga (windowSize) kiruvchi "yorqin" urinishlar ochiq
+      // ko'rinadi; undan ortiq eski urinishlar "Show More" orqasida yashirin
+      // turadi — skroll uzayib ketmasligi uchun.
+      var highlightCount = (windowSize === 'all') ? entries.length : Math.min(windowSize, entries.length);
+      var visibleEntries = entries.slice(0, highlightCount);
+      var hiddenEntries   = entries.slice(highlightCount);
+      var partUid = sec + '_' + p.key;
+
       html += '<div style="display:flex;flex-direction:column;gap:8px">' +
-        entries.map(function(r, idx) {
-          var val = isRaw ? (r.raw + '/' + p.max + " to'g'ri") : ('band ' + r.band);
-          var isHighlighted = idx < windowSize; // o'rtachaga kirgan oxirgi natijalar
-          var cardStyle = isHighlighted
-            ? 'background:rgba(' + IELTS_DETAIL_COLORS[sec].rgb + ',0.14);border:1px solid rgba(' + IELTS_DETAIL_COLORS[sec].rgb + ',0.55);box-shadow:0 0 0 1px rgba(' + IELTS_DETAIL_COLORS[sec].rgb + ',0.18);'
-            : 'background:var(--surface2);border:1px solid var(--border);opacity:0.55;';
-          var badge = isHighlighted
-            ? '<span style="font-size:9px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:' + color + ';background:rgba(' + IELTS_DETAIL_COLORS[sec].rgb + ',0.16);border:1px solid rgba(' + IELTS_DETAIL_COLORS[sec].rgb + ',0.4);border-radius:999px;padding:2px 7px;margin-right:8px">' + t('ielts_detail_last_n_label').replace('{n}', windowSize) + '</span>'
-            : '';
-          return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:10px;font-size:13px;' + cardStyle + '">' +
-            '<span style="color:var(--text-muted);display:flex;align-items:center">' + badge + t('ielts_date_label') + ': ' + _ieltsPrettyDate(r.date) + '</span>' +
-            '<span style="color:var(--text);font-weight:700">→ ' + val + '</span>' +
-          '</div>';
-        }).join('') +
+        visibleEntries.map(function(r) { return _ieltsRenderEntryCard(r, p, sec, color, isRaw, true, lastNLabel); }).join('') +
       '</div>';
+
+      if (hiddenEntries.length > 0) {
+        var moreLabel = t('ielts_detail_show_more').replace('{n}', hiddenEntries.length);
+        html += '<div id="ielts-hist-wrap-' + partUid + '" data-open="0" style="overflow:hidden;max-height:0px;transition:max-height 0.3s ease">' +
+          '<div style="display:flex;flex-direction:column;gap:8px;padding-top:8px">' +
+            hiddenEntries.map(function(r) { return _ieltsRenderEntryCard(r, p, sec, color, isRaw, false, lastNLabel); }).join('') +
+          '</div>' +
+        '</div>' +
+        '<button id="ielts-hist-btn-' + partUid + '" data-more-label="' + moreLabel.replace(/"/g, '&quot;') + '" onclick="toggleIeltsPartHistory(\'' + partUid + '\')" style="width:100%;margin-top:8px;padding:9px;border-radius:9px;border:1px dashed var(--border);background:transparent;color:var(--text-muted);font-size:12px;font-weight:600;cursor:pointer;font-family:\'DM Sans\',sans-serif">▼ ' + moreLabel + '</button>';
+      }
     } else {
       html += '<div style="font-size:13px;color:var(--text-dim);padding:12px 14px;background:var(--surface2);border-radius:10px">' + t('ielts_detail_no_part_data') + '</div>';
     }
@@ -11560,10 +11830,10 @@ function renderIeltsDetailContent(sec) {
   if (allEntries.length > 0) {
     anyData = true;
     html += '<div style="margin-top:8px;padding-top:18px;border-top:1px solid var(--border)">' +
-      '<div style="font-size:14.5px;font-weight:700;color:var(--text);margin-bottom:11px" data-i18n="ielts_detail_all_title">🧾 To\'liq test (All) natijalari</div>' +
+      '<div style="font-size:14.5px;font-weight:700;color:var(--text);margin-bottom:11px" data-i18n="ielts_detail_all_title">' + t('ielts_detail_all_title') + '</div>' +
       '<div style="display:flex;flex-direction:column;gap:8px">' +
         allEntries.map(function(r) {
-          var val = isRaw ? (r.raw + '/40 to\'g\'ri') : ('band ' + r.band);
+          var val = isRaw ? (r.raw + '/40' + t('ielts_raw_correct_suffix')) : (t('ielts_band_prefix') + ' ' + r.band);
           return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--surface2);border-radius:10px;font-size:13px">' +
             '<span style="color:var(--text-muted)">' + t('ielts_date_label') + ': ' + _ieltsPrettyDate(r.date) + '</span>' +
             '<span style="color:var(--text);font-weight:700">→ ' + val + '</span>' +
