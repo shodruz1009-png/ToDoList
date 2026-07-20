@@ -14,7 +14,10 @@
 // uchun bu versiya raqami albatta oshirilishi shart — aks holda
 // Service Worker eski faylni keshdan qaytaraverib, yangi kod hech
 // qachon ishga tushmaydi.
-const CACHE_VERSION = 'v8';
+// v9: Rewards (Mukofotlar) bo'limiga tahrirlash (Edit ✏️) funksiyasi
+// qo'shildi — mavjud mukofotning nomi/narxi/ikonkasi ID'sini
+// o'zgartirmasdan tahrirlanadi (tarix va statistika saqlanib qoladi).
+const CACHE_VERSION = 'v9';
 const CACHE_NAME = `todolist-cache-${CACHE_VERSION}`;
 
 // Ilova offline'da ishlashi uchun oldindan keshlanadigan fayllar.
