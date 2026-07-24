@@ -1,23 +1,37 @@
 // ============================================================
 // ToDoList PWA — Service Worker
-// Har bir deploy'da CACHE_VERSION'ni oshiring (masalan v7 -> v8),
+// Har bir deploy'da CACHE_VERSION'ni oshiring (masalan v9 -> v10),
 // shunda eski kesh avtomatik "activate" bosqichida o'chib, yangi
 // fayllar bilan almashtiriladi.
-// MUHIM: index.html'ga (masalan kalendar orqali tanga/soat statistikasi
-// tuzatishlari, "Jami kun" hisoblagichi va Instagram bloklandi popup'ini
-// olib tashlash kabi) yangi o'zgarish
+// MUHIM: index.html'ga yangi o'zgarish kiritilganda, foydalanuvchi
+// eski keshlangan versiyani ko'rmasligi uchun bu versiya raqami
+// albatta oshirilishi shart — aks holda Service Worker eski faylni
+// keshdan qaytaraverib, yangi kod hech qachon ishga tushmaydi.
 // To'liq offline (LocalStorage asosidagi) ilova uchun.
 // Supabase olib tashlangan, SortableJS CDN orqali ulanadi.
 // ============================================================
 
-// kiritilganda, foydalanuvchi eski keshlangan versiyani ko'rmasligi
-// uchun bu versiya raqami albatta oshirilishi shart — aks holda
-// Service Worker eski faylni keshdan qaytaraverib, yangi kod hech
-// qachon ishga tushmaydi.
-// v9: Rewards (Mukofotlar) bo'limiga tahrirlash (Edit ✏️) funksiyasi
-// qo'shildi — mavjud mukofotning nomi/narxi/ikonkasi ID'sini
-// o'zgartirmasdan tahrirlanadi (tarix va statistika saqlanib qoladi).
-const CACHE_VERSION = 'v9';
+// v10: Ushbu deployda kiritilgan o'zgarishlar:
+//  - Sirli joy: "KECHA" yorlig'iga aniq sana qo'shildi (masalan "KECHA (18.07)")
+//  - Reward ishlatilganda (0 tangalik) tarixga endi yozuv qo'shilmaydi
+//  - Reward Statistics endi XARID emas, ISHLATISH (usage) tarixini ko'rsatadi
+//    (yangi doimiy todolist_usage_history kaliti orqali)
+//  - Minecraft Steve: HP formulasi tuzatildi (tiklanish endi 0.5x/tanga,
+//    jazo bilan bir xil 2x emas)
+//  - Minecraft Steve: oyoqlar orasiga bo'shliq va konturlar qo'shildi
+//    (yassi/"qog'oz" ko'rinish muammosi)
+//  - Ko'p oyna/tab holatida IELTS natijalar va boshqa umumiy holat
+//    ba'zan yo'qolib qolish xatosi tuzatildi (visibilitychange orqali
+//    diskdagi so'nggi holat bilan sinxronlash)
+//  - "Top Task" statistikasi: Undone bosilganda taskDoneCount endi
+//    to'g'ri kamayadi + eskirgan sonlar bir martalik tuzatiladi
+//  - IELTS Detailed analysis: "i" tugmasi qo'shildi — Listening/Reading
+//    uchun rasmiy ball jadvalini ko'rsatadi
+//  - Reward tahrirlashda (Edit) endi vaqtli mukofotning haqiqiy
+//    daqiqasi (amount) ham nomga mos yangilanadi
+//  - Instagram bloklanish muddati endi qat'iy 30 kun emas — oxirgi
+//    ban tugagan kundan (yoki ilovani boshlagan kundan) hisoblanadi
+const CACHE_VERSION = 'v10';
 const CACHE_NAME = `todolist-cache-${CACHE_VERSION}`;
 
 // Ilova offline'da ishlashi uchun oldindan keshlanadigan fayllar.
