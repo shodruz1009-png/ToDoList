@@ -671,14 +671,14 @@ if ('serviceWorker' in navigator) {
     <button type="button" class="death-close-btn" id="death-close-btn" onclick="dismissDeathOverlay()" aria-label="Yopish" title="Vaqtincha yopish">✕</button>
     <span class="death-skull">💀</span>
     <div class="death-title">Siz o'ldingiz!</div>
-    <div class="death-sub">📵 INSTAGRAM 30 kunga o'chirildi!</div>
+    <div class="death-sub" id="death-sub">📵 INSTAGRAM 30 kunga o'chirildi!</div>
     <div class="death-timer-row">
       <span class="death-timer" id="death-timer-days">30</span>
     </div>
     <div class="death-timer-label" id="death-timer-label">kun qoldi</div>
     <div class="death-timer-sub">Jazo muddati</div>
     <div class="death-progress-track"><div class="death-progress-fill" id="death-progress-fill"></div></div>
-    <div class="death-hint" id="death-hint">Steve faqat vaqt tugagach jonlanadi. Bu oyna 30 kun tugamaguncha yopilmaydi.</div>
+    <div class="death-hint" id="death-hint">Steve faqat vaqt tugagach jonlanadi. Bu oyna jazo muddati tugamaguncha yopilmaydi.</div>
   </div>
 </div>
 
@@ -873,32 +873,38 @@ if ('serviceWorker' in navigator) {
             <div id="char-3d-rotator">
               <!-- OLD TOMON (FRONT) — mavjud xarakter, o'zgarishsiz -->
               <svg id="char-svg" viewBox="0 0 8 16" shape-rendering="crispEdges" style="filter:drop-shadow(0 6px 8px rgba(0,0,0,0.35))">
-                <!-- OYOQLAR (idle uchun alohida guruh, sonidan tebranadi) -->
+                <!-- OYOQLAR (idle uchun alohida guruh, sonidan tebranadi)
+                     MUHIM TUZATISH: avval ikkala oyoq bir-biriga tegib turgan
+                     va rangi juda yaqin edi — shu sabab kichik o'lchamda ikkita
+                     alohida "oyoq" emas, bitta yassi (qog'ozga o'xshash) ko'k
+                     to'rtburchak bo'lib ko'rinardi. Endi orasida aniq bo'shliq
+                     va har biriga ingichka qorong'i chegara (stroke) qo'shildi —
+                     shu bilan ikkita alohida hajmli blok sifatida o'qiladi. -->
                 <g id="mc-leg-left">
-                  <rect x="2" y="10" width="2" height="5" fill="#3B4CCA"/>
-                  <rect x="2" y="15" width="2" height="1" fill="#232323"/>
+                  <rect x="2" y="10" width="1.85" height="5" fill="#3B4CCA" stroke="#1A2266" stroke-width="0.1"/>
+                  <rect x="2" y="15" width="1.85" height="1" fill="#232323"/>
                 </g>
                 <g id="mc-leg-right">
-                  <rect x="4" y="10" width="2" height="5" fill="#33449E"/>
-                  <rect x="4" y="15" width="2" height="1" fill="#1A1A1A"/>
+                  <rect x="4.15" y="10" width="1.85" height="5" fill="#33449E" stroke="#141C52" stroke-width="0.1"/>
+                  <rect x="4.15" y="15" width="1.85" height="1" fill="#1A1A1A"/>
                 </g>
 
                 <!-- TANA -->
-                <rect x="2" y="4" width="4" height="6" fill="#3FBDBD"/>
+                <rect x="2" y="4" width="4" height="6" fill="#3FBDBD" stroke="#1F6666" stroke-width="0.1"/>
                 <rect x="2" y="9" width="4" height="1" fill="#2E8F8F"/>
 
                 <!-- QO'LLAR (idle uchun alohida guruh, yelkasidan tebranadi) -->
                 <g id="mc-arm-left">
-                  <rect x="0" y="4" width="2" height="2" fill="#2E8F8F"/>
-                  <rect x="0" y="6" width="2" height="4" fill="#E8B58C"/>
+                  <rect x="0" y="4" width="2" height="2" fill="#2E8F8F" stroke="#1F6666" stroke-width="0.1"/>
+                  <rect x="0" y="6" width="2" height="4" fill="#E8B58C" stroke="#9C6B45" stroke-width="0.1"/>
                 </g>
                 <g id="mc-arm-right">
-                  <rect x="6" y="4" width="2" height="2" fill="#2E8F8F"/>
-                  <rect x="6" y="6" width="2" height="4" fill="#D9A87D"/>
+                  <rect x="6" y="4" width="2" height="2" fill="#2E8F8F" stroke="#1F6666" stroke-width="0.1"/>
+                  <rect x="6" y="6" width="2" height="4" fill="#D9A87D" stroke="#8F5F3C" stroke-width="0.1"/>
                 </g>
 
                 <!-- BOSH -->
-                <rect x="2" y="0.3" width="4" height="3.7" fill="#E8B58C"/>
+                <rect x="2" y="0.3" width="4" height="3.7" fill="#E8B58C" stroke="#9C6B45" stroke-width="0.1"/>
                 <rect x="2" y="0.3" width="4" height="1" fill="#4A2E1D"/>
                 <rect x="2" y="1.3" width="0.6" height="1" fill="#4A2E1D"/>
                 <rect x="5.4" y="1.3" width="0.6" height="1" fill="#4A2E1D"/>
@@ -917,31 +923,31 @@ if ('serviceWorker' in navigator) {
               <svg id="char-svg-back" viewBox="0 0 8 16" shape-rendering="crispEdges" style="filter:drop-shadow(0 6px 8px rgba(0,0,0,0.35))">
                 <!-- OYOQLAR — ORQA TOMON (to'qroq soya rang, bir xil idle tebranish bilan) -->
                 <g id="mc-leg-left-back">
-                  <rect x="2" y="10" width="2" height="5" fill="#2E3A9E"/>
-                  <rect x="2" y="15" width="2" height="1" fill="#1A1A1A"/>
+                  <rect x="2" y="10" width="1.85" height="5" fill="#2E3A9E" stroke="#14184A" stroke-width="0.1"/>
+                  <rect x="2" y="15" width="1.85" height="1" fill="#1A1A1A"/>
                 </g>
                 <g id="mc-leg-right-back">
-                  <rect x="4" y="10" width="2" height="5" fill="#26327E"/>
-                  <rect x="4" y="15" width="2" height="1" fill="#101010"/>
+                  <rect x="4.15" y="10" width="1.85" height="5" fill="#26327E" stroke="#0F1338" stroke-width="0.1"/>
+                  <rect x="4.15" y="15" width="1.85" height="1" fill="#101010"/>
                 </g>
 
                 <!-- TANA — ORQA TOMON (ko'ylak orqasi, tikuv chizig'i bilan) -->
-                <rect x="2" y="4" width="4" height="6" fill="#2F9D9D"/>
+                <rect x="2" y="4" width="4" height="6" fill="#2F9D9D" stroke="#164D4D" stroke-width="0.1"/>
                 <rect x="2" y="9" width="4" height="1" fill="#256F6F"/>
                 <rect x="3.9" y="4.3" width="0.2" height="5.4" fill="#256F6F" opacity="0.55"/>
 
                 <!-- QO'LLAR — ORQA TOMON -->
                 <g id="mc-arm-left-back">
-                  <rect x="0" y="4" width="2" height="2" fill="#256F6F"/>
-                  <rect x="0" y="6" width="2" height="4" fill="#D1A177"/>
+                  <rect x="0" y="4" width="2" height="2" fill="#256F6F" stroke="#164D4D" stroke-width="0.1"/>
+                  <rect x="0" y="6" width="2" height="4" fill="#D1A177" stroke="#8A6544" stroke-width="0.1"/>
                 </g>
                 <g id="mc-arm-right-back">
-                  <rect x="6" y="4" width="2" height="2" fill="#256F6F"/>
-                  <rect x="6" y="6" width="2" height="4" fill="#C08F65"/>
+                  <rect x="6" y="4" width="2" height="2" fill="#256F6F" stroke="#164D4D" stroke-width="0.1"/>
+                  <rect x="6" y="6" width="2" height="4" fill="#C08F65" stroke="#7D5A3B" stroke-width="0.1"/>
                 </g>
 
                 <!-- BOSH — ORQA TOMON: FAQAT SOCH, yuz yo'q -->
-                <rect x="2" y="0.3" width="4" height="3.7" fill="#4A2E1D"/>
+                <rect x="2" y="0.3" width="4" height="3.7" fill="#4A2E1D" stroke="#2E1B10" stroke-width="0.1"/>
                 <rect x="2.35" y="0.6" width="0.35" height="3.1" fill="#3E2617" opacity="0.55"/>
                 <rect x="3.25" y="0.6" width="0.35" height="3.1" fill="#3E2617" opacity="0.55"/>
                 <rect x="4.15" y="0.6" width="0.35" height="3.1" fill="#3E2617" opacity="0.55"/>
@@ -1756,9 +1762,10 @@ const I18N = {
     reward_stats_title: '📊 Statistika',
     reward_stats_filter_all: 'Hammasi',
     reward_stats_pick_date: 'Sana tanlang',
-    reward_stats_empty: "Hali xarid tarixi yo'q.",
+    reward_stats_empty: "Hali ishlatish tarixi yo'q.",
     reward_stats_purchased_suffix: 'sotib olingan',
-    reward_stats_day_total: "Jami sarflandi:",
+    reward_stats_used_suffix: 'ishlatilgan',
+    reward_stats_day_total: "Jarima uchun sarflandi:",
     // Reward add form
     rewards_intro: 'Vazifalarni bajarsangiz tanga topasiz. Tangalarni mukofotlarga almashtirasiz!',
     add_reward_toggle: "➕ Yangi mukofot qo'shish",
@@ -1832,6 +1839,12 @@ const I18N = {
     ielts_detail_all_title: "🧾 To'liq test (All) natijalari",
     ielts_detail_hint: "Listening/Reading: oxirgi 5 ta, Writing/Speaking: oxirgi 3 ta natija asosida hisoblanadi (eski natijalar hisobga olinmaydi)",
     ielts_detail_tap_hint: '👆 Batafsil tahlil uchun bosing',
+    ielts_band_table_title: '📋 Ball jadvali',
+    ielts_band_table_hint: 'To\'g\'ri javoblar soni qaysi Band ballga to\'g\'ri kelishini shu yerdan ko\'rishingiz mumkin (rasmiy IELTS jadvali).',
+    ielts_band_table_no_table: 'Bu bo\'lim (Writing/Speaking) uchun to\'g\'ri javoblar soniga asoslangan jadval mavjud emas — bu yerda ball to\'g\'ridan-to\'g\'ri (0-9) kiritiladi.',
+    ielts_band_table_close: 'Yopish',
+    ielts_band_table_correct: 'To\'g\'ri javob',
+    ielts_band_table_band: 'Band',
     ielts_raw_correct_suffix: " to'g'ri",
     ielts_band_prefix: 'band',
     ielts_modal_title: '📊 IELTS Natija',
@@ -2390,9 +2403,10 @@ const I18N = {
     reward_stats_title: '📊 Statistics',
     reward_stats_filter_all: 'All',
     reward_stats_pick_date: 'Pick a date',
-    reward_stats_empty: 'No purchase history yet.',
+    reward_stats_empty: 'No usage history yet.',
     reward_stats_purchased_suffix: 'purchased',
-    reward_stats_day_total: 'Total spent:',
+    reward_stats_used_suffix: 'used',
+    reward_stats_day_total: 'Spent on penalties:',
     // Reward add form
     rewards_intro: 'Complete tasks to earn coins. Trade coins for rewards!',
     add_reward_toggle: '➕ Add new reward',
@@ -2466,6 +2480,12 @@ const I18N = {
     ielts_detail_all_title: '🧾 Full test (All) results',
     ielts_detail_hint: "Listening/Reading: based on the last 5 entries. Writing/Speaking: based on the last 3 entries (older entries don't count)",
     ielts_detail_tap_hint: '👆 Tap for detailed analysis',
+    ielts_band_table_title: '📋 Score table',
+    ielts_band_table_hint: 'Here you can see which Band score each number of correct answers corresponds to (official IELTS table).',
+    ielts_band_table_no_table: 'There is no correct-answer-based table for this section (Writing/Speaking) — here the band score is entered directly (0-9).',
+    ielts_band_table_close: 'Close',
+    ielts_band_table_correct: 'Correct answers',
+    ielts_band_table_band: 'Band',
     ielts_raw_correct_suffix: ' correct',
     ielts_band_prefix: 'band',
     ielts_modal_title: '📊 IELTS Result',
@@ -3027,9 +3047,10 @@ const I18N = {
     reward_stats_title: '📊 Статистика',
     reward_stats_filter_all: 'Все',
     reward_stats_pick_date: 'Выберите дату',
-    reward_stats_empty: 'История покупок пуста.',
+    reward_stats_empty: 'История использования пуста.',
     reward_stats_purchased_suffix: 'куплено',
-    reward_stats_day_total: 'Всего потрачено:',
+    reward_stats_used_suffix: 'использовано',
+    reward_stats_day_total: 'Потрачено на штрафы:',
     // Форма добавления награды
     rewards_intro: 'Выполняй задачи и зарабатывай монеты. Обменивай монеты на награды!',
     add_reward_toggle: '➕ Добавить новую награду',
@@ -3103,6 +3124,12 @@ const I18N = {
     ielts_detail_all_title: '🧾 Результаты полного теста (All)',
     ielts_detail_hint: 'Listening/Reading: рассчитывается по последним 5 результатам. Writing/Speaking: по последним 3 (старые результаты не учитываются)',
     ielts_detail_tap_hint: '👆 Нажмите для подробного анализа',
+    ielts_band_table_title: '📋 Таблица баллов',
+    ielts_band_table_hint: 'Здесь видно, какому баллу Band соответствует количество правильных ответов (официальная таблица IELTS).',
+    ielts_band_table_no_table: 'Для этого раздела (Writing/Speaking) нет таблицы по числу правильных ответов — балл вводится напрямую (0-9).',
+    ielts_band_table_close: 'Закрыть',
+    ielts_band_table_correct: 'Правильных ответов',
+    ielts_band_table_band: 'Band',
     ielts_raw_correct_suffix: ' правильных',
     ielts_band_prefix: 'band',
     ielts_modal_title: '📊 Результат IELTS',
@@ -4504,11 +4531,19 @@ window.addEventListener('storage', function(e) {
 });
 
 // QO'SHIMCHA XAVFSIZLIK: ba'zi brauzerlarda (ayniqsa PWA standalone rejimi
-// bilan oddiy tab orasida) 'storage' eventi ishonchli kelmasligi mumkin.
-// Shu sabab, oyna qayta faollashganda (foydalanuvchi shu tab/oynaga qaytganda)
-// ham xotiradagi tasklarni diskdagi eng so'nggi nusxa bilan qo'lda solishtirib,
-// zarur bo'lsa yangilaymiz — bu "eskirgan oyna ustidan yozib yuborish"
-// xavfini yanada kamaytiradi.
+// bilan oddiy tab orasida) 'storage' eventi ishonchli kelmasligi mumkin —
+// AYNIQSA telefon ekrani o'chib, ilova fonda "muzlab" qolganda: shu holatda
+// brauzer sahifaning JS bajarilishini butunlay to'xtatib qo'yadi, shuning
+// uchun 'storage' hodisa tinglovchisi ham ISHLAMAYDI. Ilova qayta ochilganda
+// (masalan ertalab) bu oynaning xotirasidagi S hali ESKI (muzlashdan oldingi)
+// holatda qoladi. Agar shu eskirgan oynada keyin BIRON HARAKAT qilinsa
+// (masalan yangi IELTS natija qo'shilsa) va shu save()ni chaqirsa — o'sha
+// eskirgan S butun diskdagi so'nggi holatni (jumladan muzlab turgan payt
+// ICHIDA boshqa joyda qo'shilgan boshqa natijalarni ham) USTIDAN BOSIB
+// YUBORARDI. Ilgari bu tuzatish FAQAT tasklar uchun qo'llanilgan edi —
+// endi xuddi shu tekshiruv UMUMIY HOLAT (IELTS natijalar, tanga va h.k.)
+// uchun ham qo'llanadi, shu bilan "ba'zan qo'shgan narsam keyin yo'q bo'lib
+// qoladi" muammosi tuzatiladi.
 document.addEventListener('visibilitychange', function() {
   if (document.hidden) return;
   try {
@@ -4527,6 +4562,24 @@ document.addEventListener('visibilitychange', function() {
       render();
     }
   } catch(err) { console.warn('Faollashuvda sinxronlash xatosi:', err); }
+
+  // MUHIM TUZATISH: umumiy holatni (IELTS natijalar, tanga, mukofotlar va
+  // h.k.) ham xuddi shunday tekshiramiz — diskda BIZNING oynamiz bilgan
+  // so'nggi saqlashdan KEYINGI vaqt bilan belgilangan nusxa bo'lsa, demak
+  // biz muzlab turgan paytda boshqa joyda o'zgargan — o'shani olamiz.
+  loadFromLocalStorage().then(function(fresh) {
+    if (!fresh || !fresh.data) return;
+    var diskTime = fresh.updatedAt ? new Date(fresh.updatedAt).getTime() : 0;
+    var mineTime = S._serverSavedAt ? new Date(S._serverSavedAt).getTime() : 0;
+    if (diskTime > mineTime) {
+      console.log('🔄 Oyna faollashdi — umumiy holat diskdagi so\'nggi nusxa bilan sinxronlandi.');
+      var savedTasks = S.tasks, savedOrder = S.taskOrder; // tasks alohida boshqarilgani uchun saqlab qolamiz
+      S = Object.assign({}, S, fresh.data);
+      S.tasks = savedTasks; S.taskOrder = savedOrder;
+      render();
+      refreshAllModulesFromState();
+    }
+  }).catch(function(err) { console.warn('Faollashuvda umumiy holatni sinxronlashda xatolik:', err); });
 });
 
 // ============ QO'SHIMCHA XAVFSIZLIK TO'RI: sahifa yuklanganda tasklarni
@@ -5127,6 +5180,14 @@ function toggleTask(id) {
     if(S.totalTasksDone>0) S.totalTasksDone--;
     if(S.weekDoneLog && S.weekDoneLog[today()] > 0) S.weekDoneLog[today()]--;
     if(tsk.diff===3 && S.hardTasksDone>0) S.hardTasksDone--;
+    // MUHIM TUZATISH: taskDoneCount ("necha marta bajarilgan" — Top Task
+    // statistikasi shundan hisoblanadi) avval bu yerda KAMAYTIRILMASDI —
+    // faqat Done bosilganda oshirilardi. Shu sabab tasodifiy yoki (avval
+    // tuzatilgan multi-tab race'dan) Done->Undone->Done aylanishi har safar
+    // hisobni +2 ga oshirib yuborardi, +1 o'rniga. Kalendar orqali bekor
+    // qilishda bu allaqachon to'g'ri kamaytirilardi — endi asosiy ro'yxatda
+    // ham xuddi shunday izchil ishlaydi.
+    if (S.taskDoneCount && S.taskDoneCount[tsk.id] > 0) S.taskDoneCount[tsk.id]--;
     // MUHIM TUZATISH: vazifa "Bajarilgan" dan "Bajarilmagan"ga qaytarilganda
     // avval berilgan XP ham qaytarib olinishi kerak (true -> false o'tishi),
     // aks holda foydalanuvchi Done/Undone ni cheksiz bosib XP yig'ib olishi mumkin edi.
@@ -5686,9 +5747,23 @@ function saveRewardEdit() {
   const cost = parseIntSafe(document.getElementById('er-cost').value)||r.cost;
   const icon = document.getElementById('er-icon').value.trim()||r.icon;
   if(!name){ document.getElementById('er-name').focus(); toast(t('reward_name_required_toast')); return; }
-  // MUHIM: faqat name/cost/icon o'zgaradi. r.id, r.rtype, r.amount,
-  // r.baseName — hammasi saqlanib qoladi, shu bilan S.rewardClaims[r.id]
-  // va S.usageLog[r.id] (xarid tarixi, statistikasi) uzilmaydi.
+  // MUHIM: name/cost/icon o'zgaradi. r.id, r.rtype, r.baseName — hammasi
+  // saqlanib qoladi, shu bilan S.rewardClaims[r.id] va S.usageLog[r.id]
+  // (xarid tarixi, statistikasi) uzilmaydi.
+  //
+  // MUHIM TUZATISH: avval r.amount (haqiqiy beriladigan daqiqa) HECH QACHON
+  // yangilanmasdi — faqat ko'rinadigan nom o'zgarardi. Shu sabab "insta 10
+  // min" nomini "insta 5 min"ga o'zgartirsangiz ham, u hamon 10 daqiqa
+  // berib turaverar edi (nom bilan haqiqiy qiymat mos kelmasdi). Endi —
+  // agar bu vaqtli (rtype==='time') mukofot bo'lsa va yangi nomda
+  // tanib olsa bo'ladigan daqiqa/soat ko'rsatilgan bo'lsa — r.amount ham
+  // shunga mos yangilanadi.
+  if (r.rtype === 'time') {
+    var parsedMins = parseMinutes(name);
+    if (parsedMins !== null && parsedMins > 0) {
+      r.amount = parsedMins;
+    }
+  }
   r.name=name; r.cost=cost; r.icon=icon;
   save(); renderRewards(); closeRewardModal();
   toast(t('reward_updated_toast'));
@@ -5716,6 +5791,25 @@ function parseMinutes(name) {
 // o'rnatilgach, keyingi yuklanishlarda qayta ishlov berilmaydi, shu
 // sababli mavjud (allaqachon to'g'ri) claims qayta-qayta ko'paytirilib
 // buzilib ketmaydi.
+// MUHIM TUZATISH (bir martalik): "taskDoneCount" (Top Task statistikasi
+// shundan hisoblanadi) avval Undone bosilganda kamaytirilmasdi — shu sabab
+// Done->Undone->Done aylanishlari sonini haqiqiy bajarilgan kunlar sonidan
+// ko'proq qilib qo'ygan bo'lishi mumkin edi. taskDoneLog (har bir vazifa
+// UCHUN bajarilgan sanalar ro'yxati, doim to'g'ri/dublikatsiz saqlangan)
+// ANIQ manba hisoblanadi — shundan foydalanib taskDoneCount'ni ustidan
+// qayta hisoblab, eskirgan noto'g'ri sonlarni bir martalik tuzatamiz.
+function fixInflatedTaskDoneCounts() {
+  if (S._taskDoneCountFixed) return; // faqat bir marta ishlaydi
+  if (!S.taskDoneLog) { S._taskDoneCountFixed = true; return; }
+  if (!S.taskDoneCount) S.taskDoneCount = {};
+  Object.keys(S.taskDoneLog).forEach(function(id) {
+    var accurate = (S.taskDoneLog[id] || []).length;
+    S.taskDoneCount[id] = accurate;
+  });
+  S._taskDoneCountFixed = true;
+  save();
+}
+
 function migrateLegacyRewards() {
   if (!S.rewards || !S.rewards.length) return;
   if (!S.rewardClaims) S.rewardClaims = {};
@@ -5746,11 +5840,16 @@ function migrateLegacyRewards() {
 }
 
 function formatMinutes(total) {
+  // MUHIM TUZATISH: avval "3s 36d" kabi tushunarsiz qisqartma chiqarardi va
+  // faqat o'zbekcha so'zlarni qattiq yozib qo'ygan edi (boshqa tillarda ham
+  // shu holicha chiqardi). Endi t('time_hour_unit')/t('time_min_unit')
+  // orqali tilga mos, to'liq o'qiladigan format ishlatiladi (masalan
+  // "3 soat 36 daqiqa" yoki "3 hr 36 min").
   if (total >= 60) {
     const h = Math.floor(total/60), m = total%60;
-    return m ? h+'s '+m+'d' : h+' soat';
+    return h+' '+t('time_hour_unit')+(m ? ' '+m+' '+t('time_min_unit') : '');
   }
-  return total+' daqiqa';
+  return total+' '+t('time_min_unit');
 }
 
 function overReward(id) {
@@ -6067,6 +6166,52 @@ function savePurchaseHistory(history) {
   }
 }
 
+// ================= REWARD USAGE HISTORY (statistika uchun) =================
+// Har safar "Ishlatdim" bosilganda (mukofot ISHLATILGANDA — sotib
+// olinganda emas) shu yerga doimiy yozuv qo'shiladi. Xarid tarixidan
+// (PURCHASE_HISTORY_KEY) mustaqil — chunki S.usageLog (qolgan haq
+// hisoblash uchun ishlatiladigan ichki jurnal) haq to'lib/tugab qolganda
+// tozalanib turadi, shu sababli statistika uchun UMUMAN ALOHIDA, hech
+// qachon tozalanmaydigan tarix kerak.
+const USAGE_HISTORY_KEY = 'todolist_usage_history';
+
+function loadUsageHistory() {
+  try {
+    var raw = localStorage.getItem(USAGE_HISTORY_KEY);
+    var arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch(e) {
+    console.warn('todolist_usage_history o\'qish xatosi:', e);
+    return [];
+  }
+}
+
+function saveUsageHistory(history) {
+  try {
+    localStorage.setItem(USAGE_HISTORY_KEY, JSON.stringify(history));
+  } catch(e) {
+    console.warn('todolist_usage_history yozish xatosi:', e);
+  }
+}
+
+// reward - S.rewards ichidagi obyekt, amount - shu safar ishlatilgan
+// miqdor (vaqtli mukofot uchun daqiqa, donali uchun 1), penaltyCoins -
+// agar haqdan oshib ishlatilib, jarima yechilgan bo'lsa shu safargi jarima
+// miqdori (musbat son, jarima bo'lmasa 0).
+function recordUsage(reward, amount, penaltyCoins) {
+  var history = loadUsageHistory();
+  history.push({
+    id: Date.now() + '-' + Math.floor(Math.random()*100000),
+    rewardTitle: reward.name,
+    timestamp: new Date().toISOString(),
+    rtype: reward.rtype || 'count',
+    amount: (amount>0) ? amount : 1,
+    penaltyCoins: penaltyCoins || 0,
+    icon: reward.icon || '🎁'
+  });
+  saveUsageHistory(history);
+}
+
 // reward - S.rewards ichidagi obyekt, coinsSpent - sotib olishga sarflangan tanga
 function recordPurchase(reward, coinsSpent) {
   var history = loadPurchaseHistory();
@@ -6093,7 +6238,7 @@ var _rstatCurrentFilter = 'all';
 function populateRewardStatsDateSelect() {
   var sel = document.getElementById('rstat-date-select');
   if (!sel) return;
-  var history = loadPurchaseHistory();
+  var history = loadUsageHistory();
   var dateSet = {};
   history.forEach(function(entry){ dateSet[dayKeyFromTimestamp(entry.timestamp)] = true; });
   var dates = Object.keys(dateSet).sort().reverse();
@@ -6124,7 +6269,10 @@ function renderRewardStats() {
   var content = document.getElementById('reward-stats-content');
   if (!content) return;
   populateRewardStatsDateSelect();
-  var history = loadPurchaseHistory();
+  // MUHIM TUZATISH: bu bo'lim endi XARID emas, ISHLATISH tarixini ko'rsatadi —
+  // ya'ni "qancha sotib oldim" emas, "shu kuni/hozirgacha qancha ishlatdim
+  // (sarfladim)" ko'rsatiladi (foydalanuvchi so'rovi bo'yicha).
+  var history = loadUsageHistory();
 
   if (history.length === 0) {
     content.innerHTML = '<p style="color:var(--text-muted);font-size:13px">'+t('reward_stats_empty')+'</p>';
@@ -6133,7 +6281,7 @@ function renderRewardStats() {
 
   if (_rstatCurrentFilter === 'all') {
     // "Hammasi" - har bir mukofot bo'yicha JAMI (butun tarix davomida)
-    // qancha vaqt yoki nechta sotib olinganini hisoblaymiz.
+    // qancha vaqt yoki nechta ISHLATGANINI hisoblaymiz.
     var agg = {};
     var order = [];
     history.forEach(function(entry){
@@ -6146,27 +6294,37 @@ function renderRewardStats() {
     order.forEach(function(title){
       var a = agg[title];
       var qtyLabel = a.rtype === 'time' ? formatMinutes(a.amount) : (a.count + ' ' + t('reward_unit_count'));
-      html += '<div class="rstat-stat-row"><span>'+a.icon+' '+esc(title)+'</span><span style="color:var(--accent);font-weight:600">'+qtyLabel+' '+t('reward_stats_purchased_suffix')+'</span></div>';
+      html += '<div class="rstat-stat-row"><span>'+a.icon+' '+esc(title)+'</span><span style="color:var(--accent);font-weight:600">'+qtyLabel+' '+t('reward_stats_used_suffix')+'</span></div>';
     });
     content.innerHTML = html;
   } else {
-    // Muayyan sana tanlangan - o'sha kunda nima sotib olingani, soni va
-    // sarflangan tangalar tarixi ko'rsatiladi.
+    // Muayyan sana tanlangan — bu yerda ham "Hammasi" ko'rinishidagi kabi
+    // har bir mukofot bo'yicha BITTA qator, oldida o'sha kuni jami qancha
+    // ISHLATGANI ko'rsatiladi (avval har bir xarid alohida-alohida,
+    // takrorlanib chiqardi va "sotib olingan" deb yozardi).
     var dayEntries = history.filter(function(entry){
       return dayKeyFromTimestamp(entry.timestamp) === _rstatCurrentFilter;
-    }).sort(function(a,b){ return new Date(b.timestamp) - new Date(a.timestamp); });
+    });
 
     if (dayEntries.length === 0) {
       content.innerHTML = '<p style="color:var(--text-muted);font-size:13px">'+t('reward_stats_empty')+'</p>';
       return;
     }
     var totalCoins = 0;
-    var html = '';
+    var agg = {};
+    var order = [];
     dayEntries.forEach(function(entry){
-      totalCoins += (entry.coinsSpent||0);
-      var d = new Date(entry.timestamp);
-      var timeStr = String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
-      html += '<div class="rstat-day-item"><span>'+(entry.icon||'🎁')+' '+esc(entry.rewardTitle)+' <span style="color:var(--text-dim);font-size:11px">('+timeStr+')</span></span><span style="color:#F5A623;font-weight:600">-'+entry.coinsSpent+' 🪙</span></div>';
+      totalCoins += (entry.penaltyCoins||0);
+      var key = entry.rewardTitle;
+      if (!agg[key]) { agg[key] = { icon: entry.icon||'🎁', rtype: entry.rtype||'count', amount:0, count:0 }; order.push(key); }
+      agg[key].amount += (entry.amount>0 ? entry.amount : 1);
+      agg[key].count += 1;
+    });
+    var html = '';
+    order.forEach(function(title){
+      var a = agg[title];
+      var qtyLabel = a.rtype === 'time' ? formatMinutes(a.amount) : (a.count + ' ' + t('reward_unit_count'));
+      html += '<div class="rstat-stat-row"><span>'+a.icon+' '+esc(title)+'</span><span style="color:var(--accent);font-weight:600">'+qtyLabel+' '+t('reward_stats_used_suffix')+'</span></div>';
     });
     html += '<div class="rstat-stat-row" style="margin-top:4px;border-top:1px solid var(--border);padding-top:12px;background:transparent"><span style="font-weight:600">'+t('reward_stats_day_total')+'</span><span style="color:#F87171;font-weight:700">'+totalCoins+' 🪙</span></div>';
     content.innerHTML = html;
@@ -6287,19 +6445,62 @@ function updateHpDaysLeftBadge(daysLeft) {
   badge.style.display = 'inline-block';
 }
 
-// ---- O'lim (GAME OVER) overlayini 30 kunlik taymer holatiga qarab yangilaydi ----
+// Foydalanuvchi ilovadan ILK MARTA foydalanishni qachon boshlaganini
+// taxminiy aniqlaydi (bu maxsus kuzatilmagan edi, shu sabab mavjud eng
+// eski ma'lumotlardan — Sirli joy boshlanish sanasi yoki eng eski tarix
+// yozuvi — taxmin qilinadi, keyingi safarlar uchun esa saqlab qo'yiladi).
+function getAppFirstUseAt() {
+  if (S.appFirstUseAt) return S.appFirstUseAt;
+  var candidates = [];
+  if (S.secretHabit && S.secretHabit.startDate) {
+    var t1 = new Date(S.secretHabit.startDate).getTime();
+    if (!isNaN(t1)) candidates.push(t1);
+  }
+  if (S.tarix && S.tarix.length) {
+    S.tarix.forEach(function(e) {
+      var t2 = e.ts || (e.date ? new Date(e.date).getTime() : null);
+      if (t2 && !isNaN(t2)) candidates.push(t2);
+    });
+  }
+  var earliest = candidates.length ? Math.min.apply(null, candidates) : Date.now();
+  S.appFirstUseAt = earliest;
+  return earliest;
+}
+
+// MUHIM O'ZGARISH: bloklash muddati endi doim QAT'IY 30 kun emas — foydalanuvchi
+// so'rovi bo'yicha DINAMIK hisoblanadi: "oxirgi ban qachon TUGAGAN/undan
+// CHIQQAN bo'lsa" (agar hech qachon bloklanmagan bo'lsa — ilovadan
+// foydalanishni boshlagan kundan) bugungi kungacha nechta kun o'tgan bo'lsa,
+// yangi blok muddati aynan shuncha kun bo'ladi. Masalan: 13-iyulda
+// bandan chiqqan, 24-iyulda yana blockga tushgan — yangi jazo 11 kun
+// (30 emas). Har bir ban tugaganda, o'sha tugash vaqti "oxirgi marta"
+// sifatida saqlanadi — KEYINGI safar shu asosda hisoblanadi.
+function calcDynamicBlockDurationMs(nowTs) {
+  var referenceAt = S.lastBanEndAt || getAppFirstUseAt();
+  var diff = nowTs - referenceAt;
+  var ONE_DAY = 24*60*60*1000;
+  // Kamida 1 kun — bir xil kunda ikki marta 0 HP ga tushib qolinsa ham,
+  // jazo muddati 0 bo'lib qolmasin.
+  return Math.max(ONE_DAY, diff);
+}
+
+// ---- O'lim (GAME OVER) overlayini dinamik taymer holatiga qarab yangilaydi ----
 function updateDeathOverlay() {
   var overlay = document.getElementById('death-overlay');
   if (!overlay) return;
   if (!S.isDead) { overlay.style.display = 'none'; updateHpDaysLeftBadge(0); return; }
 
-  var TOTAL_MS = 30 * 24 * 60 * 60 * 1000;
+  var TOTAL_MS = S.deathDurationMs || (30 * 24 * 60 * 60 * 1000); // eski saqlangan holatlar uchun fallback
   var deathAt = S.deathAt || Date.now();
   var elapsed = Date.now() - deathAt;
   if (elapsed < 0) elapsed = 0;
 
   if (elapsed >= TOTAL_MS) {
-    // 30 kunlik jazo muddati tugadi — Steve jonlanadi, jon qisman tiklanadi
+    // Jazo muddati tugadi — Steve jonlanadi, jon qisman tiklanadi.
+    // MUHIM: shu tugash vaqtini saqlab qo'yamiz — KEYINGI safar 0❤️ ga
+    // tushilganda, yangi jazo muddati aynan shu sanadan hisoblanadi
+    // ("oxirgi ban qachon tugagan/undan chiqqan bo'lsa" — foydalanuvchi so'rovi).
+    S.lastBanEndAt = Date.now();
     S.isDead = false;
     S.deathAt = null;
     S.hp = 50;
@@ -6322,6 +6523,12 @@ function updateDeathOverlay() {
   updateHpDaysLeftBadge(daysLeft);
   var daysEl = document.getElementById('death-timer-days');
   var fillEl = document.getElementById('death-progress-fill');
+  // MUHIM: jazo muddati endi doim 30 kun emas, dinamik (qarang:
+  // calcDynamicBlockDurationMs) — shu sabab sarlavhadagi matn ham haqiqiy
+  // umumiy kun soniga mos yangilanadi (qattiq "30" yozib qo'yilmaydi).
+  var subEl = document.getElementById('death-sub');
+  var totalDays = Math.max(1, Math.ceil(TOTAL_MS / (24*60*60*1000)));
+  if (subEl) subEl.textContent = '📵 INSTAGRAM ' + totalDays + ' kunga o\'chirildi!';
   if (daysEl) daysEl.textContent = daysLeft;
   if (fillEl) fillEl.style.width = (progressFrac*100) + '%';
 
@@ -6358,8 +6565,8 @@ setInterval(function(){ if (S.isDead) updateDeathOverlay(); }, 60000);
 //     manfiy ishorasi bilan.
 //   negDiff manfiy bo'lsa -> jon ketadi (negDiff * 2 = manfiy son, HP'ga qo'shiladi).
 //   negDiff musbat bo'lsa -> minus hududda qisman tiklanish (jon qaytadi).
-var HP_LOSS_PER_NEGATIVE_COIN = 2;   // 1 ta minus tanga = shuncha HP ketadi/qaytadi (0 dan pastdagi qism uchun)
-var HP_GAIN_PER_POSITIVE_COIN = 0.5; // ESLATMA: endi ishlatilmaydi — musbat/0 hududdagi tanga harakati HP'ga umuman ta'sir qilmaydi (yangi qat'iy qoida)
+var HP_LOSS_PER_NEGATIVE_COIN = 2;   // 1 ta minus tanga ORTSA (jazo/xarajat) = shuncha HP ketadi
+var HP_GAIN_PER_POSITIVE_COIN = 0.5; // Minus hududda 1 ta tanga TIKLANSA (qaytarilsa) = shuncha HP qaytadi — tiklanish 4x SEKINROQ, chunki jazo tezroq, davolanish sekinroq
 
 // Berilgan eski/yangi tanga balansidan qancha HP o'zgarishi kerakligini hisoblaydi.
 // BU FUNKSIYA HECH QANDAY YON TA'SIRGA (side effect) EGA EMAS — faqat sof
@@ -6373,16 +6580,23 @@ function calcHpDeltaFromCoinDiff(diff, oldCoins, newCoins) {
   var newNeg = Math.min(0, newCoins);
   var negDiff = newNeg - oldNeg;
 
-  if (negDiff !== 0) {
-    // Minus hududdagi haqiqiy farq — pasayish (negDiff<0) jon oladi,
-    // o'sha hudud ichida qisman tiklanish (negDiff>0) jonni qaytaradi.
+  if (negDiff < 0) {
+    // Balans yanada minusga tushdi (jazo/xarajat) — har -1 tanga uchun -2 HP
     return negDiff * HP_LOSS_PER_NEGATIVE_COIN;
+  }
+  if (negDiff > 0) {
+    // MUHIM TUZATISH: minus hududda QISMAN TIKLANISH avval xato ravishda
+    // xuddi jazo bilan bir xil (2x) koeffitsiyentda hisoblanardi — masalan
+    // -10 dan -5 ga tiklanganda +10 HP berardi. Bu noto'g'ri edi: tiklanish
+    // jazodan SEKINROQ bo'lishi kerak. Endi har +1 tanga uchun atigi +0.5 HP
+    // qaytariladi (masalan -10 dan -5 ga tiklanish +2.5 HP beradi, +10 emas).
+    return negDiff * HP_GAIN_PER_POSITIVE_COIN;
   }
 
   // Balans butunlay 0/musbat hududda qolgan holat: tanga qancha ko'paysa
   // ham (yoki kamaysa ham) bu HP tizimiga MUTLAQO daxl qilmaydi — jarima
   // yo'q, sun'iy tiklanish ham yo'q. HP faqat minus hududdagi harakatdan
-  // ta'sirlanadi (yuqoridagi negDiff shoxobchasi).
+  // ta'sirlanadi (yuqoridagi negDiff shoxobchalari).
   return 0;
 }
 
@@ -6432,10 +6646,13 @@ function renderHp() {
       // "-X HP" matni uchib chiqadi, matn qizarib o'tadi
       if (S.hp < oldHp) triggerHeartDamage(oldHp - S.hp);
 
-      // Jon roppa-rosa 0❤️ ga tushdi — o'lim holati va 30 kunlik taymer boshlanadi
+      // Jon roppa-rosa 0❤️ ga tushdi — o'lim holati va DINAMIK taymer boshlanadi
+      // (muddat haqiqiy 30 kun emas — oxirgi ban tugagan/undan chiqqan
+      // kundan beri o'tgan kunlar soniga teng, qarang: calcDynamicBlockDurationMs).
       if (S.hp <= 0 && !S.isDead) {
         S.isDead = true;
         S.deathAt = Date.now();
+        S.deathDurationMs = calcDynamicBlockDurationMs(S.deathAt);
         deathOverlayDismissed = false;
         save();
         updateDeathOverlay();
@@ -6947,6 +7164,7 @@ async function loadUserDataAndInit() {
   // rtype/amount tuzilmasiga o'tkazamiz — render() dan OLDIN, aks holda
   // birinchi chizishda hali ham "1 ta" ko'rinib qolishi mumkin edi.
   migrateLegacyRewards();
+  fixInflatedTaskDoneCounts();
 
   render();
   refreshAllModulesFromState();
@@ -7138,11 +7356,16 @@ function logUsage(id) {
         S.coins-=pen;
         addTarixLog('out',r.icon+' '+r.name+' (ortiqcha, 1x jazo)',-pen);
         toast(t('usage_over_penalty_toast').replace('{pen}', pen));
+        recordUsage(r, 1, pen);
         // Jarima tolandi — qarz yopildi, hisob tozalanadi (keyingi xaridga otmaydi)
         S.rewardClaims[id]=0; S.usageLog[id]=[];
       } else {
         toast(t('usage_used_toast').replace('{icon}', r.icon).replace('{name}', r.name));
-        addTarixLog('in',r.icon+' '+r.name+' ishlatildi',0);
+        recordUsage(r, 1, 0);
+        // MUHIM TUZATISH: tanga o'zgarmaydigan (0 tangalik) "ishlatildi" yozuvi
+        // tarixga endi qo'shilmaydi — bunday yozuvlar faqat tarixni chalkashtirar
+        // edi, chunki tanga miqdoriga hech qanday ta'sir qilmasdi. Statistika
+        // endi buni USAGE_HISTORY_KEY orqali doimiy kuzatadi (yuqoridagi qator).
         // Toliq ishlatib bolindi (qolgan=0) — hisob tozalanadi
         if(remaining-1<=0){ S.rewardClaims[id]=0; S.usageLog[id]=[]; }
       }
@@ -7262,11 +7485,16 @@ function logUsage(id) {
       S.coins-=pen;
       addTarixLog('out',r.icon+' '+r.name+' ('+formatMinutes(m)+', oshiq jazo)',-pen);
       toast(t('usage_over_minutes_toast').replace('{m}', formatMinutes(m)).replace('{pen}', pen));
+      recordUsage(r, m, pen);
       // Jarima tolandi — qarz yopildi, hisob tozalanadi (keyingi xaridga otmaydi)
       S.rewardClaims[id]=0; S.usageLog[id]=[];
     } else {
       toast(t('usage_within_limit_toast').replace('{m}', formatMinutes(m)));
-      addTarixLog('in',r.icon+' '+r.name+' ishlatildi ('+formatMinutes(m)+')',0);
+      recordUsage(r, m, 0);
+      // MUHIM TUZATISH: tanga o'zgarmaydigan (0 tangalik) "ishlatildi" yozuvi
+      // tarixga endi qo'shilmaydi — bunday yozuvlar faqat tarixni chalkashtirar
+      // edi, chunki tanga miqdoriga hech qanday ta'sir qilmasdi. Statistika
+      // endi buni USAGE_HISTORY_KEY orqali doimiy kuzatadi (yuqoridagi qator).
       // Sotib olingan vaqt toliq ishlatib bolindi (qolgan=0) — hisob tozalanadi
       if(totalBoughtMins!=null && (alreadyUsedMins+m)>=totalBoughtMins){
         S.rewardClaims[id]=0; S.usageLog[id]=[];
@@ -8368,7 +8596,14 @@ function renderSecretContent() {
   var activeDate = yday;
   var activeStatus = log[activeDate];
   var labelEl = document.getElementById('secret-log-label');
-  if(labelEl) labelEl.textContent = tr('ki_yesterday_caps');
+  if(labelEl) {
+    // Sana ham ko'rsatiladi (masalan "KECHA (18.07)") — shu orqali foydalanuvchi
+    // ikki xil kunni bir xil savol deb adashtirmaydi (avval faqat "KECHA" deb
+    // umumiy yozilardi, sana ko'rinmasdi).
+    var ydayParts = yday.split('-');
+    var ydayNice = ydayParts[2] + '.' + ydayParts[1];
+    labelEl.textContent = tr('ki_yesterday_caps') + ' (' + ydayNice + ')';
+  }
   var statusEl = document.getElementById('secret-today-status');
   var btnYes = document.getElementById('sec-btn-yes');
   var btnNo  = document.getElementById('sec-btn-no');
@@ -11365,6 +11600,53 @@ function calcIeltsBandLive() {
   preview.textContent = band !== null ? band : '—';
 }
 
+// "i" (ma'lumot) tugmasi bosilganda: shu section uchun rasmiy
+// "to'g'ri javoblar soni → Band ball" jadvalini ko'rsatadigan modal.
+// Listening/Reading uchun to'liq 0-40 jadval chiqadi (rawToBand bilan bir
+// xil rasmiy IELTS jadvali) — Writing/Speaking uchun bunday jadval
+// mavjud emasligi (ball to'g'ridan kiritilishi) haqida tushuntirish beriladi.
+function openIeltsBandTableModal(sec) {
+  var old = document.getElementById('ielts-band-table-modal');
+  if (old) old.remove();
+
+  var color = IELTS_DETAIL_COLORS[sec].hex;
+  var secLabel = t('ielts_sec_' + sec) || sec;
+
+  var bodyHtml = '';
+  if (sec === 'listening' || sec === 'reading') {
+    var table = (sec === 'listening')
+      ? [1,1,2,2,2.5,2.5,3,3,3.5,3.5,4,4,4,4.5,4.5,4.5,5,5,5.5,5.5,5.5,5.5,5.5,6,6,6,6.5,6.5,6.5,6.5,7,7,7.5,7.5,7.5,8,8,8.5,8.5,9,9]
+      : [1,1,2,2,2.5,2.5,3,3,3.5,3.5,4,4,4,4.5,4.5,5,5,5,5,5.5,5.5,5.5,5.5,6,6,6,6,6.5,6.5,6.5,7,7,7,7.5,7.5,8,8,8.5,8.5,9,9];
+    bodyHtml += '<p style="font-size:12.5px;color:var(--text-muted);line-height:1.6;margin:0 0 14px">' + t('ielts_band_table_hint') + '</p>';
+    bodyHtml += '<div style="max-height:50vh;overflow-y:auto;border-radius:10px;border:1px solid var(--border)">';
+    bodyHtml += '<div style="display:flex;position:sticky;top:0;background:var(--surface2);font-size:11.5px;font-weight:700;color:var(--text-muted);padding:8px 14px;text-transform:uppercase;letter-spacing:0.3px">' +
+      '<div style="flex:1">' + t('ielts_band_table_correct') + '</div><div style="flex:1;text-align:right">' + t('ielts_band_table_band') + '</div></div>';
+    table.forEach(function(band, raw) {
+      var isNewBand = raw === 0 || table[raw-1] !== band;
+      bodyHtml += '<div style="display:flex;padding:7px 14px;font-size:13.5px;' + (raw % 2 === 1 ? 'background:rgba(255,255,255,0.02)' : '') + '">' +
+        '<div style="flex:1;color:var(--text)">' + raw + ' / ' + (table.length-1) + '</div>' +
+        '<div style="flex:1;text-align:right;font-weight:' + (isNewBand ? '700' : '400') + ';color:' + (isNewBand ? color : 'var(--text-dim)') + '">' + band + '</div>' +
+      '</div>';
+    });
+    bodyHtml += '</div>';
+  } else {
+    bodyHtml += '<p style="font-size:13px;color:var(--text-muted);line-height:1.7;margin:0">' + t('ielts_band_table_no_table') + '</p>';
+  }
+
+  var overlay = document.createElement('div');
+  overlay.id = 'ielts-band-table-modal';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px';
+  overlay.innerHTML =
+    '<div style="background:#1C1C25;border:1px solid rgba(255,255,255,0.15);border-radius:20px;padding:22px;width:100%;max-width:380px;max-height:80vh;display:flex;flex-direction:column">' +
+      '<div style="font-family:Syne,sans-serif;font-size:17px;font-weight:700;color:' + color + ';margin-bottom:4px">' + t('ielts_band_table_title') + '</div>' +
+      '<div style="font-size:12.5px;color:var(--text-muted);margin-bottom:14px">' + secLabel + '</div>' +
+      bodyHtml +
+      '<button onclick="document.getElementById(\'ielts-band-table-modal\').remove()" style="margin-top:16px;padding:12px;border-radius:12px;border:none;background:var(--surface2);color:var(--text);font-size:14px;font-weight:600;cursor:pointer">' + t('ielts_band_table_close') + '</button>' +
+    '</div>';
+  overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+  document.body.appendChild(overlay);
+}
+
 function rawToBand(raw, sec) {
   // Rasmiy IELTS Listening jadval (0-40 → 1-9)
   var listeningTable = [1,1,2,2,2.5,2.5,3,3,3.5,3.5,4,4,4,4.5,4.5,4.5,5,5,5.5,5.5,5.5,5.5,5.5,6,6,6,6.5,6.5,6.5,6.5,7,7,7.5,7.5,7.5,8,8,8.5,8.5,9,9];
@@ -11767,7 +12049,10 @@ function renderIeltsDetailContent(sec) {
 
   var html = '';
   html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;padding:16px 18px;background:rgba(' + IELTS_DETAIL_COLORS[sec].rgb + ',0.1);border:1px solid rgba(' + IELTS_DETAIL_COLORS[sec].rgb + ',0.3);border-radius:14px">' +
-    '<div style="font-size:13px;color:' + color + ';font-weight:600" data-i18n="ielts_detail_section_score">' + t('ielts_detail_section_score') + '</div>' +
+    '<div style="display:flex;align-items:center;gap:7px">' +
+      '<span style="font-size:13px;color:' + color + ';font-weight:600" data-i18n="ielts_detail_section_score">' + t('ielts_detail_section_score') + '</span>' +
+      '<button onclick="openIeltsBandTableModal(\'' + sec + '\')" title="' + t('ielts_band_table_title') + '" style="width:18px;height:18px;border-radius:50%;border:1.3px solid ' + color + ';background:transparent;color:' + color + ';font-size:11px;font-weight:700;font-family:Syne,sans-serif;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0">i</button>' +
+    '</div>' +
     '<div style="display:flex;align-items:baseline;gap:10px">' +
       (rawSumInfo ? '<span style="font-family:Syne,sans-serif;font-size:16px;font-weight:700;color:' + color + ';opacity:0.85">' + rawSumInfo.sum + ' / ' + rawSumInfo.max + '</span>' : '') +
       '<span style="font-family:Syne,sans-serif;font-size:28px;font-weight:700;color:' + color + '">' + (overallBand !== null ? overallBand : '—') + '</span>' +
