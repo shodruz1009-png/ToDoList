@@ -1,6 +1,6 @@
 // ============================================================
 // ToDoList PWA — Service Worker
-// Har bir deploy'da CACHE_VERSION'ni oshiring (masalan v9 -> v10),
+// Har bir deploy'da CACHE_VERSION'ni oshiring (masalan v10 -> v11),
 // shunda eski kesh avtomatik "activate" bosqichida o'chib, yangi
 // fayllar bilan almashtiriladi.
 // MUHIM: index.html'ga yangi o'zgarish kiritilganda, foydalanuvchi
@@ -11,6 +11,21 @@
 // Supabase olib tashlangan, SortableJS CDN orqali ulanadi.
 // ============================================================
 
+// v11: Ushbu deployda kiritilgan o'zgarishlar:
+//  - IELTS va SAT endi ikkita mustaqil tab: profilda ikkalasi ham
+//    tanlansa, ikkala tab bir vaqtda ko'rinadi va natijalar (tarix,
+//    o'rtacha ball, "Yangi natija qo'shish") bir-biriga aralashmaydi
+//  - Bug: IELTS tabidagi "+ Yangi natija qo'shish" tugmasi ba'zan
+//    SAT modalini ochib yuborayotgan qoldiq kod olib tashlandi
+//  - Bug: esc() funksiyasi ikki marta e'lon qilingan bo'lib, xavfsiz
+//    (XSS'dan himoyalangan) versiya eskirgan versiya bilan bosilib
+//    qolgan edi — endi faqat xavfsiz versiya ishlatiladi
+//  - Bug: requestNotifPermission() ikki marta e'lon qilingan bo'lib,
+//    sahifa ochilganda avtomatik chaqiriladigan "sokin" tekshiruv
+//    interaktiv (toast ko'rsatadigan) versiya bilan almashib, ruxsat
+//    allaqachon berilgan foydalanuvchilarda ham har ochilishda keraksiz
+//    toast chiqarardi — endi ikkalasi alohida funksiya
+//
 // v10: Ushbu deployda kiritilgan o'zgarishlar:
 //  - Sirli joy: "KECHA" yorlig'iga aniq sana qo'shildi (masalan "KECHA (18.07)")
 //  - Reward ishlatilganda (0 tangalik) tarixga endi yozuv qo'shilmaydi
@@ -31,7 +46,7 @@
 //    daqiqasi (amount) ham nomga mos yangilanadi
 //  - Instagram bloklanish muddati endi qat'iy 30 kun emas — oxirgi
 //    ban tugagan kundan (yoki ilovani boshlagan kundan) hisoblanadi
-const CACHE_VERSION = 'v10';
+const CACHE_VERSION = 'v11';
 const CACHE_NAME = `todolist-cache-${CACHE_VERSION}`;
 
 // Ilova offline'da ishlashi uchun oldindan keshlanadigan fayllar.
