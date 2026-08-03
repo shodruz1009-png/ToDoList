@@ -1,6 +1,6 @@
 // ============================================================
 // ToDoList PWA — Service Worker
-// Har bir deploy'da CACHE_VERSION'ni oshiring (masalan v10 -> v11),
+// Har bir deploy'da CACHE_VERSION'ni oshiring (masalan v11 -> v12),
 // shunda eski kesh avtomatik "activate" bosqichida o'chib, yangi
 // fayllar bilan almashtiriladi.
 // MUHIM: index.html'ga yangi o'zgarish kiritilganda, foydalanuvchi
@@ -11,6 +11,27 @@
 // Supabase olib tashlangan, SortableJS CDN orqali ulanadi.
 // ============================================================
 
+// v12: Ushbu deployda kiritilgan o'zgarishlar:
+//  - Davlat bayroqlari: emoji bayroq shrifti yo'q qurilmalarda (ko'pincha
+//    Windows) "AF", "AL" kabi harflar chiqib qolish muammosi tuzatildi —
+//    endi flagcdn.com'dan haqiqiy bayroq rasmi ko'rsatiladi, rasm
+//    yuklanmasa eski emoji-bayroqqa avtomatik qaytadi
+//  - Level (daraja) nomlari endi barcha 3 tilga (uz/en/ru) to'liq
+//    tarjima qilingan: daraja nomlari, "SEN/YOU/ТЫ" belgisi va
+//    "Daraja/Level/Уровень" so'zi til almashtirilganda mos ravishda
+//    o'zgaradi
+//  - "Maqsadlarim" (Goals) bo'limiga yangi foydalanuvchilar uchun
+//    birinchi ochilishda avtomatik namuna maqsad qo'shiladi
+//    (masalan "10 ta lug'at yodlash" — 7 kunga), tilga mos tarjima bilan
+//  - "Chest Vazifalar" bo'limiga ham xuddi shunday yangi foydalanuvchilar
+//    uchun namuna vazifa qo'shiladi (masalan "Podcast ko'rish"/"Watch a
+//    podcast"), tilga mos tarjima bilan
+//  - Sirli joy (Personal Check): "kecha/bugun qildingizmi?" savoli endi
+//    avtomatik/majburiy chiqmaydi — faqat foydalanuvchi "✏️ Belgilash"
+//    tugmasini bosgandagina Ha/Yo'q tugmalari ko'rinadi
+//  - O'yinchi profili (Player Profile) oynasidagi statistika to'rida
+//    bo'sh qolib ketgan 4-katak endi "🔥 Joriy Streak" bilan to'ldirildi
+//
 // v11: Ushbu deployda kiritilgan o'zgarishlar:
 //  - IELTS va SAT endi ikkita mustaqil tab: profilda ikkalasi ham
 //    tanlansa, ikkala tab bir vaqtda ko'rinadi va natijalar (tarix,
@@ -46,7 +67,7 @@
 //    daqiqasi (amount) ham nomga mos yangilanadi
 //  - Instagram bloklanish muddati endi qat'iy 30 kun emas — oxirgi
 //    ban tugagan kundan (yoki ilovani boshlagan kundan) hisoblanadi
-const CACHE_VERSION = 'v11';
+const CACHE_VERSION = 'v12';
 const CACHE_NAME = `todolist-cache-${CACHE_VERSION}`;
 
 // Ilova offline'da ishlashi uchun oldindan keshlanadigan fayllar.
