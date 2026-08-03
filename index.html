@@ -370,6 +370,28 @@
   .act-btn:hover { border-color:var(--border-hover); color:var(--text); }
   .act-btn.del:hover { border-color:var(--red); color:var(--red); }
 
+  /* ⋮ Task dropdown menu (compact context menu on task card) */
+  .task-dots-wrap { position:relative; flex-shrink:0; }
+  .task-dots-btn { background:none; border:1px solid var(--border); border-radius:8px; cursor:pointer; padding:6px 9px; font-size:16px; line-height:1; color:var(--text-muted); transition:all 0.15s; font-family:'DM Sans',sans-serif; }
+  .task-dots-btn:hover, .task-dots-btn.active { border-color:var(--border-hover); color:var(--text); background:var(--surface2); }
+  .task-dropdown-menu {
+    position:absolute; top:calc(100% + 6px); right:0; min-width:168px;
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.35); padding:6px; z-index:60;
+    opacity:0; transform:translateY(-4px) scale(0.97); pointer-events:none;
+    transition:opacity 0.14s ease, transform 0.14s ease;
+  }
+  .task-dropdown-menu.open { opacity:1; transform:translateY(0) scale(1); pointer-events:auto; }
+  .task-dropdown-item {
+    display:flex; align-items:center; gap:9px; width:100%; padding:9px 10px; border-radius:8px;
+    background:none; border:none; cursor:pointer; font-size:13.5px; color:var(--text); text-align:left;
+    font-family:'DM Sans',sans-serif; white-space:nowrap; transition:background 0.12s;
+  }
+  .task-dropdown-item:hover { background:var(--surface2); }
+  .task-dropdown-item.danger { color:var(--red); }
+  .task-dropdown-item.danger:hover { background:rgba(248,113,113,0.1); }
+  .task-dropdown-item .tdi-icon { font-size:15px; flex-shrink:0; width:18px; text-align:center; }
+
   .empty { text-align:center; padding:48px 20px; color:var(--text-dim); font-size:15px; line-height:1.7; }
   .empty-icon { font-size:42px; margin-bottom:12px; opacity:0.6; }
 
@@ -852,6 +874,7 @@
     /* On mobile: hide badges & actions, show them in task-info row instead */
     .task-badges { display: none; }
     .task-actions { display: none; }
+    .task-dots-wrap { display: none; }
     .task-menu-btn { display: flex; align-items: center; justify-content: center; }
     /* Show compact badges below task name */
     .task-info-badges {
@@ -1423,6 +1446,35 @@ if ('serviceWorker' in navigator) {
 
     <div id="settings-panel" style="display:none">
 
+      <!-- 🔒 Personal Check — sozlamalar panelining eng yuqorisida, eng ko'zga
+           tashlanadigan joyda (xavfsizlik bilan bog'liq muhim sozlama bo'lgani uchun) -->
+      <div id="pc-section-card" style="background:var(--surface);border:1px solid rgba(124,92,252,0.35);border-radius:16px;padding:16px;margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div style="min-width:0">
+            <div style="font-size:14px;font-weight:600;color:var(--text)" data-i18n="pc_toggle_title">🔒 Personal Check</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:3px;line-height:1.5" data-i18n="pc_toggle_desc">Yoqilsa, PIN-kod bilan himoyalangan shaxsiy nazorat bo'limiga kirish imkoni ochiladi.</div>
+          </div>
+          <div id="pc-toggle-switch" onclick="togglePersonalCheck()" role="switch" style="flex-shrink:0;width:46px;height:26px;border-radius:999px;background:var(--surface2);border:1px solid var(--border);position:relative;cursor:pointer;transition:background 0.2s,border-color 0.2s">
+            <div id="pc-toggle-knob" style="position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--text-dim);transition:left 0.2s ease,background 0.2s"></div>
+          </div>
+        </div>
+        <!-- 🔑 PIN himoyasi — Personal Check yoqilgan bo'lsagina ko'rinadi. Bu alohida
+             kichik toggle: yoqilsa bo'limga kirishda PIN so'raladi, o'chirilsa PIN
+             so'ralmasdan to'g'ridan-to'g'ri kiriladi. -->
+        <div id="pc-pin-protection-row" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+            <div style="min-width:0">
+              <div style="font-size:13px;font-weight:600;color:var(--text)" data-i18n="pc_pin_toggle_title">🔑 PIN himoyasi</div>
+              <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px;line-height:1.5" data-i18n="pc_pin_toggle_desc">Yoqilsa, bo'limga kirishda PIN kod so'raladi.</div>
+            </div>
+            <div id="pc-pin-toggle-switch" onclick="togglePinProtection()" role="switch" style="flex-shrink:0;width:46px;height:26px;border-radius:999px;background:var(--surface2);border:1px solid var(--border);position:relative;cursor:pointer;transition:background 0.2s,border-color 0.2s">
+              <div id="pc-pin-toggle-knob" style="position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--text-dim);transition:left 0.2s ease,background 0.2s"></div>
+            </div>
+          </div>
+          <button id="pc-change-pin-btn" onclick="openChangePinModal()" style="display:none;width:100%;margin-top:12px;padding:11px;border-radius:12px;border:1px solid rgba(124,92,252,0.3);background:rgba(124,92,252,0.08);color:var(--accent);font-size:13px;cursor:pointer;font-family:DM Sans,sans-serif" data-i18n="sec_change_pin_btn">🔑 PIN ni o'zgartirish</button>
+        </div>
+      </div>
+
       <!-- ⚙️ Interfeys / Ovoz / Fokus / O'yin qoidalari — joy tejash uchun ixcham accordion kartalar,
            barchasi default holda yopiq (faqat sarlavha ko'rinadi, bosilganda ochiladi) -->
 
@@ -1460,6 +1512,19 @@ if ('serviceWorker' in navigator) {
 
           <div class="settings-sub-divider"></div>
 
+          <!-- Kechagi/Bugungi kun bilan hisoblash rejimi (Goals, Sirli joy va h.k.) -->
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 0">
+            <div style="min-width:0">
+              <div style="font-size:14px;font-weight:600;color:var(--text)" data-i18n="yday_mode_setting_title">📅 Kechagi kun bilan ishlash</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:2px;line-height:1.5" data-i18n="yday_mode_setting_desc">Yoqilgan bo'lsa, Maqsadlar va Sirli joy kabi bo'limlar "kecha bajardizmi?" deb so'raydi. O'chirilsa — "bugun bajardizmi?" deb so'raydi.</div>
+            </div>
+            <div id="yday-mode-switch" onclick="toggleYesterdayMode()" role="switch" style="flex-shrink:0;width:46px;height:26px;border-radius:999px;background:var(--surface2);border:1px solid var(--border);position:relative;cursor:pointer;transition:background 0.2s,border-color 0.2s">
+              <div id="yday-mode-knob" style="position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--text-dim);transition:left 0.2s ease,background 0.2s"></div>
+            </div>
+          </div>
+
+          <div class="settings-sub-divider"></div>
+
           <!-- Mavzu (Theme) tanlash -->
           <div style="padding:6px 0">
             <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:8px">🎨 Mavzu (Theme)</div>
@@ -1476,10 +1541,10 @@ if ('serviceWorker' in navigator) {
         </div>
       </div>
 
-      <!-- 0a. Ovoz va Audio sozlamalari (Sound & Audio Settings) -->
+      <!-- 0a. Ovoz va Musiqa sozlamalari (birlashtirilgan: Sound & Audio + Ambient Focus Sound) -->
       <div id="sound-audio-settings-card" class="settings-sub-card">
         <button type="button" class="settings-sub-header" onclick="toggleSettingsSubCard('sound-audio-settings-card')">
-          <span class="settings-sub-title" data-i18n="sound_audio_card_title">🔊 Ovoz va Audio sozlamalari</span>
+          <span class="settings-sub-title" data-i18n="sound_audio_card_title">🔊 Ovoz va Musiqa</span>
           <span class="settings-sub-arrow">▾</span>
         </button>
         <div class="settings-sub-body" style="display:none">
@@ -1501,17 +1566,9 @@ if ('serviceWorker' in navigator) {
           <!-- Test Sound (button) -->
           <button onclick="testSoundEffect()" style="width:100%;padding:11px;border-radius:12px;border:1px solid rgba(124,92,252,0.3);background:rgba(124,92,252,0.08);color:var(--accent);font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif" data-i18n="test_sound_btn">▶️ Test ovozini eshitish</button>
 
-        </div>
-      </div>
+          <div class="settings-sub-divider"></div>
 
-      <!-- 0a-2. Ambient Focus Sound — diqqatni jamlashga yordam beruvchi fon tovushlari pleyeri -->
-      <div id="ambient-focus-settings-card" class="settings-sub-card">
-        <button type="button" class="settings-sub-header" onclick="toggleSettingsSubCard('ambient-focus-settings-card')">
-          <span class="settings-sub-title" data-i18n="ambient_focus_card_title">🎶 Ambient Focus Sound</span>
-          <span class="settings-sub-arrow">▾</span>
-        </button>
-        <div class="settings-sub-body" style="display:none">
-
+          <!-- Ambient Focus Sound — diqqatni jamlashga yordam beruvchi fon tovushlari pleyeri -->
           <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 0">
             <div style="min-width:0">
               <div style="font-size:14px;font-weight:600;color:var(--text)" data-i18n="ambient_focus_toggle_title">🎶 Fon tovushlari</div>
@@ -1549,85 +1606,84 @@ if ('serviceWorker' in navigator) {
             </select>
           </div>
 
+          <div class="settings-sub-divider"></div>
+
+          <!-- ⚠️ STRICT RULES & PENALTIES — barcha jazolar va o'yin qoidalari, endi "O'yin qoidalari"
+               kartasi ichiga birlashtirilgan (bosilganda ochiladi) -->
+          <div id="strict-rules-card" class="strict-rules-card">
+            <button id="strict-rules-toggle-btn" type="button" class="strict-rules-header" onclick="toggleStrictRulesPanel()">
+              <span class="strict-rules-header-left">
+                <span class="strict-rules-icon">⚠️</span>
+                <span class="strict-rules-title-group">
+                  <span class="strict-rules-title" data-i18n="strict_rules_title">Strict Rules &amp; Penalties</span>
+                  <span class="strict-rules-sub" data-i18n="strict_rules_sub">Barcha jazolar va qoidabuzarliklar — batafsil ko'rish uchun bosing</span>
+                </span>
+              </span>
+              <span id="strict-rules-arrow" class="strict-rules-arrow">▾</span>
+            </button>
+
+            <div id="strict-rules-panel" class="strict-rules-panel" style="display:none">
+
+              <div class="strict-rule-block">
+                <div class="strict-rule-block-title"><span>⏳</span><span data-i18n="strict_b1_title">Kechiktirilgan yoki o'tkazib yuborilgan tasklar</span></div>
+                <ul class="strict-rule-list">
+                  <li data-i18n-html="strict_b1_li1">Bir martalik yoki kunlik task belgilangan muddatda (soat <b>23:59</b> gacha) bajarilmasa, tizim buni AVTOMATIK aniqlaydi va <b>HP (sog'liq)ni kamaytiradi</b> — ogohlantirishsiz, kechikish darhol jarimaga aylanadi.</li>
+                  <li data-i18n-html="strict_b1_li2">Har bir o'tkazib yuborilgan task uchun HP kamayishi joriy qiyinchilik darajasiga bog'liq (taxminiy): <b>Easy −10 HP</b>, <b>Normal −20 HP</b>, <b>Hardcore −35 HP</b>.</li>
+                  <li data-i18n-html="strict_b1_li3">Bir kunda bir nechta task o'tkazib yuborilsa, jarimalar <b>qo'shilib boradi</b> — HP tezda nolga yaqinlashishi mumkin.</li>
+                </ul>
+              </div>
+
+              <div class="strict-rule-block">
+                <div class="strict-rule-block-title"><span>💔</span><span data-i18n="strict_b2_title">HP yo'qotish va jarohat tizimi</span></div>
+                <ul class="strict-rule-list">
+                  <li data-i18n-html="strict_b2_li1">Task bajarilmaganda xarakter jarohat oladi: ekranda qizil chaqnash, yurak silkinishi va <b>"−X HP"</b> matni bilan Damage effekti ko'rsatiladi.</li>
+                  <li data-i18n-html="strict_b2_li2">Kunlik reja 100% bajarilmasa, kecha (23:59dan keyin) tizim avtomatik tarzda jarima HP'sini yozadi — har bir bajarilmagan vazifa alohida hisoblanadi.</li>
+                  <li data-i18n-html="strict_b2_li3">HP faqat vazifalarni <b>haqiqatda bajarish</b> orqali tiklanadi — allaqachon yozilgan jarimani chetlab o'tish imkoni yo'q.</li>
+                </ul>
+              </div>
+
+              <div class="strict-rule-block">
+                <div class="strict-rule-block-title"><span>💀</span><span data-i18n="strict_b3_title">Game Over va Hardcore jazo</span></div>
+                <ul class="strict-rule-list">
+                  <li data-i18n-html="strict_b3_li1">HP <b>0%</b> ga tushsa, xarakter "o'ladi" — Game Over holati boshlanadi va ekranni to'suvchi ogohlantirish oynasi chiqadi.</li>
+                  <li data-i18n-html="strict_b3_li2">Hardcore Mode yoqilgan bo'lsa, o'lim jazosi qattiqlashadi: foydalanuvchi belgilangan ijtimoiy tarmoq/ilovani (masalan Instagram) tanlangan qiyinchilikka qarab <b>Easy — 10 kun, Normal — 20 kun, Hardcore — 30 kun</b> davomida bloklaydi/ishlatmaydi.</li>
+                  <li data-i18n-html="strict_b3_li3">Jazo muddati tugamaguncha ogohlantirish oynasi yopilmaydi. Muddat tugagach HP faqat <b>50%</b> ga tiklanadi — to'plangan XP va tangalar SAQLANIB QOLADI, lekin yo'qotilgan vaqt qaytmaydi.</li>
+                </ul>
+              </div>
+
+              <div class="strict-rule-block">
+                <div class="strict-rule-block-title"><span>📉</span><span data-i18n="strict_b4_title">Qiyinchilik darajasi bo'yicha qattiq rejimlar</span></div>
+                <ul class="strict-rule-list">
+                  <li data-i18n-html="strict_b4_li1"><b>Easy:</b> Coin/XP mukofoti eng yuqori (×1.5), HP zarari standart, o'lim jazosi eng qisqa — 10 kun.</li>
+                  <li data-i18n-html="strict_b4_li2"><b>Normal:</b> Standart rejim — Coin/XP ×1.0, HP zarari standart, jazo muddati 20 kun.</li>
+                  <li data-i18n-html="strict_b4_li3"><b>Hardcore:</b> Coin/XP mukofoti pasaytirilgan (×0.7), HP zarari <b>IKKI BAROBAR</b> (×2.0), jazo eng uzun — 30 kun. Bitta xato ham juda qimmatga tushadi.</li>
+                </ul>
+              </div>
+
+              <div class="strict-rule-block">
+                <div class="strict-rule-block-title"><span>🛑</span><span data-i18n="strict_b5_title">Anti-Cheat — hiyla va aldovga qarshi</span></div>
+                <ul class="strict-rule-list">
+                  <li data-i18n-html="strict_b5_li1">Vazifani <b>"✅ Bajarildi"</b> deb belgilash faqat AMALDA bajarilganda qilinishi kerak — soxta belgilash tizim mantig'ini (HP/Coin/XP balansini) buzadi va uzoq muddatda o'z-o'zini aldashga olib keladi.</li>
+                  <li data-i18n-html="strict_b5_li2">Done → Undone qaytarilganda o'sha kun uchun berilgan mukofot qaytarib olinadi — tizimni "aldab" cheksiz mukofot yig'ish imkonsiz.</li>
+                  <li data-i18n-html="strict_b5_li3">Muddati o'tib ketgan kun uchun yozilgan HP jarimasi orqaga qaytarilmaydi — HP faqat yangi bajarilgan tasklar orqali asta-sekin tiklanadi.</li>
+                </ul>
+              </div>
+
+            </div>
+          </div>
+
         </div>
       </div>
 
-      <!-- ⚠️ STRICT RULES & PENALTIES — barcha jazolar va o'yin qoidalari (bosilganda ochiladi) -->
-      <div id="strict-rules-card" class="strict-rules-card">
-        <button id="strict-rules-toggle-btn" type="button" class="strict-rules-header" onclick="toggleStrictRulesPanel()">
-          <span class="strict-rules-header-left">
-            <span class="strict-rules-icon">⚠️</span>
-            <span class="strict-rules-title-group">
-              <span class="strict-rules-title" data-i18n="strict_rules_title">Strict Rules &amp; Penalties</span>
-              <span class="strict-rules-sub" data-i18n="strict_rules_sub">Barcha jazolar va qoidabuzarliklar — batafsil ko'rish uchun bosing</span>
-            </span>
-          </span>
-          <span id="strict-rules-arrow" class="strict-rules-arrow">▾</span>
-        </button>
-
-        <div id="strict-rules-panel" class="strict-rules-panel" style="display:none">
-
-          <div class="strict-rule-block">
-            <div class="strict-rule-block-title"><span>⏳</span><span data-i18n="strict_b1_title">Kechiktirilgan yoki o'tkazib yuborilgan tasklar</span></div>
-            <ul class="strict-rule-list">
-              <li data-i18n-html="strict_b1_li1">Bir martalik yoki kunlik task belgilangan muddatda (soat <b>23:59</b> gacha) bajarilmasa, tizim buni AVTOMATIK aniqlaydi va <b>HP (sog'liq)ni kamaytiradi</b> — ogohlantirishsiz, kechikish darhol jarimaga aylanadi.</li>
-              <li data-i18n-html="strict_b1_li2">Har bir o'tkazib yuborilgan task uchun HP kamayishi joriy qiyinchilik darajasiga bog'liq (taxminiy): <b>Easy −10 HP</b>, <b>Normal −20 HP</b>, <b>Hardcore −35 HP</b>.</li>
-              <li data-i18n-html="strict_b1_li3">Bir kunda bir nechta task o'tkazib yuborilsa, jarimalar <b>qo'shilib boradi</b> — HP tezda nolga yaqinlashishi mumkin.</li>
-            </ul>
-          </div>
-
-          <div class="strict-rule-block">
-            <div class="strict-rule-block-title"><span>💔</span><span data-i18n="strict_b2_title">HP yo'qotish va jarohat tizimi</span></div>
-            <ul class="strict-rule-list">
-              <li data-i18n-html="strict_b2_li1">Task bajarilmaganda xarakter jarohat oladi: ekranda qizil chaqnash, yurak silkinishi va <b>"−X HP"</b> matni bilan Damage effekti ko'rsatiladi.</li>
-              <li data-i18n-html="strict_b2_li2">Kunlik reja 100% bajarilmasa, kecha (23:59dan keyin) tizim avtomatik tarzda jarima HP'sini yozadi — har bir bajarilmagan vazifa alohida hisoblanadi.</li>
-              <li data-i18n-html="strict_b2_li3">HP faqat vazifalarni <b>haqiqatda bajarish</b> orqali tiklanadi — allaqachon yozilgan jarimani chetlab o'tish imkoni yo'q.</li>
-            </ul>
-          </div>
-
-          <div class="strict-rule-block">
-            <div class="strict-rule-block-title"><span>💀</span><span data-i18n="strict_b3_title">Game Over va Hardcore jazo</span></div>
-            <ul class="strict-rule-list">
-              <li data-i18n-html="strict_b3_li1">HP <b>0%</b> ga tushsa, xarakter "o'ladi" — Game Over holati boshlanadi va ekranni to'suvchi ogohlantirish oynasi chiqadi.</li>
-              <li data-i18n-html="strict_b3_li2">Hardcore Mode yoqilgan bo'lsa, o'lim jazosi qattiqlashadi: foydalanuvchi belgilangan ijtimoiy tarmoq/ilovani (masalan Instagram) tanlangan qiyinchilikka qarab <b>Easy — 10 kun, Normal — 20 kun, Hardcore — 30 kun</b> davomida bloklaydi/ishlatmaydi.</li>
-              <li data-i18n-html="strict_b3_li3">Jazo muddati tugamaguncha ogohlantirish oynasi yopilmaydi. Muddat tugagach HP faqat <b>50%</b> ga tiklanadi — to'plangan XP va tangalar SAQLANIB QOLADI, lekin yo'qotilgan vaqt qaytmaydi.</li>
-            </ul>
-          </div>
-
-          <div class="strict-rule-block">
-            <div class="strict-rule-block-title"><span>📉</span><span data-i18n="strict_b4_title">Qiyinchilik darajasi bo'yicha qattiq rejimlar</span></div>
-            <ul class="strict-rule-list">
-              <li data-i18n-html="strict_b4_li1"><b>Easy:</b> Coin/XP mukofoti eng yuqori (×1.5), HP zarari standart, o'lim jazosi eng qisqa — 10 kun.</li>
-              <li data-i18n-html="strict_b4_li2"><b>Normal:</b> Standart rejim — Coin/XP ×1.0, HP zarari standart, jazo muddati 20 kun.</li>
-              <li data-i18n-html="strict_b4_li3"><b>Hardcore:</b> Coin/XP mukofoti pasaytirilgan (×0.7), HP zarari <b>IKKI BAROBAR</b> (×2.0), jazo eng uzun — 30 kun. Bitta xato ham juda qimmatga tushadi.</li>
-            </ul>
-          </div>
-
-          <div class="strict-rule-block">
-            <div class="strict-rule-block-title"><span>🛑</span><span data-i18n="strict_b5_title">Anti-Cheat — hiyla va aldovga qarshi</span></div>
-            <ul class="strict-rule-list">
-              <li data-i18n-html="strict_b5_li1">Vazifani <b>"✅ Bajarildi"</b> deb belgilash faqat AMALDA bajarilganda qilinishi kerak — soxta belgilash tizim mantig'ini (HP/Coin/XP balansini) buzadi va uzoq muddatda o'z-o'zini aldashga olib keladi.</li>
-              <li data-i18n-html="strict_b5_li2">Done → Undone qaytarilganda o'sha kun uchun berilgan mukofot qaytarib olinadi — tizimni "aldab" cheksiz mukofot yig'ish imkonsiz.</li>
-              <li data-i18n-html="strict_b5_li3">Muddati o'tib ketgan kun uchun yozilgan HP jarimasi orqaga qaytarilmaydi — HP faqat yangi bajarilgan tasklar orqali asta-sekin tiklanadi.</li>
-            </ul>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- 7a + 7c. Personal Check va Qabriston (Trash) — joy tejash uchun bitta qatorda -->
+      <!-- 7a + 7c. Muzlatilgan vazifalar va Qabriston (Trash) — joy tejash uchun bitta qatorda -->
       <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">
-        <div id="pc-section-card" style="flex:1;min-width:260px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
-            <div style="min-width:0">
-              <div style="font-size:14px;font-weight:600;color:var(--text)" data-i18n="pc_toggle_title">🔒 Personal Check</div>
-              <div style="font-size:12px;color:var(--text-muted);margin-top:3px;line-height:1.5" data-i18n="pc_toggle_desc">Yoqilsa, PIN-kod bilan himoyalangan shaxsiy nazorat bo'limiga kirish imkoni ochiladi.</div>
-            </div>
-            <div id="pc-toggle-switch" onclick="togglePersonalCheck()" role="switch" style="flex-shrink:0;width:46px;height:26px;border-radius:999px;background:var(--surface2);border:1px solid var(--border);position:relative;cursor:pointer;transition:background 0.2s,border-color 0.2s">
-              <div id="pc-toggle-knob" style="position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--text-dim);transition:left 0.2s ease,background 0.2s"></div>
-            </div>
-          </div>
-          <button id="pc-change-pin-btn" onclick="openChangePinModal()" style="display:none;width:100%;margin-top:12px;padding:11px;border-radius:12px;border:1px solid rgba(124,92,252,0.3);background:rgba(124,92,252,0.08);color:var(--accent);font-size:13px;cursor:pointer;font-family:DM Sans,sans-serif" data-i18n="sec_change_pin_btn">🔑 PIN ni o'zgartirish</button>
+        <div style="flex:1;min-width:260px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px">
+          <div style="font-size:11px;color:var(--text-dim);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px">🧊 <span data-i18n="frozen_tasks_btn">Muzlatilgan vazifalar</span></div>
+          <div style="font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.6" data-i18n="frozen_tasks_section_desc">Muzlatilgan vazifalar hech qanday jarima yoki streak buzilishisiz shu yerda ko'rinadi.</div>
+          <button onclick="toggleFrozenTasksPanel()" style="width:100%;padding:12px;border-radius:12px;border:1px solid rgba(96,165,250,0.4);background:rgba(96,165,250,0.1);color:#60A5FA;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px">
+            <span data-i18n="frozen_tasks_btn">Muzlatilgan vazifalar</span>
+            <span id="frozen-tasks-count" style="background:rgba(96,165,250,0.25);border-radius:999px;padding:1px 7px;font-size:11px">0</span>
+          </button>
         </div>
 
         <!-- 7c. Qabriston (Trash) -->
@@ -1639,6 +1695,12 @@ if ('serviceWorker' in navigator) {
             <span id="trash-count-badge" style="display:none;background:#F87171;color:#fff;font-size:11px;font-weight:700;border-radius:999px;padding:2px 8px;line-height:1.4"></span>
           </button>
         </div>
+      </div>
+
+      <!-- 🧊 Frozen tasks panel — yuqoridagi tugmadan ochiladi/yopiladi -->
+      <div id="frozen-tasks-panel" style="display:none;margin-bottom:12px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px">
+        <div style="font-size:11px;color:var(--text-dim);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:10px" data-i18n="frozen_panel_title">🧊 Muzlatilgan vazifalar</div>
+        <div id="frozen-tasks-list"></div>
       </div>
 
       <!-- 7b + 8. Ma'lumotlarni zaxiralash va Xavfli zona — joy tejash uchun bitta qatorda -->
@@ -1657,7 +1719,7 @@ if ('serviceWorker' in navigator) {
         <div style="flex:1;min-width:260px;background:var(--surface);border:1px solid rgba(248,113,113,0.2);border-radius:16px;padding:16px">
           <div style="font-size:11px;color:var(--text-dim);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:10px" data-i18n="danger_zone_title">⚠️ Xavfli zona</div>
           <div style="font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.6"><span data-i18n="danger_zone_desc_pre">Akkauntni </span><b style="color:var(--text)" data-i18n="danger_zone_desc_bold">qayta boshlash</b><span data-i18n="danger_zone_desc_post"> barcha vazifalar, tangalar, streak va statistikani o'chirib tashlaydi. Bu amalni qaytarib bo'lmaydi!</span></div>
-          <button onclick="confirmRestart()" style="width:100%;padding:12px;border-radius:12px;border:1px solid rgba(248,113,113,0.4);background:rgba(248,113,113,0.08);color:#F87171;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif" data-i18n="danger_zone_btn">🔄 Akkauntni qayta boshlash</button>
+          <button onclick="openResetOptionsModal()" style="width:100%;padding:12px;border-radius:12px;border:1px solid rgba(248,113,113,0.4);background:rgba(248,113,113,0.08);color:#F87171;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif" data-i18n="danger_zone_btn">🔄 Akkauntni qayta boshlash</button>
         </div>
       </div>
 
@@ -1684,6 +1746,12 @@ if ('serviceWorker' in navigator) {
       <button type="button" id="reyting-metric-coins" class="reyting-toggle-btn" onclick="setReytingMetric('coins')" data-i18n="reyting_metric_coins">🪙 Tanga</button>
       <button type="button" id="reyting-metric-hp" class="reyting-toggle-btn" onclick="setReytingMetric('hp')" data-i18n="reyting_metric_hp">❤️ HP</button>
       <button type="button" id="reyting-metric-streak" class="reyting-toggle-btn" onclick="setReytingMetric('streak')" data-i18n="reyting_metric_streak">⚡ Streak</button>
+    </div>
+
+    <!-- Yangi mavsumgacha qolgan vaqt — sekundigacha jonli hisoblagich -->
+    <div id="reyting-season-countdown" style="display:flex;align-items:center;justify-content:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:10px 14px;margin-bottom:16px">
+      <span style="font-size:12.5px;color:var(--text-muted)" data-i18n="reyting_season_countdown_label">⏳ Yangi mavsumgacha:</span>
+      <span id="reyting-season-countdown-val" style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--accent);letter-spacing:0.02em">—</span>
     </div>
 
     <div id="reyting-list"></div>
@@ -1941,11 +2009,13 @@ if ('serviceWorker' in navigator) {
       <!-- Log section: kecha (agar kiritilmagan) yoki bugun (agar kecha allaqachon kiritilgan) -->
       <div id="secret-log-section" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:14px">
         <div id="secret-log-label" style="font-size:12px;color:var(--text-muted);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:14px">Kecha</div>
-        <div style="display:flex;gap:10px">
+        <!-- Tugmalar avtomatik/majburiy chiqmaydi — foydalanuvchi o'zi "Belgilash" tugmasini bossagina ko'rinadi.
+             Bu "notification"ga o'xshab har safar majburan savol berilishining oldini oladi. -->
+        <div id="secret-log-buttons" style="display:none;gap:10px">
           <button id="sec-btn-yes" onclick="secretLogCurrent('clean')" style="flex:1;padding:14px 10px;border-radius:12px;border:2px solid rgba(52,211,153,0.3);background:rgba(52,211,153,0.08);color:#34D399;font-size:14px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;transition:all 0.2s" data-i18n="sec_btn_yes">✅ Qilmadim (yaxshi)</button>
           <button id="sec-btn-no"  onclick="secretLogCurrent('fail')"  style="flex:1;padding:14px 10px;border-radius:12px;border:2px solid rgba(248,113,113,0.3);background:rgba(248,113,113,0.08);color:#F87171;font-size:14px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;transition:all 0.2s" data-i18n="sec_btn_no">❌ Qildim (yiqildim)</button>
         </div>
-        <div id="secret-today-status" style="text-align:center;margin-top:12px;font-size:13px;color:var(--text-muted)"></div>
+        <div id="secret-today-status" style="text-align:center;margin-top:0;font-size:13px;color:var(--text-muted)"></div>
       </div>
 
       <!-- Calendar last 30 days -->
@@ -2375,12 +2445,16 @@ if ('serviceWorker' in navigator) {
     <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;line-height:1.5" data-i18n="focus_player_desc">Diqqatni jamlash uchun tinch fon tovushini tanlang va balandligini sozlang. Boshqa sahifaga o'tsangiz ham pleyer burchakda kichik pufakcha bo'lib chalinishda davom etadi.</div>
 
     <div id="focus-sound-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px">
-      <button class="focus-sound-btn" data-sound="rain" onclick="selectFocusSound('rain')"><span class="focus-sound-emoji">🌧️</span><span data-i18n="focus_sound_rain">Yomg'ir va momaqaldiroq</span></button>
-      <button class="focus-sound-btn" data-sound="lofi" onclick="selectFocusSound('lofi')"><span class="focus-sound-emoji">🎧</span><span data-i18n="focus_sound_lofi">Lo-Fi musiqa</span></button>
-      <button class="focus-sound-btn" data-sound="cafe" onclick="selectFocusSound('cafe')"><span class="focus-sound-emoji">☕</span><span data-i18n="focus_sound_cafe">Kafe va yomg'ir</span></button>
-      <button class="focus-sound-btn" data-sound="forest" onclick="selectFocusSound('forest')"><span class="focus-sound-emoji">🍃</span><span data-i18n="focus_sound_forest">O'rmon va shamol</span></button>
+      <button class="focus-sound-btn" data-sound="rain" onclick="selectFocusSound('rain')"><span class="focus-sound-emoji">🌧️</span><span data-i18n="focus_sound_rain">Yengil yomg'ir</span></button>
+      <button class="focus-sound-btn" data-sound="storm" onclick="selectFocusSound('storm')"><span class="focus-sound-emoji">⛈️</span><span data-i18n="focus_sound_storm">Momaqaldiroqli bo'ron</span></button>
+      <button class="focus-sound-btn" data-sound="forest" onclick="selectFocusSound('forest')"><span class="focus-sound-emoji">🌲</span><span data-i18n="focus_sound_forest">O'rmon va qushlar</span></button>
+      <button class="focus-sound-btn" data-sound="ocean" onclick="selectFocusSound('ocean')"><span class="focus-sound-emoji">🌊</span><span data-i18n="focus_sound_ocean">Dengiz to'lqinlari</span></button>
+      <button class="focus-sound-btn" data-sound="white" onclick="selectFocusSound('white')"><span class="focus-sound-emoji">🤍</span><span data-i18n="focus_sound_white">Oq shovqin</span></button>
+      <button class="focus-sound-btn" data-sound="brown" onclick="selectFocusSound('brown')"><span class="focus-sound-emoji">🟤</span><span data-i18n="focus_sound_brown">Jigarrang shovqin</span></button>
+      <button class="focus-sound-btn" data-sound="fire" onclick="selectFocusSound('fire')"><span class="focus-sound-emoji">🔥</span><span data-i18n="focus_sound_fire">Kamin gulduri</span></button>
+      <button class="focus-sound-btn" data-sound="lofi" onclick="selectFocusSound('lofi')"><span class="focus-sound-emoji">🎹</span><span data-i18n="focus_sound_lofi">Lo-Fi tinch ohang</span></button>
     </div>
-    <div id="focus-stream-status" style="font-size:11px;color:var(--text-dim);text-align:center;min-height:14px;margin-bottom:12px"></div>
+    <div id="focus-stream-status" style="font-size:11px;color:var(--text-dim);text-align:center;min-height:14px;margin-bottom:12px" data-i18n="focus_generated_note">🎛️ Barchasi shu yerda generatsiya qilinadi — hech qanday fayl yuklanmaydi</div>
 
     <div style="display:flex;align-items:center;justify-content:center;margin-bottom:18px">
       <button id="focus-play-btn" onclick="toggleFocusPlayback()" style="width:64px;height:64px;border-radius:50%;border:none;background:var(--accent);color:#fff;font-size:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px var(--accent-glow)">▶️</button>
@@ -2444,6 +2518,23 @@ const I18N = {
     section_today: 'Bugungi vazifalar',
     section_once: 'Bir martalik',
     section_future: '🔮 Kelajakdagi vazifalar',
+    // 🧊 Task Freeze
+    freeze_task_toast: 'Vazifa muzlatildi',
+    unfreeze_task_toast: 'Vazifa muzdan chiqarildi',
+    freeze_task_sheet_btn: 'Muzlatish',
+    frozen_tasks_btn: 'Muzlatilgan vazifalar',
+    frozen_tasks_section_desc: "Muzlatilgan vazifalar hech qanday jarima yoki streak buzilishisiz shu yerda ko'rinadi.",
+    frozen_panel_title: '🧊 Muzlatilgan vazifalar',
+    frozen_tasks_empty: 'Hozircha muzlatilgan vazifa yo\'q.',
+    frozen_since_label: 'muzlatilgan:',
+    unfreeze_btn: 'Muzdan chiqarish',
+    // ⋮ Task dropdown menu
+    task_actions_title: 'Amallar',
+    skip_dd_item: "O'tkazib yuborish",
+    unskip_dd_item: 'Qaytarish',
+    freeze_dd_item: 'Muzlatish',
+    edit_dd_item: 'Tahrirlash',
+    delete_dd_item: "O'chirish",
     level_panel_levels: 'Barcha darajalar',
     // Rewards
     rewards_empty: 'Hali mukofot yoq.',
@@ -2484,15 +2575,20 @@ const I18N = {
     goals_title: '🎯 Maqsadlarim',
     goals_add_btn: '+ Yangi',
     goals_empty: "Hali maqsad yo'q.<br>Yangi maqsad qo'shing!",
+    goal_example_name: "10 ta lug'at yodlash",
+    goal_example_desc: "Namuna maqsad — tushunib bo'lgach, o'zingiz o'chirib, o'z maqsadingizni qo'shishingiz mumkin",
     goal_completed: '✅ Tugallandi!',
     goal_expired: "❌ Muddat o'tdi",
     goal_days_left: 'kun qoldi',
     goal_days_unit: 'kun',
     goal_check_done: '✅ Kecha bajardim!',
     goal_check_todo: '☐ Kecha bajardim',
+    goal_check_done_today: '✅ Bugun bajardim!',
+    goal_check_todo_today: '☐ Bugun bajardim',
     // Chest
     chest_tasks_title: '🎲 Chest Vazifalar',
     chest_add_btn: "+ Qo'shish",
+    chest_example_task_name: "Podcast ko'rish",
     chest_tasks_empty_title: "Hali chest vazifalar yo'q.",
     chest_tasks_empty_sub: "+ tugmasi bilan qo'shing",
     chest_easy: '🟢 Oson',
@@ -2688,6 +2784,16 @@ const I18N = {
     danger_zone_desc_bold: 'qayta boshlash',
     danger_zone_desc_post: " barcha vazifalar, tangalar, streak va statistikani o'chirib tashlaydi. Bu amalni qaytarib bo'lmaydi!",
     danger_zone_btn: '🔄 Akkauntni qayta boshlash',
+    reset_opts_title: 'Nimani qayta boshlaysiz?',
+    reset_opts_desc: "Kerakli bo'limlarni belgilang — istagancha birlashtirib tanlashingiz mumkin.",
+    reset_opt_coins: 'Tanga',
+    reset_opt_stats: 'Statistika',
+    reset_opt_tasks: 'Vazifalar (tasks, chest, rewards, goals)',
+    reset_opt_all: 'Hammasi',
+    reset_neg_coins_title: 'Diqqat: tangangiz manfiy',
+    reset_neg_coins_desc1: "Hozir sizda {coins} ta tanga bor. Agar reset bersangiz, statistika ham birga tozalanadi.",
+    reset_neg_coins_desc2: "OK bosilsa: tanga 0'ga tushadi va barcha statistika boshidan boshlanadi.",
+    reset_done_toast: '✅ Tanlangan bo\u2019limlar qayta tiklandi!',
     // Profile edit modal
     pe_choose_photo: '📷 Rasm tanlash',
     pe_remove_photo: "Rasmni o'chirish",
@@ -2700,6 +2806,9 @@ const I18N = {
     pe_username_taken: "❌ Bu username allaqachon band, boshqa ism tanlang!",
     pe_username_available: "✅ Ushbu username bo'sh!",
     pe_username_short: "⚠️ Username kamida 3 ta belgidan iborat bo'lishi kerak!",
+    pe_username_too_long: "⚠️ Username 16 ta belgidan oshmasligi kerak!",
+    pe_username_invalid_chars: "⚠️ Faqat harflar, raqamlar va pastki chiziq (_) ishlatiladi — bo'sh joy, emoji va boshqa belgilar mumkin emas!",
+    pe_username_blocked: "❌ Bu so'zni username sifatida ishlatib bo'lmaydi!",
     guide_info_tooltip: "Ilova bo'yicha qo'llanma",
     guide_title: "📱 Ilovadan qanday foydalanish",
     guide_next_btn: 'Keyingi →',
@@ -2751,7 +2860,7 @@ const I18N = {
     onb_step_calendar_advanced: "Har bir kun katakchasini bosganingizda o'sha kuni bajarilgan va bajarilmagan vazifalar ro'yxati ochiladi. Ro'yxatdagi ✅/⬜ belgisini bosib, hatta o'tgan kunlardagi vazifani ham bajarilgan yoki bajarilmagan deb qayta belgilashingiz (tahrirlashingiz) mumkin — masalan, o'sha kuni belgilashni unutib qolgan bo'lsangiz, keyinroq to'g'rilash uchun. Oyni almashtirish uchun tepadagi ‹ va › strelkalaridan foydalaning — shu orqali o'tgan oylardagi progressingizni ham ko'rib chiqishingiz mumkin.",
     onb_step_character_advanced: "Har bir bajarilmagan vazifa Steve'ning HP'sidan ma'lum miqdorda kamaytiradi, ketma-ket bajarmaslik esa jarimani ikki baravar oshiradi. HP nolga tushganda avtomatik ravishda \"o'lim\" holati faollashadi va Instagram ilovasi 30 kunga bloklanadi. Vazifalarni qayta bajarishni boshlasangiz, Steve asta-sekin \"tiklanadi\" (HP qayta o'sadi).",
     onb_step_export_advanced: "Eksport tugmasi barcha ma'lumotlaringizni (.json) fayl sifatida yuklab beradi — uni bulutga yoki xotiraga saqlab qo'ying. Import qilganda esa mavjud fayldan barcha vazifa, tanga va statistikangiz to'liq tiklanadi — bu odatda telefon almashtirganda yoki ilovani qayta o'rnatganda kerak bo'ladi.",
-    onb_step_settings_advanced: "Sozlamalar bo'limi bir nechta kichik kartalarga bo'lingan: Interfeys (tungi rejim, xarakter ko'rinishi, mavzu), Ovoz va Audio, Ambient Focus Sound (musiqa) va O'yin qoidalari (qiyinlik darajasi). Har birining sarlavhasini bosib ochishingiz mumkin.",
+    onb_step_settings_advanced: "Sozlamalar bo'limi bir nechta kichik kartalarga bo'lingan: Interfeys (tungi rejim, xarakter ko'rinishi, mavzu), Ovoz va Musiqa (audio va fon tovushlari) va O'yin qoidalari (qiyinlik darajasi). Har birining sarlavhasini bosib ochishingiz mumkin.",
     onb_step_music_advanced: "Fon tovushlari yoqilgach, pastda \"Qo'shiqlarni ochish\" tugmasi paydo bo'ladi — u orqali turli ambient trekni tanlab, ovozini sozlab, ishlash yoki dam olish paytida fonda qo'yib qo'yishingiz mumkin.",
     onb_step_mood_advanced: "Kayfiyat belgilash faqat bugungi kun uchun mavjud, lekin kalendar orqali barcha o'tgan kunlardagi belgilangan kayfiyatlarni va izohlarni ko'rib chiqishingiz mumkin. Xohlasangiz, bugungi kayfiyatni o'zgartirish yoki o'chirish ham mumkin.",
     btn_save: 'Saqlash',
@@ -2974,6 +3083,8 @@ const I18N = {
     freeze_already_used_toast: 'Bugun allaqachon muzlatilgan',
     freeze_none_left_toast: 'Muzlatish imkoniyati qolmadi',
     freeze_used_toast: 'Bugun muzlatildi — jarima olinmaydi!',
+    freeze_cancel_toast: 'Muzlatish bekor qilindi',
+    freeze_used_today_tap_hint: '❄️ Bugun muzlatilgan (bekor qilish uchun bosing)',
     daily_100_toast: '100% Bajarildi! +{xp} XP bonus!',
     levelup_title: 'YANGI DARAJA',
     levelup_sub: "Level {level} ga ko'tarildingiz! 🎉",
@@ -3029,6 +3140,15 @@ const I18N = {
     // Level
     level_xp_left: 'XP qoldi',
     level_max: '👑 Maksimal daraja!',
+    level_word: 'Daraja',
+    level_you: 'SEN',
+    level_name_1: 'Yangi boshlagan',
+    level_name_2: 'Harakat qiluvchi',
+    level_name_3: "Izchil o'quvchi",
+    level_name_4: 'Intizomli',
+    level_name_5: 'Ustoz darajasi',
+    level_name_6: 'Chempion',
+    level_name_7: 'Legenda',
     // Secret habit tracker (KI)
     ki_day_suffix: ' kuni',
     ki_title: 'Shaxsiy nazorat',
@@ -3038,10 +3158,17 @@ const I18N = {
     ki_select_answer: 'Javobni tanlang',
     ki_yesterday_caps: 'KECHA',
     ki_yesterday_clean: 'Kecha yaxshi kechdi! +3 🪙',
+    ki_today_caps: 'BUGUN',
+    ki_today_clean: 'Bugun yaxshi ketyapti! +3 🪙',
     ki_pen_2x: '⚠️ 3 kun ketma-ket! -10 🪙 2x jazo!',
     ki_pen_normal: '-5 🪙 jazo.',
     ki_fail_label: 'Yiqildim.',
     ki_not_entered_yet: 'Kecha hali kiritilmagan',
+    ki_not_entered_today: 'Bugun hali kiritilmagan',
+    yday_mode_setting_title: '📅 Kechagi kun bilan ishlash',
+    yday_mode_setting_desc: "Yoqilgan bo'lsa, Maqsadlar va Sirli joy kabi bo'limlar \"kecha bajardizmi?\" deb so'raydi. O'chirilsa — \"bugun bajardizmi?\" deb so'raydi.",
+    yday_mode_on_toast: "📅 Endi \"kecha bajardizmi?\" deb so'raladi",
+    yday_mode_off_toast: "📅 Endi \"bugun bajardizmi?\" deb so'raladi",
     btn_edit: "O'zgartir",
     // Secret Place — qo'shimcha i18n (til almashtirish tuzatildi)
     secret_locked_title: 'Yashirin sahifa',
@@ -3054,7 +3181,7 @@ const I18N = {
     theme_setting_desc: "Yoqilgan bo'lsa — qorong'i tema, o'chirilgan bo'lsa — yorug' tema.",
     char_setting_title: '🧍 Xarakter (Steve)',
     char_setting_desc: "O'chirilsa, Profil sahifasida xarakter va HP paneli yashiriladi.",
-    sound_audio_card_title: '🔊 Ovoz va Audio sozlamalari',
+    sound_audio_card_title: '🔊 Ovoz va Musiqa',
     master_volume_title: '🔈 Umumiy balandlik',
     master_volume_desc: 'Ovoz effektlari balandligini sozlang.',
     test_sound_btn: '▶️ Test ovozini eshitish',
@@ -3066,13 +3193,15 @@ const I18N = {
     focus_disabled_toast: '🎶 Fon tovushlari o\u02bbchirildi',
     focus_player_desc: "Diqqatni jamlash uchun tinch fon tovushini tanlang va balandligini sozlang. Boshqa sahifaga o'tsangiz ham pleyer burchakda kichik pufakcha bo'lib chalinishda davom etadi.",
     focus_volume_label: '🔈 Balandlik',
-    focus_sound_rain: "Yomg'ir va momaqaldiroq",
-    focus_sound_lofi: 'Lo-Fi musiqa',
-    focus_sound_cafe: "Kafe va yomg'ir",
-    focus_sound_forest: "O'rmon va shamol",
-    focus_stream_error: '⚠️ Audio oqimi yuklanmadi, boshqa manba sinalmoqda…',
-    focus_installing_status: '⬇️ Birinchi marta yuklab olinmoqda… biroz kuting',
-    focus_install_fail_status: "⚠️ Yuklab bo'lmadi, internetni tekshirib qayta urining",
+    focus_sound_rain: "Yengil yomg'ir",
+    focus_sound_storm: "Momaqaldiroqli bo'ron",
+    focus_sound_forest: "O'rmon va qushlar",
+    focus_sound_ocean: "Dengiz to'lqinlari",
+    focus_sound_white: 'Oq shovqin',
+    focus_sound_brown: 'Jigarrang shovqin',
+    focus_sound_fire: 'Kamin gulduri',
+    focus_sound_lofi: 'Lo-Fi tinch ohang',
+    focus_generated_note: '🎛️ Barchasi shu yerda generatsiya qilinadi — hech qanday fayl yuklanmaydi',
     gamification_rules_card_title: "🎮 O'yin qoidalari",
     hardcore_mode_title: '💀 Hardcore rejim',
     hardcore_mode_desc: "Yoqilsa, HP nolga tushganda qattiq jazo qo'llanadi (masalan, Instagram 30 kunga o'chiriladi).",
@@ -3088,19 +3217,24 @@ const I18N = {
     char_enabled_toast: '🧍 Xarakter yoqildi',
     char_disabled_toast: '🧍 Xarakter yashirildi',
     pc_toggle_title: '🔒 Personal Check',
-    pc_toggle_desc: "Yoqilsa, PIN-kod bilan himoyalangan shaxsiy nazorat bo'limiga kirish imkoni ochiladi.",
+    pc_toggle_desc: "Yoqilsa, shaxsiy nazorat bo'limiga kirish imkoni ochiladi.",
+    pc_pin_toggle_title: '🔑 PIN himoyasi',
+    pc_pin_toggle_desc: "Yoqilsa, bo'limga kirishda PIN kod so'raladi.",
+    pc_pin_disabled_toast: "🔓 PIN himoyasi o'chirildi",
+    pc_pin_enabled_toast: '🔒 PIN himoyasi yoqildi',
     pc_create_title: '🔑 Yangi PIN yarating',
     pc_verify_title: 'PIN kiriting',
     pc_verify_desc: "Personal Check'ni yoqish uchun PIN kodingizni kiriting",
     pc_disabled_toast: "🔒 Personal Check o'chirildi",
     pc_enabled_toast: '🔓 Personal Check yoqildi',
     pc_info_title: '🕵️‍♂️ Personal Check haqida',
-    pc_info_body: "Personal Check — bu sizning shaxsiy odatlaringiz va intizomingizni xavfsiz kuzatib borish uchun mo'ljallangan maxsus sirli bo'limdir.<br><br>Masalan:<br>• Masturbatsiya qilmaslik<br>• Chekmaslik<br>• Ijtimoiy tarmoqlarda ortiqcha vaqt sarflamaslik<br><br>Bu ma'lumotlar faqat sizga ko'rinadi va PIN-kod bilan himoyalanadi.",
+    pc_info_body: "Personal Check — bu sizning shaxsiy odatlaringiz va intizomingizni xavfsiz kuzatib borish uchun mo'ljallangan maxsus sirli bo'limdir.<br><br>Masalan:<br>• Masturbatsiya qilmaslik<br>• Chekmaslik<br>• Ijtimoiy tarmoqlarda ortiqcha vaqt sarflamaslik<br><br>Bu ma'lumotlar faqat sizga ko'rinadi. Xohlasangiz, Sozlamalardagi \"PIN himoyasi\" tugmasi orqali bo'limni PIN kod bilan qo'shimcha himoyalashingiz mumkin.",
     pc_info_access: "🔑 Kirish: asosiy ekrandagi logotip belgisi ustiga ketma-ket 5 marta bosing.",
     pc_info_footer: 'Davom etish uchun Enter tugmasini bosing',
     pc_info_ok_btn: 'Tushunarli, davom etish',
     sec_btn_yes: '✅ Qilmadim (yaxshi)',
     sec_btn_no: '❌ Qildim (yiqildim)',
+    sec_mark_btn: 'Belgilash',
     sec_last30_title: 'Oxirgi 30 kun',
     sec_legend_clean: 'Qilmadim',
     sec_legend_fail: 'Qildim',
@@ -3215,6 +3349,7 @@ const I18N = {
     reyting_metric_streak: '⚡ Streak',
     reyting_you_badge: 'Siz',
     reyting_days_unit: 'kun',
+    reyting_season_countdown_label: '⏳ Yangi mavsumgacha:',
     reyting_no_country_msg: "Mahalliy reytingni ko'rish uchun avval profilingizda davlatingizni tanlang.",
     reyting_jump_btn: "🎯 O'zimga",
     reyting_not_in_list_toast: "Siz hozirgi ro'yxatda topilmadingiz",
@@ -3231,6 +3366,7 @@ const I18N = {
     pp_max_streak_label: 'Maks. Streak',
     pp_tasks_completed_label: 'Bajarilgan vazifa',
     pp_total_coins_label: 'Jami tanga',
+    pp_cur_streak_label: 'Joriy Streak',
     pp_goal_label: 'Maqsad',
     // Top Chart — Oylik Season Mukofotlari (Info Modal)
     reyting_info_btn_title: "Ma'lumot",
@@ -3239,7 +3375,7 @@ const I18N = {
     reyting_info_gold: '1-o\'rin: 300 Tanga + "Global Champion" unvoni',
     reyting_info_silver: '2-o\'rin: 100 Tanga + "Master" unvoni',
     reyting_info_bronze: '3-o\'rin: 50 Tanga + "Pro" unvoni',
-    reyting_info_note: "⚠️ Eslatma: Mukofotlar faqat Worldwide (Dunyo) reytingi bo'yicha beriladi va har oyning 1-sanasida avtomatik hisoblab beriladi. Agar bitta foydalanuvchi bir vaqtning o'zida bir nechta mezon (Tanga/HP/Streak) bo'yicha Top 3'da tursa, unga faqat eng yuqori turgan reytingi uchun mukofot beriladi — qolganlari uchun takroran berilmaydi. Har oy yakunlangach barcha reyting ko'rsatkichlari 0'dan qayta boshlanadi.",
+    reyting_info_note: "⚠️ Eslatma: Mukofotlar faqat Worldwide (Dunyo) reytingi bo'yicha beriladi va har oyning 1-sanasida avtomatik hisoblab beriladi. Agar bitta foydalanuvchi bir vaqtning o'zida bir nechta mezon (Tanga/HP/Streak) bo'yicha Top 3'da tursa, unga faqat eng yuqori turgan reytingi uchun mukofot beriladi — qolganlari uchun takroran berilmaydi. Tanga (Coins) reytingi hamyoningizdagi joriy (hozirgi) balansga asoslanadi — umrbod yig'ilgan jami tangaga emas. Har oy yakunlangach faqat Tanga (Coins) ko'rsatkichi 0'dan qayta boshlanadi — HP va Streak ko'rsatkichlari esa oylar osha davomida davom etaveradi.",
     reyting_info_close_btn: "Tushunarli ✓",
   },
   en: {
@@ -3278,6 +3414,23 @@ const I18N = {
     section_today: "Today's tasks",
     section_once: 'One-time',
     section_future: '🔮 Future tasks',
+    // 🧊 Task Freeze
+    freeze_task_toast: 'Task frozen',
+    unfreeze_task_toast: 'Task unfrozen',
+    freeze_task_sheet_btn: 'Freeze',
+    frozen_tasks_btn: 'Frozen tasks',
+    frozen_tasks_section_desc: 'Frozen tasks appear here with no penalty or streak loss.',
+    frozen_panel_title: '🧊 Frozen tasks',
+    frozen_tasks_empty: 'No frozen tasks yet.',
+    frozen_since_label: 'frozen:',
+    unfreeze_btn: 'Unfreeze',
+    // ⋮ Task dropdown menu
+    task_actions_title: 'Actions',
+    skip_dd_item: 'Skip',
+    unskip_dd_item: 'Undo skip',
+    freeze_dd_item: 'Freeze',
+    edit_dd_item: 'Edit',
+    delete_dd_item: 'Delete',
     level_panel_levels: 'All levels',
     // Rewards
     rewards_empty: 'No rewards yet.',
@@ -3318,15 +3471,20 @@ const I18N = {
     goals_title: '🎯 My Goals',
     goals_add_btn: '+ New',
     goals_empty: 'No goals yet.<br>Add a new goal!',
+    goal_example_name: 'Learn 10 new words',
+    goal_example_desc: 'Example goal — once you get the idea, feel free to delete it and add your own',
     goal_completed: '✅ Completed!',
     goal_expired: '❌ Time expired',
     goal_days_left: 'days left',
     goal_days_unit: 'days',
     goal_check_done: '✅ Done yesterday!',
     goal_check_todo: '☐ Done yesterday',
+    goal_check_done_today: '✅ Done today!',
+    goal_check_todo_today: '☐ Done today',
     // Chest
     chest_tasks_title: '🎲 Chest Tasks',
     chest_add_btn: '+ Add',
+    chest_example_task_name: 'Watch a podcast',
     chest_tasks_empty_title: 'No chest tasks yet.',
     chest_tasks_empty_sub: 'Add one with the + button',
     chest_easy: '🟢 Easy',
@@ -3527,6 +3685,16 @@ const I18N = {
     danger_zone_desc_bold: 'account',
     danger_zone_desc_post: ' will erase all tasks, coins, streak, and statistics. This cannot be undone!',
     danger_zone_btn: '🔄 Reset account',
+    reset_opts_title: 'What would you like to reset?',
+    reset_opts_desc: 'Select the sections you need — you can combine as many as you like.',
+    reset_opt_coins: 'Coins',
+    reset_opt_stats: 'Statistics',
+    reset_opt_tasks: 'Tasks (tasks, chest, rewards, goals)',
+    reset_opt_all: 'Everything',
+    reset_neg_coins_title: 'Warning: your coins are negative',
+    reset_neg_coins_desc1: 'You currently have {coins} coins. If you reset, statistics will be cleared as well.',
+    reset_neg_coins_desc2: 'If you press OK: coins will drop to 0 and all statistics will restart from scratch.',
+    reset_done_toast: '✅ The selected sections have been reset!',
     // Profile edit modal
     pe_choose_photo: '📷 Choose photo',
     pe_remove_photo: 'Remove photo',
@@ -3539,6 +3707,9 @@ const I18N = {
     pe_username_taken: '❌ This username is already taken, please choose another!',
     pe_username_available: '✅ This username is available!',
     pe_username_short: '⚠️ Username must be at least 3 characters!',
+    pe_username_too_long: '⚠️ Username must be at most 16 characters!',
+    pe_username_invalid_chars: '⚠️ Only letters, numbers and underscore (_) are allowed — no spaces, emoji or other symbols!',
+    pe_username_blocked: "❌ This word can't be used as a username!",
     guide_info_tooltip: 'App guide',
     guide_title: '📱 How to use the app',
     guide_next_btn: 'Next →',
@@ -3590,7 +3761,7 @@ const I18N = {
     onb_step_calendar_advanced: "Tap any day's cell to see the tasks that were done and missed that day. Tap the ✅/⬜ icon next to a task to toggle it done or not done — this also works for past days, so you can fix a day you forgot to mark. Use the ‹ and › arrows at the top to switch months and review your progress from previous months too.",
     onb_step_character_advanced: "Every missed task drains some of Steve's HP, and missing tasks several days in a row doubles the penalty. When HP hits zero, \"death\" mode kicks in automatically and Instagram gets blocked for 30 days. Get back on track with your tasks and Steve gradually heals (HP regrows).",
     onb_step_export_advanced: "The Export button downloads all your data as a .json file — save it to the cloud or your device. Import restores everything (tasks, coins, and stats) from that file, which is handy when switching phones or reinstalling the app.",
-    onb_step_settings_advanced: "Settings is split into a few cards: Interface (dark mode, character visibility, theme), Sound & Audio, Ambient Focus Sound (music), and Game Rules (difficulty level). Tap any card's header to expand it.",
+    onb_step_settings_advanced: "Settings is split into a few cards: Interface (dark mode, character visibility, theme), Sound & Music (audio and ambient background sounds), and Game Rules (difficulty level). Tap any card's header to expand it.",
     onb_step_music_advanced: "Once ambient sounds are enabled, an \"Open tracks\" button appears below — use it to pick different ambient tracks, adjust the volume, and play them in the background while you work or relax.",
     onb_step_mood_advanced: "You can only set today's mood, but the calendar lets you look back through every day you've logged, along with any notes. You can also change or delete today's entry if you'd like.",
     btn_save: 'Save',
@@ -3813,6 +3984,8 @@ const I18N = {
     freeze_already_used_toast: 'Today is already frozen',
     freeze_none_left_toast: 'No freezes left',
     freeze_used_toast: 'Today is frozen — no penalty!',
+    freeze_cancel_toast: 'Freeze cancelled',
+    freeze_used_today_tap_hint: '❄️ Today is frozen (tap to cancel)',
     daily_100_toast: '100% Complete! +{xp} XP bonus!',
     levelup_title: 'NEW LEVEL',
     levelup_sub: "You reached Level {level}! 🎉",
@@ -3868,6 +4041,15 @@ const I18N = {
     // Level
     level_xp_left: 'XP left',
     level_max: '👑 Max level!',
+    level_word: 'Level',
+    level_you: 'YOU',
+    level_name_1: 'Beginner',
+    level_name_2: 'Go-getter',
+    level_name_3: 'Consistent learner',
+    level_name_4: 'Disciplined',
+    level_name_5: 'Master level',
+    level_name_6: 'Champion',
+    level_name_7: 'Legend',
     // Secret habit tracker (KI)
     ki_day_suffix: '',
     ki_title: 'Personal check-in',
@@ -3877,10 +4059,17 @@ const I18N = {
     ki_select_answer: 'Select an answer',
     ki_yesterday_caps: 'YESTERDAY',
     ki_yesterday_clean: 'Yesterday went well! +3 🪙',
+    ki_today_caps: 'TODAY',
+    ki_today_clean: 'Today is going well! +3 🪙',
     ki_pen_2x: '⚠️ 3 days in a row! -10 🪙 2x penalty!',
     ki_pen_normal: '-5 🪙 penalty.',
     ki_fail_label: 'Slipped up.',
     ki_not_entered_yet: 'Yesterday not logged yet',
+    ki_not_entered_today: 'Today not logged yet',
+    yday_mode_setting_title: '📅 Track by yesterday',
+    yday_mode_setting_desc: 'When on, sections like Goals and Secret Place ask "did you do it yesterday?". When off, they ask "did you do it today?".',
+    yday_mode_on_toast: '📅 Now asking "did you do it yesterday?"',
+    yday_mode_off_toast: '📅 Now asking "did you do it today?"',
     btn_edit: 'Edit',
     // Secret Place — additional i18n (language switch fix)
     secret_locked_title: 'Secret page',
@@ -3893,7 +4082,7 @@ const I18N = {
     theme_setting_desc: 'On uses the dark theme; off switches to the light theme.',
     char_setting_title: '🧍 Character (Steve)',
     char_setting_desc: 'When off, the character and HP panel are hidden on the Profile page.',
-    sound_audio_card_title: '🔊 Sound & Audio Settings',
+    sound_audio_card_title: '🔊 Sound & Music',
     master_volume_title: '🔈 Master Volume',
     master_volume_desc: 'Adjust the volume of sound effects.',
     test_sound_btn: '▶️ Test sound',
@@ -3905,10 +4094,15 @@ const I18N = {
     focus_disabled_toast: '🎶 Ambient Focus Sound disabled',
     focus_player_desc: 'Pick a calm background sound and adjust its volume. It keeps playing as a small floating bubble in the corner even when you switch pages.',
     focus_volume_label: '🔈 Volume',
-    focus_sound_rain: 'Heavy Rain & Thunder',
-    focus_sound_lofi: 'Lo-Fi Chill Beats',
-    focus_sound_cafe: 'Cozy Cafe & Rain',
-    focus_sound_forest: 'Deep Forest & Wind',
+    focus_sound_rain: 'Light Rain',
+    focus_sound_storm: 'Thunderstorm',
+    focus_sound_forest: 'Forest & Birds',
+    focus_sound_ocean: 'Ocean Waves',
+    focus_sound_white: 'White Noise',
+    focus_sound_brown: 'Brown Noise',
+    focus_sound_fire: 'Crackling Fireplace',
+    focus_sound_lofi: 'Lo-Fi Chill Ambience',
+    focus_generated_note: '🎛️ Generated live in your browser — nothing is downloaded or stored',
     focus_stream_error: '⚠️ Stream failed to load, trying another source…',
     focus_installing_status: '⬇️ Downloading for the first time… please wait',
     focus_install_fail_status: '⚠️ Download failed, check your connection and try again',
@@ -3927,19 +4121,24 @@ const I18N = {
     char_enabled_toast: '🧍 Character shown',
     char_disabled_toast: '🧍 Character hidden',
     pc_toggle_title: '🔒 Personal Check',
-    pc_toggle_desc: 'When enabled, unlocks a PIN-protected personal check section.',
+    pc_toggle_desc: 'When enabled, unlocks the personal check section.',
+    pc_pin_toggle_title: '🔑 PIN protection',
+    pc_pin_toggle_desc: 'When enabled, a PIN will be required to open the section.',
+    pc_pin_disabled_toast: '🔓 PIN protection disabled',
+    pc_pin_enabled_toast: '🔒 PIN protection enabled',
     pc_create_title: '🔑 Create a new PIN',
     pc_verify_title: 'Enter PIN',
     pc_verify_desc: 'Enter your PIN to turn on Personal Check',
     pc_disabled_toast: '🔒 Personal Check disabled',
     pc_enabled_toast: '🔓 Personal Check enabled',
     pc_info_title: '🕵️‍♂️ About Personal Check',
-    pc_info_body: "Personal Check is a special hidden section for privately tracking your personal habits and discipline.<br><br>For example:<br>• Not masturbating<br>• Not smoking<br>• Not wasting time on social media<br><br>This data is visible only to you and is protected by a PIN code.",
+    pc_info_body: "Personal Check is a special hidden section for privately tracking your personal habits and discipline.<br><br>For example:<br>• Not masturbating<br>• Not smoking<br>• Not wasting time on social media<br><br>This data is visible only to you. If you'd like, you can also protect the section with a PIN using the \"PIN protection\" switch in Settings.",
     pc_info_access: '🔑 Access: tap the logo on the main screen 5 times in a row.',
     pc_info_footer: 'Press Enter to continue',
     pc_info_ok_btn: 'Got it, continue',
     sec_btn_yes: "✅ Didn't do it (good)",
     sec_btn_no: '❌ Did it (slipped up)',
+    sec_mark_btn: 'Mark',
     sec_last30_title: 'Last 30 days',
     sec_legend_clean: "Didn't do it",
     sec_legend_fail: 'Did it',
@@ -4052,6 +4251,7 @@ const I18N = {
     reyting_metric_streak: '⚡ Streak',
     reyting_you_badge: 'You',
     reyting_days_unit: 'days',
+    reyting_season_countdown_label: '⏳ New season in:',
     reyting_no_country_msg: 'To see the local leaderboard, first select your country in your profile.',
     reyting_jump_btn: '🎯 Find me',
     reyting_not_in_list_toast: "You weren't found in the current list",
@@ -4068,6 +4268,7 @@ const I18N = {
     pp_max_streak_label: 'Max Streak',
     pp_tasks_completed_label: 'Tasks Completed',
     pp_total_coins_label: 'Total Coins',
+    pp_cur_streak_label: 'Current Streak',
     pp_goal_label: 'Goal',
     // Top Chart — Monthly Season Rewards (Info Modal)
     reyting_info_btn_title: 'Info',
@@ -4076,7 +4277,7 @@ const I18N = {
     reyting_info_gold: '1st place: 300 Coins + "Global Champion" title',
     reyting_info_silver: '2nd place: 100 Coins + "Master" title',
     reyting_info_bronze: '3rd place: 50 Coins + "Pro" title',
-    reyting_info_note: "⚠️ Note: Rewards are only given based on the Worldwide leaderboard, and are calculated automatically on the 1st of every month. If a user ranks in the Top 3 under more than one metric (Coins/HP/Streak) at once, they only receive the reward for their highest-ranked leaderboard — not for each one separately. After every month ends, all leaderboard scores reset back to 0.",
+    reyting_info_note: "⚠️ Note: Rewards are only given based on the Worldwide leaderboard, and are calculated automatically on the 1st of every month. If a user ranks in the Top 3 under more than one metric (Coins/HP/Streak) at once, they only receive the reward for their highest-ranked leaderboard — not for each one separately. The Coins ranking is based on your current wallet balance, not your lifetime total coins earned. After every month ends, only the Coins score resets back to 0 — HP and Streak keep carrying over from month to month.",
     reyting_info_close_btn: 'Got it ✓',
   },
   ru: {
@@ -4115,6 +4316,23 @@ const I18N = {
     section_today: 'Задачи на сегодня',
     section_once: 'Разовые',
     section_future: '🔮 Будущие задачи',
+    // 🧊 Task Freeze
+    freeze_task_toast: 'Задача заморожена',
+    unfreeze_task_toast: 'Задача разморожена',
+    freeze_task_sheet_btn: 'Заморозить',
+    frozen_tasks_btn: 'Замороженные задачи',
+    frozen_tasks_section_desc: 'Замороженные задачи показаны здесь — без штрафов и потери серии.',
+    frozen_panel_title: '🧊 Замороженные задачи',
+    frozen_tasks_empty: 'Пока нет замороженных задач.',
+    frozen_since_label: 'заморожено:',
+    unfreeze_btn: 'Разморозить',
+    // ⋮ Task dropdown menu
+    task_actions_title: 'Действия',
+    skip_dd_item: 'Пропустить',
+    unskip_dd_item: 'Отменить пропуск',
+    freeze_dd_item: 'Заморозить',
+    edit_dd_item: 'Редактировать',
+    delete_dd_item: 'Удалить',
     level_panel_levels: 'Все уровни',
     // Награды
     rewards_empty: 'Наград пока нет.',
@@ -4155,15 +4373,20 @@ const I18N = {
     goals_title: '🎯 Мои цели',
     goals_add_btn: '+ Новая',
     goals_empty: 'Целей пока нет.<br>Добавьте новую цель!',
+    goal_example_name: 'Выучить 10 новых слов',
+    goal_example_desc: 'Пример цели — когда разберётесь, можете удалить её и добавить свою',
     goal_completed: '✅ Завершено!',
     goal_expired: '❌ Срок истёк',
     goal_days_left: 'дней осталось',
     goal_days_unit: 'дней',
     goal_check_done: '✅ Вчера выполнил!',
     goal_check_todo: '☐ Вчера выполнил',
+    goal_check_done_today: '✅ Сегодня выполнил!',
+    goal_check_todo_today: '☐ Сегодня выполнил',
     // Сундук
     chest_tasks_title: '🎲 Задачи сундука',
     chest_add_btn: '+ Добавить',
+    chest_example_task_name: 'Посмотреть подкаст',
     chest_tasks_empty_title: 'Задач в сундуке пока нет.',
     chest_tasks_empty_sub: '+ добавьте кнопкой выше',
     chest_easy: '🟢 Легко',
@@ -4363,6 +4586,16 @@ const I18N = {
     danger_zone_desc_bold: 'удалит всё',
     danger_zone_desc_post: ' — задачи, монеты, streak и статистику. Это действие необратимо!',
     danger_zone_btn: '🔄 Сбросить аккаунт',
+    reset_opts_title: 'Что вы хотите сбросить?',
+    reset_opts_desc: 'Отметьте нужные разделы — можно выбрать сколько угодно вариантов одновременно.',
+    reset_opt_coins: 'Монеты',
+    reset_opt_stats: 'Статистика',
+    reset_opt_tasks: 'Задачи (tasks, сундук, награды, цели)',
+    reset_opt_all: 'Всё сразу',
+    reset_neg_coins_title: 'Внимание: у вас отрицательный баланс монет',
+    reset_neg_coins_desc1: 'Сейчас у вас {coins} монет. Если вы сбросите, статистика тоже будет очищена.',
+    reset_neg_coins_desc2: 'При нажатии OK: монеты станут 0, а вся статистика начнётся заново.',
+    reset_done_toast: '✅ Выбранные разделы сброшены!',
     // Редактирование профиля
     pe_choose_photo: '📷 Выбрать фото',
     pe_remove_photo: 'Удалить фото',
@@ -4375,6 +4608,9 @@ const I18N = {
     pe_username_taken: '❌ Это имя пользователя уже занято, выберите другое!',
     pe_username_available: '✅ Это имя пользователя свободно!',
     pe_username_short: '⚠️ Имя пользователя должно содержать не менее 3 символов!',
+    pe_username_too_long: '⚠️ Имя пользователя должно быть не длиннее 16 символов!',
+    pe_username_invalid_chars: '⚠️ Разрешены только буквы, цифры и нижнее подчёркивание (_) — без пробелов, эмодзи и других символов!',
+    pe_username_blocked: '❌ Это слово нельзя использовать как имя пользователя!',
     guide_info_tooltip: 'Руководство по приложению',
     guide_title: '📱 Как пользоваться приложением',
     guide_next_btn: 'Далее →',
@@ -4426,7 +4662,7 @@ const I18N = {
     onb_step_calendar_advanced: 'Нажмите на ячейку любого дня, чтобы увидеть выполненные и пропущенные в этот день задачи. Нажмите на значок ✅/⬜ рядом с задачей, чтобы отметить её как выполненную или невыполненную — это работает и для прошлых дней, если вы забыли отметить задачу вовремя. Используйте стрелки ‹ и › вверху, чтобы переключать месяцы и просматривать прогресс за предыдущие месяцы.',
     onb_step_character_advanced: 'Каждая пропущенная задача отнимает часть HP у Стива, а пропуски несколько дней подряд удваивают штраф. Когда HP достигает нуля, автоматически активируется режим «смерти», и Instagram блокируется на 30 дней. Возобновив выполнение задач, вы постепенно «лечите» Стива (HP восстанавливается).',
     onb_step_export_advanced: 'Кнопка Export скачивает все ваши данные в файл .json — сохраните его в облако или на устройство. Import полностью восстанавливает задачи, монеты и статистику из этого файла — удобно при смене телефона или переустановке приложения.',
-    onb_step_settings_advanced: 'Настройки разделены на несколько карточек: Интерфейс (тёмный режим, видимость персонажа, тема), Звук и аудио, Ambient Focus Sound (музыка) и Правила игры (уровень сложности). Нажмите на заголовок карточки, чтобы её развернуть.',
+    onb_step_settings_advanced: 'Настройки разделены на несколько карточек: Интерфейс (тёмный режим, видимость персонажа, тема), Звук и музыка (аудио и фоновые звуки) и Правила игры (уровень сложности). Нажмите на заголовок карточки, чтобы её развернуть.',
     onb_step_music_advanced: 'После включения фоновых звуков ниже появится кнопка «Открыть треки» — с её помощью можно выбрать разные фоновые треки, настроить громкость и включить их на фоне во время работы или отдыха.',
     onb_step_mood_advanced: 'Настроение можно отметить только за сегодняшний день, но в календаре вы можете просмотреть все прошлые записи вместе с заметками. Сегодняшнюю запись также можно изменить или удалить.',
     btn_save: 'Сохранить',
@@ -4649,6 +4885,8 @@ const I18N = {
     freeze_already_used_toast: 'Сегодня уже заморожено',
     freeze_none_left_toast: 'Заморозок больше нет',
     freeze_used_toast: 'Сегодня заморожено — штрафа не будет!',
+    freeze_cancel_toast: 'Заморозка отменена',
+    freeze_used_today_tap_hint: '❄️ Сегодня заморожено (нажмите для отмены)',
     daily_100_toast: '100% выполнено! +{xp} XP бонус!',
     levelup_title: 'НОВЫЙ УРОВЕНЬ',
     levelup_sub: 'Вы достигли уровня {level}! 🎉',
@@ -4707,6 +4945,15 @@ const I18N = {
     // Уровень
     level_xp_left: 'XP осталось',
     level_max: '👑 Максимальный уровень!',
+    level_word: 'Уровень',
+    level_you: 'ТЫ',
+    level_name_1: 'Новичок',
+    level_name_2: 'Активист',
+    level_name_3: 'Стабильный ученик',
+    level_name_4: 'Дисциплинированный',
+    level_name_5: 'Уровень мастера',
+    level_name_6: 'Чемпион',
+    level_name_7: 'Легенда',
     // Личный контроль (ki)
     ki_day_suffix: '',
     ki_title: 'Личный контроль',
@@ -4716,10 +4963,17 @@ const I18N = {
     ki_select_answer: 'Выберите ответ',
     ki_yesterday_caps: 'ВЧЕРА',
     ki_yesterday_clean: 'Вчера всё отлично! +3 🪙',
+    ki_today_caps: 'СЕГОДНЯ',
+    ki_today_clean: 'Сегодня всё отлично! +3 🪙',
     ki_pen_2x: '⚠️ 3 дня подряд! -10 🪙 2x штраф!',
     ki_pen_normal: '-5 🪙 штраф.',
     ki_fail_label: 'Сорвался.',
     ki_not_entered_yet: 'Вчера ещё не введено',
+    ki_not_entered_today: 'Сегодня ещё не введено',
+    yday_mode_setting_title: '📅 Работать по вчерашнему дню',
+    yday_mode_setting_desc: 'Если включено, разделы Цели и Личный контроль спрашивают «выполнили вчера?». Если выключено — «выполнили сегодня?».',
+    yday_mode_on_toast: '📅 Теперь спрашивается «выполнили вчера?»',
+    yday_mode_off_toast: '📅 Теперь спрашивается «выполнили сегодня?»',
     btn_edit: 'Изменить',
     // Secret Place — доп. переводы (исправление переключения языка)
     secret_locked_title: 'Секретная страница',
@@ -4732,7 +4986,7 @@ const I18N = {
     theme_setting_desc: 'Включено — тёмная тема, выключено — светлая тема.',
     char_setting_title: '🧍 Персонаж (Стив)',
     char_setting_desc: 'При выключении персонаж и панель HP скрываются на странице профиля.',
-    sound_audio_card_title: '🔊 Настройки звука и аудио',
+    sound_audio_card_title: '🔊 Звук и музыка',
     master_volume_title: '🔈 Общая громкость',
     master_volume_desc: 'Настройте громкость звуковых эффектов.',
     test_sound_btn: '▶️ Проверить звук',
@@ -4744,10 +4998,15 @@ const I18N = {
     focus_disabled_toast: '🎶 Фоновые звуки выключены',
     focus_player_desc: 'Выберите спокойный фоновый звук и настройте громкость. Он продолжит звучать в виде маленького плавающего значка в углу, даже если вы перейдёте на другую страницу.',
     focus_volume_label: '🔈 Громкость',
-    focus_sound_rain: 'Ливень с громом',
-    focus_sound_lofi: 'Lo-Fi биты',
-    focus_sound_cafe: 'Уютное кафе и дождь',
-    focus_sound_forest: 'Лес и ветер',
+    focus_sound_rain: 'Лёгкий дождь',
+    focus_sound_storm: 'Гроза с громом',
+    focus_sound_forest: 'Лес и птицы',
+    focus_sound_ocean: 'Морские волны',
+    focus_sound_white: 'Белый шум',
+    focus_sound_brown: 'Коричневый шум',
+    focus_sound_fire: 'Потрескивание камина',
+    focus_sound_lofi: 'Спокойный Lo-Fi',
+    focus_generated_note: '🎛️ Генерируется прямо в браузере — ничего не скачивается и не хранится',
     focus_stream_error: '⚠️ Поток не загрузился, пробуем другой источник…',
     focus_installing_status: '⬇️ Загружается в первый раз… подождите немного',
     focus_install_fail_status: '⚠️ Не удалось загрузить, проверьте соединение и попробуйте снова',
@@ -4766,19 +5025,24 @@ const I18N = {
     char_enabled_toast: '🧍 Персонаж показан',
     char_disabled_toast: '🧍 Персонаж скрыт',
     pc_toggle_title: '🔒 Personal Check',
-    pc_toggle_desc: 'При включении открывается доступ к разделу личного контроля, защищённому PIN-кодом.',
+    pc_toggle_desc: 'При включении открывается доступ к разделу личного контроля.',
+    pc_pin_toggle_title: '🔑 Защита PIN-кодом',
+    pc_pin_toggle_desc: 'При включении для входа в раздел потребуется PIN-код.',
+    pc_pin_disabled_toast: '🔓 Защита PIN-кодом отключена',
+    pc_pin_enabled_toast: '🔒 Защита PIN-кодом включена',
     pc_create_title: '🔑 Создайте новый PIN',
     pc_verify_title: 'Введите PIN',
     pc_verify_desc: 'Введите PIN-код, чтобы включить Personal Check',
     pc_disabled_toast: '🔒 Personal Check отключён',
     pc_enabled_toast: '🔓 Personal Check включён',
     pc_info_title: '🕵️‍♂️ О разделе Personal Check',
-    pc_info_body: "Personal Check — это специальный скрытый раздел для приватного отслеживания ваших личных привычек и дисциплины.<br><br>Например:<br>• Не мастурбировать<br>• Не курить<br>• Не тратить лишнее время в соцсетях<br><br>Эти данные видны только вам и защищены PIN-кодом.",
+    pc_info_body: "Personal Check — это специальный скрытый раздел для приватного отслеживания ваших личных привычек и дисциплины.<br><br>Например:<br>• Не мастурбировать<br>• Не курить<br>• Не тратить лишнее время в соцсетях<br><br>Эти данные видны только вам. При желании раздел можно дополнительно защитить PIN-кодом через переключатель «Защита PIN-кодом» в Настройках.",
     pc_info_access: '🔑 Доступ: нажмите на логотип на главном экране 5 раз подряд.',
     pc_info_footer: 'Нажмите Enter, чтобы продолжить',
     pc_info_ok_btn: 'Понятно, продолжить',
     sec_btn_yes: '✅ Не сделал (хорошо)',
     sec_btn_no: '❌ Сделал (сорвался)',
+    sec_mark_btn: 'Отметить',
     sec_last30_title: 'Последние 30 дней',
     sec_legend_clean: 'Не сделал',
     sec_legend_fail: 'Сделал',
@@ -4890,6 +5154,7 @@ const I18N = {
     reyting_metric_streak: '⚡ Streak',
     reyting_you_badge: 'Вы',
     reyting_days_unit: 'дн.',
+    reyting_season_countdown_label: '⏳ До нового сезона:',
     reyting_no_country_msg: 'Чтобы увидеть местный рейтинг, сначала выберите свою страну в профиле.',
     reyting_jump_btn: '🎯 Найти меня',
     reyting_not_in_list_toast: 'Вы не найдены в текущем списке',
@@ -4906,6 +5171,7 @@ const I18N = {
     pp_max_streak_label: 'Макс. Streak',
     pp_tasks_completed_label: 'Выполнено заданий',
     pp_total_coins_label: 'Всего монет',
+    pp_cur_streak_label: 'Текущий Streak',
     pp_goal_label: 'Цель',
     // Top Chart — Награды месячного сезона (Info Modal)
     reyting_info_btn_title: 'Информация',
@@ -4914,7 +5180,7 @@ const I18N = {
     reyting_info_gold: '1-е место: 300 монет + звание "Global Champion"',
     reyting_info_silver: '2-е место: 100 монет + звание "Master"',
     reyting_info_bronze: '3-е место: 50 монет + звание "Pro"',
-    reyting_info_note: '⚠️ Примечание: Награды начисляются только по мировому (Worldwide) рейтингу и рассчитываются автоматически 1-го числа каждого месяца. Если пользователь одновременно входит в Топ-3 по нескольким показателям (Монеты/HP/Streak), награда начисляется только за его наивысший рейтинг — повторно за остальные не начисляется. После окончания каждого месяца все показатели рейтинга обнуляются.',
+    reyting_info_note: '⚠️ Примечание: Награды начисляются только по мировому (Worldwide) рейтингу и рассчитываются автоматически 1-го числа каждого месяца. Если пользователь одновременно входит в Топ-3 по нескольким показателям (Монеты/HP/Streak), награда начисляется только за его наивысший рейтинг — повторно за остальные не начисляется. Рейтинг по Монетам основан на текущем балансе кошелька, а не на общей сумме монет за всё время. После окончания каждого месяца обнуляется только показатель Монет — HP и Streak продолжают накапливаться из месяца в месяц.',
     reyting_info_close_btn: 'Понятно ✓',
   }
 };
@@ -5180,6 +5446,34 @@ const COUNTRIES_LIST = [
 
 function countryByCode(code) { return COUNTRIES_LIST.find(function(c){ return c.c === code; }); }
 function countryFlag(code) { var c = countryByCode(code); return c ? c.f : '🏳️'; }
+// Ba'zi qurilmalarda (asosan Windows'da) bayroq-emoji shrifti yo'q — shu
+// sabab bayroq o'rniga davlat kodi (masalan "AF") matn sifatida chiqib
+// qoladi. Shuning uchun emoji o'rniga flagcdn.com'dan haqiqiy bayroq
+// rasmini ko'rsatamiz — bu har qanday qurilmada bir xil ko'rinadi.
+// Agar rasm biror sababdan yuklanmasa (internet yo'q va h.k.), onerror
+// orqali eski emoji-bayroqqa qaytariladi.
+function countryFlagImg(code, size) {
+  size = size || 18;
+  var w = Math.round(size * 1.33);
+  if (!code) {
+    return '<span style="font-size:'+size+'px;line-height:1">🏳️</span>';
+  }
+  var lc = code.toLowerCase();
+  return '<img src="https://flagcdn.com/w40/'+lc+'.png" data-cc="'+code+'" data-sz="'+size+'" alt="'+code+'" ' +
+    'style="width:'+w+'px;height:'+size+'px;object-fit:cover;border-radius:2px;vertical-align:middle;display:inline-block" ' +
+    'onerror="flagImgFallback(this)" />';
+}
+// Rasm yuklanmasa (masalan internet uzilib qolsa), eski emoji-bayroqqa
+// avtomatik qaytaradi — countryFlagImg() dagi <img onerror> shu funksiyani chaqiradi.
+function flagImgFallback(img) {
+  var code = img.getAttribute('data-cc');
+  var size = img.getAttribute('data-sz') || 18;
+  var span = document.createElement('span');
+  span.style.fontSize = size + 'px';
+  span.style.lineHeight = '1';
+  span.textContent = countryFlag(code);
+  img.replaceWith(span);
+}
 function countryName(code) { var c = countryByCode(code); return c ? c.n : ''; }
 
 // ============================================================
@@ -5562,205 +5856,310 @@ function testSoundEffect() {
 }
 
 // ============================================================
-// 🎶 AMBIENT FOCUS SOUND — HAQIQIY AUDIO OQIMLARI (real MP3 stream)
-// asosidagi fon tovushlari pleyeri. Sintetik Web Audio shovqin generatori
-// endi ishlatilmaydi — buning o'rniga har bir tovush turi uchun haqiqiy,
-// ochiq litsenziyali (Royalty-Free / CC0) audio fayllar <audio> orqali
-// to'g'ridan-to'g'ri chalinadi. Har bir manba uchun 2 ta zaxira (fallback)
-// URL bor: birinchisi ishlamasa, avtomatik ikkinchisiga o'tadi.
-// "cafe" turi ikki qatlamli — kafe fon shovqini + past ovozdagi yomg'ir —
-// shu bois "Cozy Cafe & Rain" nomi bilan mos keladi.
+// 🎶 AMBIENT FOCUS SOUND — PROSEDURAL AUDIO DVIGATELI (Web Audio API)
+// Endi hech qanday tashqi audio fayl yuklanmaydi, hech narsa keshlanmaydi
+// va hech qanday tarmoq (internet) so'rovi yuborilmaydi — 8 xil tovushning
+// barchasi shu yerning o'zida, real vaqtda (oscillator/noise buffer orqali)
+// generatsiya qilinadi. Bu ilova hajmini bir baytga ham oshirmaydi.
 // ============================================================
-var FOCUS_SOUND_LAYERS = {
-  // 🌧️ Heavy Rain & Thunder
-  rain: [
-    { urls: [
-        'https://archive.org/download/RainSound13/rain-thunder.mp3',
-        'https://archive.org/download/RainSound13/heavyrainloop.mp3'
-      ], vol: 1.0 }
-  ],
-  // 🎧 Lo-Fi Chill Beats
-  lofi: [
-    { urls: [
-        'https://archive.org/download/kalaido-hanging-lanterns_202101/finite%20-%20Lofi%20Hip%20Hop%20Beat%20%28FREE%20FOR%20PROFIT%20USE%29.mp3',
-        'https://archive.org/download/kalaido-hanging-lanterns_202101/deep%20space%20-%20Ambient%20Lofi%20Hip%20Hop%20Beat%20%28FREE%20FOR%20PROFIT%20USE%29.mp3'
-      ], vol: 1.0 }
-  ],
-  // ☕ Cozy Cafe & Rain — 2 qatlam: kafe fon shovqini (asosiy) + juda past
-  // ovozdagi yomg'ir tovushi (atmosfera uchun)
-  cafe: [
-    { urls: [
-        'https://archive.org/download/coffee-shop-sounds-12/Coffee%20Shop%20Sounds%2012.mp3',
-        'https://archive.org/download/coffee-shop-sounds-12/Coffee%20Shop%20Sounds%2011.mp3'
-      ], vol: 1.0 },
-    { urls: [
-        'https://archive.org/download/RainSound13/rain-thunder.mp3',
-        'https://archive.org/download/RainSound13/heavyrainloop.mp3'
-      ], vol: 0.32 }
-  ],
-  // 🍃 Deep Forest & Wind
-  forest: [
-    { urls: [
-        'https://archive.org/download/NightSounds_201801/Relaxing%20Forest%20and%20Nature%20Soundscape.mp3',
-        'https://archive.org/download/NightSounds_201801/Soothing%20Night%20Time%20Forest%20Sounds.mp3'
-      ], vol: 1.0 }
-  ]
-};
-
 var FocusAudio = (function () {
-  var current = null;      // { type, layers:[{audio, baseVol}] }
-  var currentType = null;
-  var playing = false;
-  var masterPct = 45;
-  var fadeTimer = null;
-  var VOL_CEILING = 0.9;   // 100% balandlikdagi eng tepa nuqta
+  var actx = null, master = null, current = null, currentType = null, playing = false, masterPct = 45;
+  var VOL_CEILING = 0.9;
 
-  function setStreamStatus(msg) {
-    var el = document.getElementById('focus-stream-status');
-    if (el) el.textContent = msg || '';
+  function ac() {
+    if (!actx) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      actx = new AC();
+      master = actx.createGain();
+      master.gain.value = 0.0001;
+      master.connect(actx.destination);
+    }
+    if (actx.state === 'suspended') { try { actx.resume(); } catch (e) {} }
+    return actx;
   }
 
-  // ---- 📦 "O'rnatish" (install) mexanizmi — Cache Storage API ----
-  // Birinchi marta biror tovush chalinganda, fayl to'liq yuklab olinib
-  // brauzerning doimiy keshiga (Cache Storage) saqlanadi. Shundan keyin,
-  // odam ilovani qachon ochmasin — internet yo'q yoki archive.org vaqtincha
-  // ishlamay qolgan taqdirda ham, tovush kesh orqali darhol va ishonchli
-  // tarzda chalinadi. Kesh browser tomonidan tozalanmaguncha (yoki odam
-  // brauzer ma'lumotlarini o'chirmaguncha) doimiy saqlanib qoladi.
-  var FOCUS_CACHE_NAME = 'ambient-focus-audio-v1';
+  // ---- Shovqin (noise) buferlari — bir marta yaratiladi va qayta ishlatiladi ----
+  var noiseBufCache = {};
+  function whiteBuffer(seconds) {
+    var key = 'w' + seconds;
+    if (noiseBufCache[key]) return noiseBufCache[key];
+    var c = ac(), len = Math.max(1, Math.floor(c.sampleRate * seconds));
+    var buf = c.createBuffer(1, len, c.sampleRate);
+    var d = buf.getChannelData(0);
+    for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    noiseBufCache[key] = buf;
+    return buf;
+  }
+  function brownBuffer(seconds) {
+    var key = 'b' + seconds;
+    if (noiseBufCache[key]) return noiseBufCache[key];
+    var c = ac(), len = Math.max(1, Math.floor(c.sampleRate * seconds));
+    var buf = c.createBuffer(1, len, c.sampleRate);
+    var d = buf.getChannelData(0);
+    var last = 0;
+    for (var i = 0; i < len; i++) {
+      var white = Math.random() * 2 - 1;
+      last = (last + 0.02 * white) / 1.02;
+      d[i] = last * 3.5;
+    }
+    noiseBufCache[key] = buf;
+    return buf;
+  }
+  function noiseSource(buf, loop) {
+    var src = ac().createBufferSource();
+    src.buffer = buf;
+    src.loop = loop !== false;
+    return src;
+  }
 
-  function focusCacheGetOrFetch(url) {
-    if (!('caches' in window)) return Promise.reject(new Error('cache-api-yoq'));
-    return caches.open(FOCUS_CACHE_NAME).then(function (cache) {
-      return cache.match(url).then(function (cached) {
-        if (cached) return cached.blob(); // ✅ allaqachon o'rnatilgan — darhol qaytadi
-        return fetch(url, { mode: 'cors' }).then(function (resp) {
-          if (!resp.ok) throw new Error('http-' + resp.status);
-          // Fayl muvaffaqiyatli tushdi — keshga yozib qo'yamiz, shu bilan
-          // "o'rnatish" jarayoni yakunlanadi.
-          cache.put(url, resp.clone());
-          return resp.blob();
+  // Biror AudioParam'ni sekin, tabiiy tarzda tebranadigan qiladi (masalan,
+  // yomg'ir/shamol balandligining mayin "nafas olishi").
+  function lfo(target, freq, depth) {
+    var c = ac();
+    var osc = c.createOscillator();
+    osc.type = 'sine'; osc.frequency.value = freq;
+    var g = c.createGain(); g.gain.value = depth;
+    osc.connect(g); g.connect(target);
+    osc.start();
+    return osc;
+  }
+
+  function makeBus() {
+    var g = ac().createGain(); g.gain.value = 1; g.connect(master); return g;
+  }
+
+  // Qisqa hodisa (momaqaldiroq guldurashi, olov chirsillashi) — filtrlangan
+  // shovqinni zarb (envelope) bilan bir marta chaladi.
+  function burst(bus, opts) {
+    var c = ac(), now = c.currentTime;
+    var dur = opts.dur;
+    var buf = opts.brown ? brownBuffer(dur + 0.2) : whiteBuffer(dur + 0.2);
+    var src = noiseSource(buf, false);
+    var filt = c.createBiquadFilter();
+    filt.type = opts.filterType || 'lowpass';
+    filt.frequency.setValueAtTime(opts.freq, now);
+    if (opts.freqEnd) filt.frequency.exponentialRampToValueAtTime(opts.freqEnd, now + dur);
+    if (opts.q) filt.Q.value = opts.q;
+    var g = c.createGain();
+    var pan = c.createStereoPanner ? c.createStereoPanner() : null;
+    src.connect(filt); filt.connect(g);
+    if (pan) { g.connect(pan); pan.connect(bus); pan.pan.value = opts.pan || 0; } else { g.connect(bus); }
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.linearRampToValueAtTime(opts.peak, now + opts.attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + opts.attack + opts.release);
+    src.start(now); src.stop(now + dur + 0.05);
+  }
+
+  // Tasodifiy oraliqda takrorlanadigan hodisani rejalashtiradi (qush sayrashi,
+  // momaqaldiroq va h.k.). Qaytarilgan funksiya uni to'xtatadi.
+  function scheduleRandom(minS, maxS, fn) {
+    var timer = null, stopped = false;
+    function tick() {
+      if (stopped) return;
+      fn();
+      timer = setTimeout(tick, (minS + Math.random() * (maxS - minS)) * 1000);
+    }
+    timer = setTimeout(tick, (minS + Math.random() * (maxS - minS)) * 1000);
+    return function stop() { stopped = true; if (timer) clearTimeout(timer); };
+  }
+
+  function birdChirp(bus) {
+    var c = ac(), now = c.currentTime;
+    var notes = 1 + (Math.random() < 0.5 ? 1 : 0);
+    for (var n = 0; n < notes; n++) {
+      var t0 = now + n * (0.1 + Math.random() * 0.06);
+      var osc = c.createOscillator();
+      osc.type = 'sine';
+      var startF = 1800 + Math.random() * 1200;
+      osc.frequency.setValueAtTime(startF, t0);
+      osc.frequency.exponentialRampToValueAtTime(startF * (0.55 + Math.random() * 0.4), t0 + 0.12);
+      var g = c.createGain();
+      var pan = c.createStereoPanner ? c.createStereoPanner() : null;
+      osc.connect(g);
+      if (pan) { g.connect(pan); pan.connect(bus); pan.pan.value = (Math.random() * 2 - 1); } else { g.connect(bus); }
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.linearRampToValueAtTime(0.07 + Math.random() * 0.05, t0 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.18);
+      osc.start(t0); osc.stop(t0 + 0.22);
+    }
+  }
+
+  function crackle(bus) {
+    var c = ac(), now = c.currentTime;
+    var dur = 0.05 + Math.random() * 0.05;
+    var src = noiseSource(whiteBuffer(dur + 0.1), false);
+    var filt = c.createBiquadFilter();
+    filt.type = 'highpass'; filt.frequency.value = 1200 + Math.random() * 2500;
+    var g = c.createGain();
+    src.connect(filt); filt.connect(g); g.connect(bus);
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.linearRampToValueAtTime(0.22 + Math.random() * 0.25, now + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    src.start(now); src.stop(now + dur + 0.05);
+  }
+
+  // ---- Har bir tovush turi uchun "quruvchi" — bus va manbalar ro'yxatini qaytaradi ----
+  function buildRain(heavy) {
+    var c = ac(), bus = makeBus();
+    var src = noiseSource(whiteBuffer(4));
+    var filt = c.createBiquadFilter();
+    filt.type = 'bandpass'; filt.frequency.value = heavy ? 900 : 1500; filt.Q.value = 0.6;
+    var hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 250;
+    var g = c.createGain(); g.gain.value = heavy ? 0.85 : 0.6;
+    src.connect(filt); filt.connect(hp); hp.connect(g); g.connect(bus);
+    var breathe = lfo(g.gain, 0.12, 0.07);
+    src.start();
+    var stops = [];
+    if (heavy) {
+      stops.push(scheduleRandom(6, 16, function () {
+        burst(bus, { dur: 1.8, freq: 400, freqEnd: 90, filterType: 'lowpass', q: 0.6, peak: 0.85, attack: 0.2, release: 1.6, brown: true });
+      }));
+    }
+    return { bus: bus, sources: [src, breathe], stops: stops };
+  }
+
+  function buildForest() {
+    var c = ac(), bus = makeBus();
+    var src = noiseSource(whiteBuffer(4));
+    var filt = c.createBiquadFilter(); filt.type = 'lowpass'; filt.frequency.value = 700;
+    var g = c.createGain(); g.gain.value = 0.5;
+    src.connect(filt); filt.connect(g); g.connect(bus);
+    var windGust = lfo(filt.frequency, 0.05, 250);
+    var breathe = lfo(g.gain, 0.08, 0.1);
+    src.start();
+    var stops = [scheduleRandom(2.5, 7, function () { birdChirp(bus); })];
+    return { bus: bus, sources: [src, windGust, breathe], stops: stops };
+  }
+
+  function buildOcean() {
+    var c = ac(), bus = makeBus();
+    var src = noiseSource(whiteBuffer(4));
+    var filt = c.createBiquadFilter(); filt.type = 'lowpass'; filt.frequency.value = 500;
+    var g = c.createGain(); g.gain.value = 0.35;
+    src.connect(filt); filt.connect(g); g.connect(bus);
+    var swell = lfo(g.gain, 0.09, 0.3);
+    src.start();
+    return { bus: bus, sources: [src, swell] };
+  }
+
+  function buildWhite() {
+    var c = ac(), bus = makeBus();
+    var src = noiseSource(whiteBuffer(4));
+    var filt = c.createBiquadFilter(); filt.type = 'lowpass'; filt.frequency.value = 9000;
+    var g = c.createGain(); g.gain.value = 0.45;
+    src.connect(filt); filt.connect(g); g.connect(bus);
+    src.start();
+    return { bus: bus, sources: [src] };
+  }
+
+  function buildBrown() {
+    var c = ac(), bus = makeBus();
+    var src = noiseSource(brownBuffer(4));
+    var g = c.createGain(); g.gain.value = 0.75;
+    src.connect(g); g.connect(bus);
+    src.start();
+    return { bus: bus, sources: [src] };
+  }
+
+  function buildFire() {
+    var c = ac(), bus = makeBus();
+    var src = noiseSource(brownBuffer(4));
+    var filt = c.createBiquadFilter(); filt.type = 'lowpass'; filt.frequency.value = 300;
+    var g = c.createGain(); g.gain.value = 0.3;
+    src.connect(filt); filt.connect(g); g.connect(bus);
+    src.start();
+    var stops = [scheduleRandom(0.12, 0.9, function () { crackle(bus); })];
+    return { bus: bus, sources: [src], stops: stops };
+  }
+
+  function buildLofi() {
+    var c = ac(), bus = makeBus();
+    // Juda past ovozdagi "vinil" shovqini — lo-fi uchun issiq fon
+    var hiss = noiseSource(whiteBuffer(4));
+    var hissFilt = c.createBiquadFilter(); hissFilt.type = 'highpass'; hissFilt.frequency.value = 3000;
+    var hissGain = c.createGain(); hissGain.gain.value = 0.02;
+    hiss.connect(hissFilt); hissFilt.connect(hissGain); hissGain.connect(bus);
+    hiss.start();
+
+    var chords = [
+      [261.63, 329.63, 392.00, 493.88], // Cmaj7
+      [220.00, 261.63, 329.63, 392.00], // Am7
+      [174.61, 220.00, 261.63, 349.23], // Fmaj7
+      [196.00, 246.94, 293.66, 349.23]  // G7
+    ];
+    var padFilt = c.createBiquadFilter(); padFilt.type = 'lowpass'; padFilt.frequency.value = 1100;
+    padFilt.connect(bus);
+    var idx = 0, stopped = false, timer = null;
+
+    function playChord() {
+      if (stopped) return;
+      var chord = chords[idx % chords.length]; idx++;
+      var now = c.currentTime, dur = 6.5;
+      chord.forEach(function (freq, i) {
+        [1, 1.006].forEach(function (detune) {
+          var osc = c.createOscillator();
+          osc.type = i === 0 ? 'triangle' : 'sine';
+          osc.frequency.value = freq * detune;
+          var g = c.createGain(); g.gain.value = 0;
+          osc.connect(g); g.connect(padFilt);
+          g.gain.setValueAtTime(0.0001, now);
+          g.gain.linearRampToValueAtTime(0.045, now + 1.4);
+          g.gain.linearRampToValueAtTime(0.03, now + dur - 1.8);
+          g.gain.linearRampToValueAtTime(0.0001, now + dur);
+          osc.start(now); osc.stop(now + dur + 0.1);
         });
       });
-    }).then(function (blob) {
-      return URL.createObjectURL(blob);
-    });
-  }
-
-  // Bitta qatlam uchun <audio> elementini quradi.
-  // 1-yo'l (asosiy): har bir manbani navbat bilan kesh orqali yuklashga
-  //    urinadi ("o'rnatish"); muvaffaqiyatli bo'lsa, keyingi safarlar
-  //    uchun ham doimiy saqlanib qoladi.
-  // 2-yo'l (zaxira): agar hech qaysi manba kesh orqali yuklanmasa (masalan,
-  //    CORS to'sig'i tufayli), eski uslubga — to'g'ridan-to'g'ri <audio>
-  //    orqali oqim sifatida chalishga — qaytadi.
-  function buildLayer(urls, baseVol) {
-    var audio = new Audio();
-    audio.loop = true;
-    audio.preload = 'auto';
-    audio.volume = 0;
-    var idx = 0;
-    var directMode = false;
-
-    function tryDirectStream() {
-      if (idx >= urls.length) { setStreamStatus(t('focus_install_fail_status')); return; }
-      directMode = true;
-      audio.src = urls[idx];
-      try { audio.load(); } catch (e) {}
+      timer = setTimeout(playChord, dur * 1000 - 400);
     }
-
-    function tryCacheLoad() {
-      if (idx >= urls.length) {
-        // Kesh usuli barcha manbalarda ishlamadi — oxirgi imkoniyat
-        // sifatida to'g'ridan-to'g'ri stream qilib ko'ramiz.
-        idx = 0;
-        tryDirectStream();
-        return;
-      }
-      setStreamStatus(t('focus_installing_status'));
-      focusCacheGetOrFetch(urls[idx]).then(function (blobUrl) {
-        audio.src = blobUrl;
-        try { audio.load(); } catch (e) {}
-        setStreamStatus('');
-      }).catch(function () {
-        idx++;
-        tryCacheLoad();
-      });
-    }
-
-    audio.addEventListener('error', function () {
-      if (!directMode) return; // kesh bosqichidagi xatolar tryCacheLoad ichida boshqariladi
-      idx++;
-      if (idx < urls.length) { tryDirectStream(); }
-      else { setStreamStatus(t('focus_install_fail_status')); }
-    });
-    audio.addEventListener('canplay', function () { setStreamStatus(''); });
-
-    tryCacheLoad();
-    return { audio: audio, baseVol: baseVol };
+    playChord();
+    return { bus: bus, sources: [hiss], stops: [function () { stopped = true; if (timer) clearTimeout(timer); }] };
   }
 
-  function clearFade() { if (fadeTimer) { clearInterval(fadeTimer); fadeTimer = null; } }
-
-  // Barcha qatlamlarning ovozini birgalikda, mayin (linear) tarzda
-  // maqsadli darajaga (toMul, 0..VOL_CEILING) olib boradi.
-  function fadeLayers(layers, toMul, ms, done) {
-    clearFade();
-    if (!layers || !layers.length) { if (done) done(); return; }
-    var starts = layers.map(function (l) {
-      return l.baseVol > 0 ? (l.audio.volume / l.baseVol) : 0;
-    });
-    var start = Date.now();
-    fadeTimer = setInterval(function () {
-      var p = Math.min(1, (Date.now() - start) / ms);
-      layers.forEach(function (l, i) {
-        var mul = starts[i] + (toMul - starts[i]) * p;
-        l.audio.volume = Math.max(0, Math.min(1, l.baseVol * mul));
-      });
-      if (p >= 1) {
-        clearFade();
-        if (done) done();
-      }
-    }, 40);
-  }
+  var BUILDERS = {
+    rain: function () { return buildRain(false); },
+    storm: function () { return buildRain(true); },
+    forest: buildForest,
+    ocean: buildOcean,
+    white: buildWhite,
+    brown: buildBrown,
+    fire: buildFire,
+    lofi: buildLofi
+  };
 
   function teardown(node) {
     if (!node) return;
-    node.layers.forEach(function (l) {
-      try { l.audio.pause(); } catch (e) {}
-      try { l.audio.removeAttribute('src'); l.audio.load(); } catch (e) {}
-    });
+    (node.sources || []).forEach(function (n) { try { n.stop(); } catch (e) {} try { n.disconnect(); } catch (e) {} });
+    (node.stops || []).forEach(function (fn) { try { fn(); } catch (e) {} });
+    try { node.bus.disconnect(); } catch (e) {}
   }
 
-  function currentMul() {
-    return (Math.max(0, Math.min(100, masterPct || 0)) / 100) * VOL_CEILING;
+  function currentMul() { return (Math.max(0, Math.min(100, masterPct || 0)) / 100) * VOL_CEILING; }
+
+  function fadeMaster(toMul, seconds, cb) {
+    var c = ac(), now = c.currentTime;
+    master.gain.cancelScheduledValues(now);
+    master.gain.setValueAtTime(Math.max(0.0001, master.gain.value), now);
+    master.gain.linearRampToValueAtTime(Math.max(0.0001, toMul), now + seconds);
+    if (cb) setTimeout(cb, seconds * 1000 + 20);
   }
 
   function startNew(type, pct) {
+    ac();
     masterPct = pct;
-    setStreamStatus('');
-    var spec = FOCUS_SOUND_LAYERS[type] || FOCUS_SOUND_LAYERS.rain;
-    var layers = spec.map(function (l) { return buildLayer(l.urls, l.vol); });
-    layers.forEach(function (l) {
-      l.audio.volume = 0;
-      var p = l.audio.play();
-      if (p && p.catch) p.catch(function () { /* autoplay taqiqlansa, keyingi tugma bosilganda qayta urinadi */ });
-    });
-    current = { type: type, layers: layers };
+    var build = BUILDERS[type] || BUILDERS.rain;
+    current = build();
     currentType = type;
-    fadeLayers(layers, currentMul(), 320);
+    fadeMaster(currentMul(), 0.5);
   }
 
-  // Yangi tovushni chalishni boshlaydi: joriy tovush bo'lsa avval mayin
-  // (crossfade) so'nadi, so'ng yangisi mayin ko'tariladi — hech qanday
-  // "click" yoki uzilish bo'lmaydi.
+  // Tovush turini almashtirish: joriysi mayin so'nadi, so'ng yangisi mayin
+  // ko'tariladi — hech qanday "click" yoki uzilish bo'lmaydi.
   function play(type, pct) {
     if (currentType === type && current) { return resume(pct); }
     if (current) {
       var old = current;
-      fadeLayers(old.layers, 0, 240, function () { teardown(old); });
+      fadeMaster(0.0001, 0.3, function () { teardown(old); startNew(type, pct); });
       current = null; currentType = null;
-      setTimeout(function () { startNew(type, pct); }, 250);
     } else {
       startNew(type, pct);
     }
@@ -5771,30 +6170,19 @@ var FocusAudio = (function () {
   function setVolume(pct) {
     masterPct = pct;
     if (!current) return;
-    fadeLayers(current.layers, currentMul(), 180);
+    fadeMaster(currentMul(), 0.2);
   }
 
-  // Pauza — mayin so'nadi, so'ngra haqiqatda to'xtaydi (battery/trafik
-  // tejash uchun); Resume bosilganda xuddi shu joydan davom etadi.
   function pause() {
     if (!current) { playing = false; return; }
-    var layers = current.layers;
-    fadeLayers(layers, 0, 260, function () {
-      layers.forEach(function (l) { try { l.audio.pause(); } catch (e) {} });
-    });
+    fadeMaster(0.0001, 0.3);
     playing = false;
   }
 
   function resume(pct) {
     if (!current) return false;
     masterPct = pct;
-    current.layers.forEach(function (l) {
-      if (l.audio.paused) {
-        var p = l.audio.play();
-        if (p && p.catch) p.catch(function () {});
-      }
-    });
-    fadeLayers(current.layers, currentMul(), 320);
+    fadeMaster(currentMul(), 0.4);
     playing = true;
     return true;
   }
@@ -5802,10 +6190,9 @@ var FocusAudio = (function () {
   function stopAll() {
     if (current) {
       var old = current;
-      fadeLayers(old.layers, 0, 300, function () { teardown(old); });
+      fadeMaster(0.0001, 0.3, function () { teardown(old); });
     }
     current = null; currentType = null; playing = false;
-    setStreamStatus('');
   }
 
   function isPlaying() { return playing; }
@@ -5817,9 +6204,13 @@ var FocusAudio = (function () {
 // ---- Ambient Focus Sound: sozlamalar, UI va boshqaruv funksiyalari ----
 var FOCUS_SOUNDS = {
   rain:   { icon: '🌧️', labelKey: 'focus_sound_rain' },
-  lofi:   { icon: '🎧', labelKey: 'focus_sound_lofi' },
-  cafe:   { icon: '☕', labelKey: 'focus_sound_cafe' },
-  forest: { icon: '🍃', labelKey: 'focus_sound_forest' }
+  storm:  { icon: '⛈️', labelKey: 'focus_sound_storm' },
+  forest: { icon: '🌲', labelKey: 'focus_sound_forest' },
+  ocean:  { icon: '🌊', labelKey: 'focus_sound_ocean' },
+  white:  { icon: '🤍', labelKey: 'focus_sound_white' },
+  brown:  { icon: '🟤', labelKey: 'focus_sound_brown' },
+  fire:   { icon: '🔥', labelKey: 'focus_sound_fire' },
+  lofi:   { icon: '🎹', labelKey: 'focus_sound_lofi' }
 };
 
 function ensureAmbientFocusDefaults() {
@@ -6103,6 +6494,9 @@ function t(key) {
 }
 // Alias — ba'zi funksiyalarda lokal 't' (task) parametri bo'lgani uchun ishlatiladi
 function tr(key) { return t(key); }
+// Level nomini joriy tilda qaytaradi (level_name_1..7 kalitlari orqali,
+// tarjima topilmasa LEVELS massividagi standart (o'zbekcha) nomga qaytadi).
+function levelName(lvObj) { return lvObj ? t('level_name_' + lvObj.level) : ''; }
 
 function applyLanguage() {
   document.documentElement.lang = getLang();
@@ -6231,7 +6625,7 @@ function showLevelUpModal(lv) {
     '<div class="levelup-box">' +
       '<span class="levelup-icon">' + lv.icon + '</span>' +
       '<div class="levelup-title">⭐ ' + t('levelup_title') + ' ⭐</div>' +
-      '<div class="levelup-name">' + lv.name + '</div>' +
+      '<div class="levelup-name">' + levelName(lv) + '</div>' +
       '<div class="levelup-sub">' + t('levelup_sub').replace('{level}', lv.level) +
         (reward > 0 ? '<br><span style="color:var(--gold);font-weight:700;font-size:18px">+' + reward + ' 🪙 ' + t('levelup_bonus_coins') + '</span>' : '') +
       '</div>' +
@@ -6304,6 +6698,10 @@ function addDays(dateStr, n) {
 }
 
 function taskDueToday(t) {
+  // 🧊 Muzlatilgan vazifa hech qachon "bugun bajarilishi kerak" deb
+  // hisoblanmaydi — u faol ro'yxatlardan butunlay g'oyib bo'ladi va
+  // HP/jarima/streak hisobiga hech qanday ta'sir qilmaydi.
+  if (t.isFrozen) return false;
   const td = today();
   const dow = new Date().getDay();
   if (t.repeat === 'daily') return true;
@@ -6322,8 +6720,24 @@ function taskDueToday(t) {
 // ta'minlaydi.
 function ensureFreezeGrants() {
   if (typeof S.freezeCount !== 'number' || isNaN(S.freezeCount)) S.freezeCount = 0;
+  if (!S.freezeWelcomeGranted) {
+    // "Xush kelibsiz" muzlatish imkoniyati hali berilmagan — buni darhol
+    // beramiz. Bu nafaqat yangi foydalanuvchilar uchun, balki avvalgi kod
+    // versiyasida bu imkoniyat berilmay, faqat "keyingi sana" o'rnatilib
+    // qolgan (freezeCount hamon 0) mavjud foydalanuvchilar uchun ham
+    // ishlaydi — chunki tekshiruv alohida bayroq (freezeWelcomeGranted)
+    // orqali, S.freezeNextGrantDate mavjud-yo'qligidan qat'i nazar amalga
+    // oshadi.
+    S.freezeCount++;
+    S.freezeWelcomeGranted = true;
+    if (!S.freezeNextGrantDate) S.freezeNextGrantDate = addDays(today(), 30);
+    S.pendingFreezeGrantMsg = '❄️ ' + t('freeze_granted_msg_one');
+    return;
+  }
   if (!S.freezeNextGrantDate) {
-    // Birinchi marta ishga tushganda — 30 kundan keyin birinchi imkoniyat beriladi.
+    // Ehtiyot chorasi: nazariy jihatdan bu yerga tushmasligi kerak (yuqorida
+    // welcome-blok bilan birga o'rnatiladi), lekin eski/qo'lda o'zgartirilgan
+    // holatlar uchun himoya sifatida qoldirildi.
     S.freezeNextGrantDate = addDays(today(), 30);
     return;
   }
@@ -6347,17 +6761,30 @@ function ensureFreezeGrants() {
 
 // Foydalanuvchi Profil bo'limidan bosib, bugungi kunni "muzlatadi" —
 // bugun uchun bironta vazifa bajarilmagan bo'lsa ham jarima olinmaydi va
-// streak zanjiri uzilmaydi.
+// streak zanjiri uzilmaydi. Agar bugun allaqachon muzlatilgan bo'lsa,
+// tugmani qayta bosish — muzlatishni BEKOR QILADI (imkoniyat qaytariladi,
+// streak qayta eski holatiga hisoblanadi). Ya'ni bitta tugma ikki yo'nalishli
+// (toggle) ishlaydi: Muzlatish ⇄ Bekor qilish.
 function useFreezeToday() {
   ensureFreezeGrants();
   var td = today();
   if (!S.freezeUsedDates) S.freezeUsedDates = [];
-  if (S.freezeUsedDates.indexOf(td) !== -1) { toast(t('freeze_already_used_toast')); return; }
+  var idx = S.freezeUsedDates.indexOf(td);
+  if (idx !== -1) {
+    // Bugungi muzlatishni bekor qilamiz — imkoniyat egasiga qaytariladi.
+    S.freezeUsedDates.splice(idx, 1);
+    S.freezeCount = (S.freezeCount || 0) + 1;
+    recalcStreakFromLog();
+    save(); render(); renderProfile(); renderCalendar();
+    toast('↩️ ' + t('freeze_cancel_toast'));
+    try { SFX.click(); } catch (e) {}
+    return;
+  }
   if ((S.freezeCount || 0) <= 0) { toast(t('freeze_none_left_toast')); return; }
   S.freezeCount--;
   S.freezeUsedDates.push(td);
   recalcStreakFromLog();
-  save(); render(); renderProfile();
+  save(); render(); renderProfile(); renderCalendar();
   toast('❄️ ' + t('freeze_used_toast'));
   try { SFX.click(); } catch (e) {}
 }
@@ -7115,6 +7542,11 @@ function refundTaskPenalty(tsk, dateStr) {
 function taskWasDueOnDate(t, dateStr) {
   // Vazifa qo'shilguncha bo'lgan kunlarga ta'sir qilmasin
   if (t.createdAt && dateStr < t.createdAt) return false;
+  // 🧊 Muzlatilgan vazifa — muzlatilgan sanadan (frozenAt) boshlab HP,
+  // jarima va streak hisobiga umuman ta'sir qilmasligi kerak. Muzlatishdan
+  // OLDINGI tarix (allaqachon bajarilgan/o'tkazib yuborilgan kunlar) esa
+  // o'zgarishsiz qoladi — bu orqaga qarab streak/statistikani buzmaydi.
+  if (t.isFrozen && (!t.frozenAt || dateStr >= t.frozenAt)) return false;
   var d = new Date(dateStr + 'T00:00:00'); var dow = d.getDay();
   if (t.repeat === 'daily') return true;
   if (t.repeat === 'weekdays') return dow >= 1 && dow <= 5;
@@ -7553,6 +7985,7 @@ function saveTask() {
     label: mLabel || null,
     note: document.getElementById('m-note').value.trim() || null,
     emoji: mEmoji || null,
+    isFrozen: false, frozenAt: null,
   };
   S.tasks.push(task);
   // Yangi task har doim mavjud tartibning OXIRIGA qo'shiladi, avvalgi
@@ -7704,6 +8137,72 @@ function unskipTask(id) {
   save(); render();
 }
 
+
+// ============================================================
+// 🧊 TASK FREEZE — vazifani muzlatish / muzdan chiqarish
+// ------------------------------------------------------------
+// Muzlatilgan vazifa (t.isFrozen===true) barcha faol ro'yxatlardan
+// (bugungi, bir martalik, kelajakdagi) butunlay yashiriladi va
+// HP/jarima/streak hisobiga hech qanday ta'sir qilmaydi — buni
+// taskDueToday() va taskWasDueOnDate() ichidagi tekshiruvlar
+// ta'minlaydi (yagona manba). U faqat Statistika va Profil >
+// "🧊 Muzlatilgan vazifalar" bo'limida ko'rinadi.
+function freezeTask(id) {
+  var tk = S.tasks.find(function(x){ return x.id===id; });
+  if (!tk || tk.isFrozen) return;
+  tk.isFrozen = true;
+  tk.frozenAt = today();
+  save(); render(); renderProfile();
+  toast('🧊 ' + t('freeze_task_toast'));
+  try { SFX.click(); } catch(e) {}
+}
+
+function unfreezeTask(id) {
+  var tk = S.tasks.find(function(x){ return x.id===id; });
+  if (!tk || !tk.isFrozen) return;
+  tk.isFrozen = false;
+  tk.frozenAt = null;
+  save(); render(); renderProfile();
+  renderFrozenTasksPanel();
+  toast('🔥 ' + t('unfreeze_task_toast'));
+  try { SFX.click(); } catch(e) {}
+}
+
+// Profil bo'limidagi "Muzlatilgan vazifalar" panelini ochish/yopish
+function toggleFrozenTasksPanel() {
+  var panel = document.getElementById('frozen-tasks-panel');
+  if (!panel) return;
+  var willShow = panel.style.display === 'none' || !panel.style.display;
+  if (willShow) {
+    renderFrozenTasksPanel();
+    panel.style.display = '';
+  } else {
+    panel.style.display = 'none';
+  }
+}
+
+function renderFrozenTasksPanel() {
+  var list = document.getElementById('frozen-tasks-list');
+  var countEl = document.getElementById('frozen-tasks-count');
+  if (!list) return;
+  var frozen = S.tasks.filter(function(x){ return x.isFrozen; });
+  if (countEl) countEl.textContent = frozen.length;
+  if (!frozen.length) {
+    list.innerHTML = '<div style="font-size:13px;color:var(--text-dim);text-align:center;padding:14px 0">' + t('frozen_tasks_empty') + '</div>';
+    return;
+  }
+  list.innerHTML = frozen.map(function(tk){
+    var rl = repeatLabel(tk);
+    return '' +
+      '<div style="display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:8px">' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="font-size:14px;color:var(--text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (tk.emoji ? tk.emoji + ' ' : '') + esc(tk.name) + '</div>' +
+          '<div style="font-size:11px;color:var(--text-dim);margin-top:2px">' + rl.text + (tk.frozenAt ? ' · ' + t('frozen_since_label') + ' ' + tk.frozenAt : '') + '</div>' +
+        '</div>' +
+        '<button onclick="unfreezeTask(' + JSON.stringify(tk.id) + ')" style="flex-shrink:0;padding:7px 14px;border-radius:999px;border:1px solid rgba(245,166,35,0.4);background:rgba(245,166,35,0.12);color:var(--gold);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">🔥 ' + t('unfreeze_btn') + '</button>' +
+      '</div>';
+  }).join('');
+}
 
 function postponeTask(id) {
   const tk = S.tasks.find(x=>x.id===id); if(!tk||tk.done) return;
@@ -7979,7 +8478,7 @@ function initTaskSortable() {
       // check/edit/delete/menu tugmalari filter orqali chetlab o'tiladi,
       // shu sababli ularni oddiy bosish hamon bir zumda ishlaydi.
       draggable: '.task-card',
-      filter: '.check-btn, .act-btn, .task-menu-btn, .task-note-toggle, .task-label-dot',
+      filter: '.check-btn, .act-btn, .task-menu-btn, .task-note-toggle, .task-label-dot, .task-dots-btn, .task-dropdown-menu, .task-dropdown-item',
       preventOnFilter: false,
       delay: 160,             // bosib turish kerak bo'lgan vaqt (ms)
       delayOnTouchOnly: true, // sichqonchada (desktop) darhol, mobil ekranda ushlab turish talab qilinadi
@@ -8265,6 +8764,7 @@ function showTab(tab) {
   });
   var _reytingPanel = document.getElementById('reyting-myrank-panel');
   if (_reytingPanel) _reytingPanel.style.display = (tab==='reyting') ? '' : 'none';
+  if (tab !== 'reyting') stopReytingCountdown();
   if(tab==='rewards') renderRewards();
   if(tab==='spin') renderSpin();
   if(tab==='profile') { renderProfile(); renderStats(); renderCalendar(); renderIeltsCountdown(); }
@@ -8523,6 +9023,40 @@ function overReward(id) {
   overlay.addEventListener('mousedown',function(e){if(e.target===overlay)overlay.remove();});
 }
 
+// ============================================================
+// ⋮ TASK DROPDOWN MENU — Skip/Freeze/Edit/Delete uchun ixcham,
+// kartaga yopishgan (anchored) popover menyu. Bitta vaqtda faqat
+// bitta menyu ochiq bo'ladi; menyu tashqarisiga bosilganda yoki
+// Escape bosilganda avtomatik yopiladi.
+// ============================================================
+function closeAllTaskDropdowns() {
+  document.querySelectorAll('.task-dropdown-menu.open').forEach(function(m){ m.classList.remove('open'); });
+  document.querySelectorAll('.task-dots-btn.active').forEach(function(b){ b.classList.remove('active'); });
+}
+
+function toggleTaskDropdown(id, btnEl, ev) {
+  if (ev) { ev.stopPropagation(); ev.preventDefault(); }
+  var menu = document.getElementById('task-dd-' + id);
+  if (!menu) return;
+  var willOpen = !menu.classList.contains('open');
+  closeAllTaskDropdowns();
+  if (willOpen) {
+    menu.classList.add('open');
+    if (btnEl) btnEl.classList.add('active');
+  }
+}
+
+// Menyudan tashqariga bosilganda yoki Escape bosilganda yopish
+document.addEventListener('click', function(e) {
+  if (e.target.closest && (e.target.closest('.task-dots-wrap'))) return;
+  closeAllTaskDropdowns();
+});
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeAllTaskDropdowns();
+});
+// Task ro'yxati sudrab-tashlanganda (drag boshlanganda) ochiq menyularni yopamiz
+document.addEventListener('scroll', closeAllTaskDropdowns, true);
+
 function makeTaskEl(t) {
   const d = document.createElement('div');
   let cls = 'task-card';
@@ -8568,12 +9102,15 @@ function makeTaskEl(t) {
       ${diffBadge(t.diff||1)}
       <span class="badge badge-coins">+${t.coins}🪙</span>
     </div>
-    <div class="task-actions">
-      
-      ${!t.done&&!t.skipped?`<button class="act-btn" onclick="skipTask(${t.id})" title="Otkazib yuborish">&#9193;</button>`:''}
-      ${t.skipped&&!t.done?`<button class="act-btn" onclick="unskipTask(${t.id})" title="Qaytarish" style="border-color:rgba(96,165,250,0.4);color:#60A5FA">&#8617;</button>`:''}
-      <button class="act-btn" onclick="editTask(${t.id})" title="Tahrirlash">✏️</button>
-      <button class="act-btn del" onclick="deleteTask(${t.id})">🗑</button>
+    <div class="task-dots-wrap">
+      <button class="task-dots-btn" onclick="toggleTaskDropdown(${t.id}, this, event)" title="${tr('task_actions_title')}">⋮</button>
+      <div class="task-dropdown-menu" id="task-dd-${t.id}">
+        ${!t.done&&!t.skipped?`<button class="task-dropdown-item" onclick="closeAllTaskDropdowns();skipTask(${t.id})"><span class="tdi-icon">⏩</span>${tr('skip_dd_item')}</button>`:''}
+        ${t.skipped&&!t.done?`<button class="task-dropdown-item" onclick="closeAllTaskDropdowns();unskipTask(${t.id})"><span class="tdi-icon">↩️</span>${tr('unskip_dd_item')}</button>`:''}
+        <button class="task-dropdown-item" onclick="closeAllTaskDropdowns();freezeTask(${t.id})"><span class="tdi-icon">🧊</span>${tr('freeze_dd_item')}</button>
+        <button class="task-dropdown-item" onclick="closeAllTaskDropdowns();editTask(${t.id})"><span class="tdi-icon">✏️</span>${tr('edit_dd_item')}</button>
+        <button class="task-dropdown-item danger" onclick="closeAllTaskDropdowns();deleteTask(${t.id})"><span class="tdi-icon">🗑</span>${tr('delete_dd_item')}</button>
+      </div>
     </div>
     <button class="task-menu-btn" onclick="openTaskSheet(${t.id})" title="Amallar">⋯</button>
   `;
@@ -8982,15 +9519,15 @@ function renderLevel() {
 
   // Panel details
   document.getElementById('lp-icon').textContent = lv.icon;
-  document.getElementById('lp-name').textContent = lv.name;
-  document.getElementById('lp-num').textContent = 'Level ' + lv.level + '  ' + total + ' XP';
+  document.getElementById('lp-name').textContent = levelName(lv);
+  document.getElementById('lp-num').textContent = t('level_word') + ' ' + lv.level + '  ' + total + ' XP';
 
   if (nextLv) {
     const progress = total - lv.min;
     const needed = nextLv.min - lv.min;
     const pct = Math.min(100, Math.round(progress / needed * 100));
     document.getElementById('level-fill').style.width = pct + '%';
-    document.getElementById('level-sub').textContent = (nextLv.min - total) + ' ' + t('level_xp_left') + ' ➡️ ' + nextLv.icon + ' ' + nextLv.name;
+    document.getElementById('level-sub').textContent = (nextLv.min - total) + ' ' + t('level_xp_left') + ' ➡️ ' + nextLv.icon + ' ' + levelName(nextLv);
   } else {
     document.getElementById('level-fill').style.width = '100%';
     document.getElementById('level-sub').textContent = t('level_max');
@@ -9005,10 +9542,10 @@ function renderLevel() {
     const el = document.createElement('div');
     el.style.cssText = 'display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:10px;border:1px solid ' + (isCur ? 'rgba(245,166,35,0.5)' : 'var(--border)') + ';background:' + (isCur ? 'var(--gold-dim)' : 'transparent');
     el.innerHTML = '<span style="font-size:18px">' + l.icon + '</span>'
-      + '<span style="flex:1;font-size:13px;color:' + (isCur ? 'var(--gold)' : isDone ? 'var(--text)' : 'var(--text-dim)') + '">' + l.name + '</span>'
+      + '<span style="flex:1;font-size:13px;color:' + (isCur ? 'var(--gold)' : isDone ? 'var(--text)' : 'var(--text-dim)') + '">' + levelName(l) + '</span>'
       + '<span style="font-size:11px;color:var(--text-dim)">' + l.min + ' XP</span>'
       + (l.reward > 0 ? '<span style="font-size:11px;color:var(--gold);margin-left:4px">+'+l.reward+'🪙</span>' : '')
-      + (isCur ? '<span style="font-size:10px;color:var(--gold);font-weight:700;margin-left:4px">✦ SEN</span>' : isDone ? '<span style="font-size:12px;color:var(--green);margin-left:4px">✓</span>' : '');
+      + (isCur ? '<span style="font-size:10px;color:var(--gold);font-weight:700;margin-left:4px">✦ ' + t('level_you') + '</span>' : isDone ? '<span style="font-size:12px;color:var(--green);margin-left:4px">✓</span>' : '');
     list.appendChild(el);
   });
 }
@@ -9412,8 +9949,7 @@ function renderHp() {
 function updateHeaderUserTitle() {
   var el = document.getElementById('user-title');
   if (!el) return;
-  var savedName = (S.profile && S.profile.name) || S.kiName || '';
-  el.textContent = savedName ? savedName : t('header_default_name');
+  el.textContent = getDisplayUsername();
 }
 
 function render() {
@@ -9487,7 +10023,7 @@ function render() {
     if (t.postponedTo && t.postponedTo > today()) return false;
     return taskDueToday(t);
   });
-  const onceTasks = S.tasks.filter(t=>t.repeat==='once' && (!t.postponedTo || t.postponedTo<=today()) && !t.done);
+  const onceTasks = S.tasks.filter(t=>!t.isFrozen && t.repeat==='once' && (!t.postponedTo || t.postponedTo<=today()) && !t.done);
 
   // MUHIM TUZATISH: kelajakka mo'ljallangan vazifa bugun oldindan "Done"
   // qilingan bo'lsa ham, u todayTasks ichida bo'lmagani uchun DONE
@@ -9619,6 +10155,7 @@ function daysUntilTask(t) {
 // qilmaydi, shu sababli u "Done" bo'lgandan keyin ham ko'rinib turadi
 // va checkbox orqali qaytarib bekor qilish mumkin bo'ladi.
 function taskIsFuture(t, td) {
+  if (t.isFrozen) return false;
   if (t.repeat === 'interval' && t.nextDate && t.nextDate > td) return true;
   if (t.repeat === 'once' && t.postponedTo && t.postponedTo > td) return true;
   if (t.repeat === 'custom-days') {
@@ -9650,7 +10187,7 @@ function renderTaskList() {
     return taskDueToday(t);
   });
   var onceTasks = S.tasks.filter(function(t){
-    return t.repeat==='once' && (!t.postponedTo || t.postponedTo<=td) && !t.done;
+    return !t.isFrozen && t.repeat==='once' && (!t.postponedTo || t.postponedTo<=td) && !t.done;
   });
 
   // Kelajakdagi vazifalar (faqat showAllTasks=true da)
@@ -9763,7 +10300,31 @@ async function loadUserDataAndInit() {
       }
     });
   } else {
-    // LocalStorage'da hali holat yo'q — birinchi marta, boshlang'ich holatni saqlaymiz
+    // LocalStorage'da hali holat yo'q — birinchi marta, boshlang'ich holatni saqlaymiz.
+    // Yangi foydalanuvchi "Maqsadlarim" bo'limi qanday ishlashini tushunishi uchun
+    // bitta namuna maqsad qo'shib qo'yamiz (masalan: 7 kunga "10 ta lug'at yodlash").
+    // Bu shunchaki ko'rgazma — foydalanuvchi uni istalgan payt o'zi o'chirib
+    // tashlashi yoki tahrirlashi mumkin.
+    var exStart = today();
+    var exEnd = addDays(exStart, 7 - 1);
+    S.goals = [{
+      id: Date.now(),
+      name: t('goal_example_name'),
+      desc: t('goal_example_desc'),
+      duration: 7,
+      emoji: '📚',
+      startDate: exStart,
+      endDate: exEnd,
+      done: false,
+      daysChecked: {},
+      daysCoinsGiven: {},
+      coins: 1
+    }];
+    // "Chest Vazifalar" bo'limi uchun ham bitta namuna vazifa qo'shamiz
+    // (masalan "Podcast ko'rish"), shu orqali foydalanuvchi bu bo'lim
+    // qanday ishlashini tushunadi. Xohlasa o'zi o'chirib tashlaydi.
+    S.nextCtId = 1001;
+    S.chestTasks = [{ id: 1000, name: t('chest_example_task_name'), diff: 1 }];
     saveToLocalStorage(S);
   }
 
@@ -9818,6 +10379,7 @@ async function loadUserDataAndInit() {
 
   // Reyting — oylik mavsum almashganmi, tekshiramiz (Top-3 mukofoti)
   checkReytingMonthlySeason();
+  startMockLeaderboardTicker();
 
   render();
   refreshAllModulesFromState();
@@ -9889,7 +10451,19 @@ function startEditTitle(){
 function saveTitle(){
   var s=document.getElementById('user-title'),p=s.nextElementSibling,inp=document.getElementById('title-input');
   var v=inp.value.trim();
-  if(v){ S.kiName=v; if(!S.profile)S.profile={}; S.profile.name=v; }
+  if(v){
+    var currentName = S.profile && S.profile.name;
+    if (v.length < 3) { toast(t('pe_username_short')); }
+    else if (v.length > USERNAME_MAX_LEN) { toast(t('pe_username_too_long')); }
+    else if (!USERNAME_ALLOWED_REGEX.test(v)) { toast(t('pe_username_invalid_chars')); }
+    else if (isUsernameBlocked(v)) { toast(t('pe_username_blocked')); }
+    else if (isUsernameTaken(v, currentName)) { toast(t('pe_username_taken')); }
+    else {
+      if(!S.profile)S.profile={};
+      applyUsernameChange(v);
+      S.kiName=v;
+    }
+  }
   save();
   updateHeaderUserTitle();
   inp.style.display='none';s.style.display='';p.style.display='';
@@ -10186,7 +10760,7 @@ setTimeout(requestNotifPermissionSilent, 3000);
 // -- MUAMMO 3: Profile --
 function viewProfilePhoto() {
   var photo = S.profile && S.profile.photo;
-  var name = (S.profile && S.profile.name) || t('header_default_name');
+  var name = getDisplayUsername();
   var ov = document.createElement('div');
   ov.className = 'avatar-view-overlay';
   if(photo) {
@@ -10203,6 +10777,70 @@ function viewProfilePhoto() {
 // yoki boshqa manbada band-bandmasligini tekshiradi. Foydalanuvchining
 // o'z hozirgi ismi bilan solishtirilmaydi — buni chaqiruvchi taraf
 // currentName parametri orqali istisno qiladi.
+
+// 🎮 Minecraft nikiga o'xshash username cheklovlari:
+// faqat lotin harflari (A-Z/a-z), raqamlar (0-9) va pastki chiziq (_)
+// ruxsat etiladi — bo'sh joy, emoji, va boshqa maxsus belgilar (masalan
+// stiker/emoji kabi) taqiqlanadi. Uzunlik: 3–16 belgi (Minecraft bilan bir xil).
+var USERNAME_MAX_LEN = 16;
+var USERNAME_ALLOWED_REGEX = /^[A-Za-z0-9_]+$/;
+
+// Tizim uchun band bo'lgan (rezerv qilingan) nomlar — foydalanuvchi o'zini
+// admin/moderator kabi ko'rsatib odlashtirmasligi uchun.
+var USERNAME_RESERVED = [
+  'admin','administrator','moderator','support','system','staff',
+  'null','undefined','anonymous','anthropic','claude','root','owner'
+];
+
+// Odobsiz/haqoratli so'zlar bo'yicha kengaytirilgan filtr (ingliz/rus/o'zbek
+// tilida ~100 ta eng keng tarqalgan so'kinish, jinsiy va haqoratli so'z).
+// BU RO'YXAT TO'LIQ EMAS — kerak bo'lsa kengaytirilishi mumkin. Qidiruv
+// substring (qism-satr) asosida ishlaydi, shu sabab ba'zi uzun/neytral
+// so'zlar ichida tasodifan mos kelib qolishi mumkin — bu qasddan shunday
+// (xavfsizroq tomonga og'ish uchun).
+var USERNAME_PROFANITY = [
+  // --- Ingliz tili: so'kinish / haqorat ---
+  'fuck','fucker','fucking','shit','shitty','bullshit','bitch','asshole',
+  'ass','bastard','cunt','dick','dickhead','pussy','cock','whore','slut',
+  'douche','jerk','moron','idiot','retard','retarded','scum','twat',
+  'wanker','prick','damn','goddamn','crap','freak','loser','stupid',
+  // --- Ingliz tili: jinsiy mazmun ---
+  'sex','sexy','porn','porno','nude','naked','boobs','tits','penis',
+  'vagina','orgasm','masturbat','cum','jerkoff','blowjob','anal','handjob',
+  'orgy','fetish','incest','pedo','pedophile','rape','rapist','molest',
+  // --- Ingliz tili: nafrat/zo'ravonlik ---
+  'nigger','nigga','faggot','fag','nazi','hitler','terrorist','kill',
+  'suicide','murder',
+  // --- Rus tili: so'kinish ---
+  'сука','блять','блядь','хуй','хуйня','пизда','пиздец','ебал','ебан',
+  'ебать','мудак','сволоч','идиот','дебил','даун','гандон','урод','тварь',
+  'гнида','петух','пидор','ублюдок','мразь','долбоеб','придурок',
+  // --- Rus tili: jinsiy mazmun ---
+  'шлюха','проститутка','порно','секс','трахать','минет','залупа','манда',
+  // --- O'zbek tili: haqorat / so'kinish ---
+  'jalab','qotoq','fohisha','padarla','padaring','onangni','onani',
+  'sikay','sikish','sikilgan','sikik','harom','betamiz','iflos','nopok',
+  'gomik','ablah','ahmoq','tentak','esankiragan','shalvirak','qusuq',
+  'kir','junjik','bekorchi','shayton',
+  // --- O'zbek tili: qo'shimcha 50 ta so'z ---
+  'axloqsiz','benomus','nomussiz','sharmanda','sharmandalik','uyatsiz',
+  'rasvo','laqma','lapashang','kaltafahm','tuban','eshakmiya','choʻchqa',
+  'chochqa','itvachcha','padarlanat','padarlanati','lanati','padarqusur',
+  'xiyonatchi','sotqin','yolgonchi','munofiq','fohishaboz','xotinboz',
+  'kissavur','firibgar','alkash','giyohvand','nomahram','buzuq','buzuqi',
+  'axlatvoy','ifloslik','nopoklik','bemaza','qusuqvoy','junjikvoy','jinni',
+  'tentakvoy','ablahjon','kalavoy','sassiq','sasqoq','shalvirvoy',
+  'bekorchivoy','yalqov','laqmavoy','soqov','kar-soqov','nusxa'
+];
+
+function isUsernameBlocked(newUsername) {
+  if (!newUsername) return false;
+  var normalized = newUsername.trim().toLowerCase();
+  if (USERNAME_RESERVED.indexOf(normalized) !== -1) return true;
+  return USERNAME_PROFANITY.some(function(bad){ return normalized.indexOf(bad) !== -1; });
+}
+
+
 function isUsernameTaken(newUsername, currentName) {
   if (!newUsername) return false;
   var normalized = newUsername.trim().toLowerCase();
@@ -10212,10 +10850,108 @@ function isUsernameTaken(newUsername, currentName) {
     return p && p.name && String(p.name).trim().toLowerCase() === normalized;
   });
   if (takenInMock) return true;
-  // Boshqa LocalStorage manbalari (masalan, saqlangan boshqa profillar
-  // bo'lsa) uchun ham tekshiruv joyi — hozircha faqat mockLeaderboard
-  // asosiy manba hisoblanadi.
+  // Registrda hozir "band" deb belgilangan (reservedNicks) nomlar bilan ham
+  // solishtiramiz — bu eski nik ozod qilinmaguncha boshqa hech kim o'sha
+  // nikni qayta ololmasligini kafolatlaydi.
+  var reg = ensureUsernameRegistry();
+  if (reg.reservedNicks && reg.reservedNicks[normalized]) return true;
   return false;
+}
+
+// ==== Avtomatik username tizimi (user1, user2, user3 ...) ====
+// Foydalanuvchi hali o'zi nik qo'ymagan bo'lsa, statik "Profile" so'zi
+// o'rniga tizim navbat bilan userN (masalan user1, user2, user3...)
+// ko'rinishidagi taxallus beradi. Bu holat S.profile.autoUsername'da
+// saqlanadi (barqaror bo'lishi uchun — har render'da qayta o'zgarmasin).
+// Har safar kimdir nikini o'zgartirsa (custom bo'lsin, auto bo'lsin) —
+// eski nik/raqam registrga qaytarilib "ozod" qilinadi, shunda boshqalar
+// o'sha nik yoki o'sha raqamdan qayta foydalana oladi.
+function ensureUsernameRegistry() {
+  if (!S.usernameRegistry) S.usernameRegistry = {};
+  var reg = S.usernameRegistry;
+  if (typeof reg.nextNum !== 'number' || reg.nextNum < 1) reg.nextNum = 1;
+  if (!Array.isArray(reg.freedNums)) reg.freedNums = [];
+  if (!reg.reservedNicks || typeof reg.reservedNicks !== 'object') reg.reservedNicks = {};
+  return reg;
+}
+
+// Registrdan navbatdagi bo'sh raqamni ajratadi: avval ozod qilingan
+// (freedNums) raqamlar orasidan eng kichigini beradi, ular tugagach
+// yangi (hali hech kimga berilmagan) raqamni ishlatadi.
+function allocateUsernameNumber() {
+  var reg = ensureUsernameRegistry();
+  if (reg.freedNums.length > 0) {
+    reg.freedNums.sort(function(a, b){ return a - b; });
+    return reg.freedNums.shift();
+  }
+  var n = reg.nextNum;
+  reg.nextNum = n + 1;
+  return n;
+}
+
+// Berilgan raqamni registrga "ozod" sifatida qaytaradi — keyingi
+// foydalanuvchiga shu raqam qayta berilishi mumkin bo'ladi.
+function freeUsernameNumber(num) {
+  if (num == null) return;
+  var reg = ensureUsernameRegistry();
+  if (reg.freedNums.indexOf(num) === -1) reg.freedNums.push(num);
+}
+
+// Hozirgi avtomatik "userN" nomni qaytaradi. Agar profilda avval
+// ajratilgan autoUsername bo'lsa — barqarorlik uchun o'shani qaytaradi,
+// aks holda registridan yangi raqam olib, profilga saqlaydi.
+function getAutoUsername() {
+  if (!S.profile) S.profile = {};
+  if (S.profile.autoUsername) return S.profile.autoUsername;
+  var num = allocateUsernameNumber();
+  var uname = 'user' + num;
+  S.profile.autoUsername = uname;
+  S.profile.autoUsernameNum = num;
+  return uname;
+}
+
+// Ekranda ko'rsatiladigan ism: agar custom nik saqlangan bo'lsa o'shani,
+// aks holda avtomatik userN nomini qaytaradi (statik "Profile" o'rniga).
+function getDisplayUsername() {
+  var custom = S.profile && S.profile.name;
+  if (custom) return custom;
+  return getAutoUsername();
+}
+
+// Nikni markazlashtirilgan tarzda o'zgartiradi: eski custom nik yoki
+// eski avtomatik raqamni "ozod" qiladi (boshqalar foydalana olishi
+// uchun), so'ng yangisini belgilaydi. newName bo'sh/null bo'lsa —
+// foydalanuvchi avtomatik nomga qaytadi (yangi raqam bilan; eski
+// raqami esa har doim ozod bo'lib qoladi).
+function applyUsernameChange(newName) {
+  if (!S.profile) S.profile = {};
+  var reg = ensureUsernameRegistry();
+  var oldCustom = S.profile.name;
+  var oldAutoNum = S.profile.autoUsernameNum;
+
+  // Eski custom nikni ozod qilamiz (agar bo'lsa va yangisi undan farq qilsa)
+  if (oldCustom) {
+    var oldNorm = String(oldCustom).trim().toLowerCase();
+    if (!newName || oldNorm !== String(newName).trim().toLowerCase()) {
+      delete reg.reservedNicks[oldNorm];
+    }
+  }
+  // Eski avtomatik raqamni doim ozod qilamiz — endi custom nik
+  // qo'yilyapti yoki yangi avtomatik nom kerak bo'ladi, ikkala holatda
+  // ham eski raqam boshqa foydalanuvchilarga tegishli bo'lib qoladi.
+  if (oldAutoNum != null) {
+    freeUsernameNumber(oldAutoNum);
+    S.profile.autoUsernameNum = null;
+    S.profile.autoUsername = null;
+  }
+
+  if (newName) {
+    S.profile.name = newName;
+    reg.reservedNicks[String(newName).trim().toLowerCase()] = true;
+  } else {
+    S.profile.name = null;
+    getAutoUsername();
+  }
 }
 
 // Nom input maydoni ustida real-vaqt validatsiya ko'rsatgichini yangilaydi.
@@ -10233,6 +10969,20 @@ function pe_validateUsernameLive(currentName) {
   } else if (val.length < 3) {
     fb.textContent = t('pe_username_short');
     fb.style.color = '#FBBF24';
+    valid = false;
+  } else if (val.length > USERNAME_MAX_LEN) {
+    fb.textContent = t('pe_username_too_long');
+    fb.style.color = '#FBBF24';
+    valid = false;
+  } else if (!USERNAME_ALLOWED_REGEX.test(val)) {
+    // 🎮 Minecraft nikidagi kabi: faqat harf/raqam/pastki chiziq — bo'sh joy,
+    // emoji va boshqa maxsus belgilar (stiker va h.k.) taqiqlanadi.
+    fb.textContent = t('pe_username_invalid_chars');
+    fb.style.color = '#F87171';
+    valid = false;
+  } else if (isUsernameBlocked(val)) {
+    fb.textContent = t('pe_username_blocked');
+    fb.style.color = '#F87171';
     valid = false;
   } else if (isUsernameTaken(val, currentName)) {
     fb.textContent = t('pe_username_taken');
@@ -10295,7 +11045,7 @@ function showProfileEdit() {
       '</div>'+
       '<div style="flex:1">'+
         '<label style="'+labelStyle+'">'+t('pe_name_label')+'</label>'+
-        '<input id="pe-name" value="'+esc(name)+'" style="'+fieldStyle+'"/>'+
+        '<input id="pe-name" value="'+esc(name)+'" maxlength="'+USERNAME_MAX_LEN+'" style="'+fieldStyle+'"/>'+
         '<div id="pe-name-feedback" style="font-size:10px;margin-top:4px;min-height:12px"></div>'+
       '</div>'+
     '</div>'+
@@ -10318,7 +11068,7 @@ function showProfileEdit() {
     '<div style="margin-bottom:10px">'+
       '<label style="'+labelStyle+'">'+t('pe_country_label')+'</label>'+
       '<button type="button" id="pe-country-btn" style="'+fieldStyle+';text-align:left;cursor:pointer;display:flex;align-items:center;gap:6px">'+
-        (country ? (countryFlag(country)+' '+esc(countryName(country))) : ('<span style="color:var(--text-dim)">'+t('pe_country_none')+'</span>'))+
+        (country ? (countryFlagImg(country,16)+' '+esc(countryName(country))) : ('<span style="color:var(--text-dim)">'+t('pe_country_none')+'</span>'))+
       '</button>'+
     '</div>'+
     // Preparing for — Ko'p variantli tanlov (Multi-select Chips/Pills)
@@ -10371,7 +11121,7 @@ function showProfileEdit() {
     openCountryPickerModal(pendingCountry, function(code){
       pendingCountry = code;
       var btn = document.getElementById('pe-country-btn');
-      if (btn) btn.innerHTML = code ? (countryFlag(code)+' '+esc(countryName(code))) : ('<span style="color:var(--text-dim)">'+t('pe_country_none')+'</span>');
+      if (btn) btn.innerHTML = code ? (countryFlagImg(code,16)+' '+esc(countryName(code))) : ('<span style="color:var(--text-dim)">'+t('pe_country_none')+'</span>');
     });
   };
 
@@ -10388,8 +11138,17 @@ function showProfileEdit() {
     };
   });
 
-  // Live validatsiya: har bir belgi kiritilganda username bandligini tekshiradi
+  // Live validatsiya: har bir belgi kiritilganda username bandligini tekshiradi.
+  // 🎮 Minecraft nik maydoni kabi: ruxsat etilmagan belgilar (bo'sh joy,
+  // emoji, stiker va boshqa maxsus belgilar) kiritilishi bilanoq avtomatik
+  // olib tashlanadi — foydalanuvchi ularni umuman yoza olmaydi.
   document.getElementById('pe-name').addEventListener('input', function(){
+    var cleaned = this.value.replace(/[^A-Za-z0-9_]/g, '');
+    if (cleaned !== this.value) {
+      var pos = this.selectionStart - (this.value.length - cleaned.length);
+      this.value = cleaned;
+      try { this.setSelectionRange(pos, pos); } catch(e) {}
+    }
     pe_validateUsernameLive(name);
   });
   // Modal ochilganda ham bir marta tekshirib qo'yamiz (hozirgi ism bo'yicha)
@@ -10407,7 +11166,8 @@ function showProfileEdit() {
     // mantig'i hali ham shu maydonga tayanadi — IELTS ustunlik qiladi).
     var p = targetSubjects.indexOf('ielts') !== -1 ? 'ielts' : (targetSubjects.indexOf('sat') !== -1 ? 'sat' : 'none');
     if(!S.profile)S.profile={};
-    S.profile.name=n||null; S.profile.age=a||null; S.profile.photo=newPhotoData||null; S.profile.language=l; S.profile.prep=p; S.profile.targetSubjects=targetSubjects.slice(); S.profile.country=pendingCountry||null;
+    applyUsernameChange(n||null);
+    S.profile.age=a||null; S.profile.photo=newPhotoData||null; S.profile.language=l; S.profile.prep=p; S.profile.targetSubjects=targetSubjects.slice(); S.profile.country=pendingCountry||null;
     S.kiName=n||null;
     updateHeaderUserTitle();
     overlay.remove();
@@ -10471,7 +11231,7 @@ function openCountryPickerModal(currentCode, onSelect) {
     }
     listEl.innerHTML = items.map(function(c){
       var sel = c.c === currentCode;
-      return '<button type="button" class="cp-item" data-code="'+c.c+'" style="display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 10px;border-radius:10px;border:1px solid '+(sel?'var(--accent)':'transparent')+';background:'+(sel?'rgba(124,92,252,0.12)':'transparent')+';color:var(--text);font-size:14px;cursor:pointer;font-family:\'DM Sans\',sans-serif"><span style="font-size:18px">'+c.f+'</span><span>'+esc(c.n)+'</span></button>';
+      return '<button type="button" class="cp-item" data-code="'+c.c+'" style="display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 10px;border-radius:10px;border:1px solid '+(sel?'var(--accent)':'transparent')+';background:'+(sel?'rgba(124,92,252,0.12)':'transparent')+';color:var(--text);font-size:14px;cursor:pointer;font-family:\'DM Sans\',sans-serif">'+countryFlagImg(c.c,18)+'<span>'+esc(c.n)+'</span></button>';
     }).join('');
     listEl.querySelectorAll('.cp-item').forEach(function(btn){
       btn.onclick = function(){
@@ -10572,13 +11332,19 @@ function showAppGuide() {
 function renderProfile() {
   try { applyCharacterVisibility(); } catch (e) {}
   renderHp();
-  var name=(S.profile&&S.profile.name)||t('header_default_name');
+  (function(){
+    var c = document.getElementById('frozen-tasks-count');
+    if (c) c.textContent = S.tasks.filter(function(x){ return x.isFrozen; }).length;
+    var panel = document.getElementById('frozen-tasks-panel');
+    if (panel && panel.style.display !== 'none') renderFrozenTasksPanel();
+  })();
+  var name=getDisplayUsername();
   var age=(S.profile&&S.profile.age);
   var el;
   el=document.getElementById('profile-name-big'); if(el) el.textContent=name;
   el=document.getElementById('profile-age-big'); if(el) el.textContent=age?age+' '+t('profile_age_unit'):t('profile_no_age');
   el=document.getElementById('profile-country-big');
-  if(el){ var pc=S.profile&&S.profile.country; el.textContent = pc ? (countryFlag(pc)+' '+countryName(pc)) : ''; }
+  if(el){ var pc=S.profile&&S.profile.country; el.innerHTML = pc ? (countryFlagImg(pc,16)+' '+esc(countryName(pc))) : ''; }
   // Nimaga tayyorlanyapsiz? — tanlangan yo'nalishlar badge sifatida
   el=document.getElementById('profile-subjects-badges');
   if(el){ el.innerHTML = renderSubjectBadgesHtml((S.profile && S.profile.targetSubjects) || []); }
@@ -10616,10 +11382,10 @@ function renderProfile() {
     if (fBtn) {
       var usedToday = !!(S.freezeUsedDates && S.freezeUsedDates.indexOf(today()) !== -1);
       if (usedToday) {
-        fBtn.textContent = t('freeze_used_today_label');
-        fBtn.disabled = true;
-        fBtn.style.opacity = '0.55';
-        fBtn.style.cursor = 'default';
+        fBtn.textContent = t('freeze_used_today_tap_hint');
+        fBtn.disabled = false;
+        fBtn.style.opacity = '1';
+        fBtn.style.cursor = 'pointer';
       } else if ((S.freezeCount || 0) <= 0) {
         fBtn.textContent = t('freeze_use_btn');
         fBtn.disabled = true;
@@ -10645,6 +11411,11 @@ function renderProfile() {
 // ============================================================
 var reytingScope = 'global';   // 'global' | 'local'
 var reytingMetric = 'coins';   // 'coins' | 'hp' | 'streak'
+// Hozir ochiq turgan "Player Profile" modalining foydalanuvchi id'si (agar
+// modal yopiq bo'lsa — null). Bot statistikasi minutlik tik'da yangilanganda,
+// agar aynan shu bot uchun modal ochiq bo'lsa, uni qayta qurmasdan (flicker
+// bo'lmasligi uchun) faqat qiymatlarini yangilash uchun ishlatiladi.
+var _openPlayerProfileId = null;
 
 var REYTING_MOCK_COUNTRIES = ['UZ','US','RU','GB','DE','FR','TR','KZ','KR','JP','IN','BR','CN','CA','IT','ES','KG','TJ','AZ','UA','PL','NL'];
 var REYTING_MOCK_NAMES = ['Aziz','Sardor','Malika','Dilnoza','Javlon','Kamron','Nodira','Shaxzod','Zarina','Bekzod','Munisa','Sherzod','Alex','John','Emma','Liu Wei','Chen','Yuki','Min-jun','Arjun','Priya','Carlos','Sofia','Marco','Ivan','Olga','Ahmed','Fatima','Elvin','Aygul','Baurzhan','Nurlan','Lucas','Mia','Noah','Hana'];
@@ -10674,7 +11445,26 @@ function _reytingRandomJoinDate() {
 // Bot o'yinchilar ro'yxatini bir martalik generatsiya qiladi (mavsum
 // almashganda checkReytingMonthlySeason() orqali qayta generatsiya bo'ladi).
 function ensureMockLeaderboard() {
-  if (S.mockLeaderboard && S.mockLeaderboard.length) return;
+  if (S.mockLeaderboard && S.mockLeaderboard.length) {
+    // Ilovaning oldingi versiyalarida generatsiya qilingan bot ro'yxatida
+    // yangi maydonlar (tasksCompleted/totalCoins/streakRecord/joinedDate/
+    // targetSubjects) bo'lmasligi mumkin — shu sabab har safar ularni
+    // tekshirib, yo'q bo'lsa to'ldiramiz (aks holda Profile Modal'da 0
+    // yoki "—" ko'rinib qolaveradi).
+    var patched = false;
+    S.mockLeaderboard.forEach(function(p){
+      if (!p) return;
+      if (typeof p.tasksCompleted !== 'number') { p.tasksCompleted = Math.floor(Math.random() * 480) + 5; patched = true; }
+      if (typeof p.totalCoins !== 'number') { p.totalCoins = Math.floor(Math.random() * 4000) + 100; patched = true; }
+      if (typeof p.streakRecord !== 'number') { p.streakRecord = (p.streak || 0) + Math.floor(Math.random() * 20); patched = true; }
+      if (!p.joinedDate) { p.joinedDate = _reytingRandomJoinDate(); patched = true; }
+      if (!p.targetSubjects) { p.targetSubjects = _reytingRandomSubjects(); patched = true; }
+      if (typeof p.level !== 'number') { p.level = getLevel(p.xp || 0).level; patched = true; }
+      if (typeof p.currentHP !== 'number') { p.currentHP = getLevel(p.xp || 0).level; patched = true; }
+    });
+    if (patched) save();
+    return;
+  }
   var list = [];
   for (var i = 0; i < 36; i++) {
     var nm = REYTING_MOCK_NAMES[Math.floor(Math.random() * REYTING_MOCK_NAMES.length)];
@@ -10703,6 +11493,65 @@ function ensureMockLeaderboard() {
   save();
 }
 
+// ---- Bot o'yinchilar statistikasini "jonli" simulyatsiya qilish ----
+// Haqiqiy ko'p foydalanuvchili backend hali yo'qligi sababli (keyinroq
+// alohida qo'shiladi), Leaderboard bot o'yinchilarining ko'rsatkichlari
+// (tanga, XP, streak, bajarilgan vazifalar) doim bir xil turib qolmasligi
+// uchun har 1 daqiqada bir marta ozgina (tasodifiy) o'zgartirib turiladi —
+// go'yo ular ham vaqt o'tishi bilan haqiqatan faol bo'lib turgandek
+// taassurot beradi. Faqat o'zgargan qiymatlar yangilanadi; hozir ochiq
+// turgan Reyting ro'yxati va/yoki Player Profile Modal ham shu zahoti
+// yangilanadi (sahifa yangilanishini kutmasdan).
+var MOCK_LEADERBOARD_TICK_MS = 60 * 1000;
+var _mockLeaderboardTickTimer = null;
+
+function tickMockLeaderboardStats() {
+  ensureMockLeaderboard();
+  var list = S.mockLeaderboard || [];
+  if (!list.length) return;
+  var changed = false;
+  list.forEach(function(p){
+    if (!p) return;
+    // Har bir bot uchun ~55% ehtimollik bilan shu daqiqada "faollik" bo'ladi
+    if (Math.random() > 0.55) return;
+    changed = true;
+    var coinGain = Math.floor(Math.random() * 12) + 1; // 1..12
+    p.coins = (p.coins || 0) + coinGain;
+    p.totalCoins = (p.totalCoins || 0) + coinGain;
+    p.xp = (p.xp || 0) + Math.floor(Math.random() * 30) + 5;
+    p.level = getLevel(p.xp).level;
+    p.currentHP = p.level;
+    // ~30% ehtimol bilan bitta qo'shimcha vazifa bajaradi
+    if (Math.random() < 0.3) p.tasksCompleted = (p.tasksCompleted || 0) + 1;
+    // ~20% ehtimol bilan streak +1 (kamdan-kam holatda 0'ga tushib qoladi)
+    if (Math.random() < 0.2) {
+      p.streak = Math.random() < 0.1 ? 0 : (p.streak || 0) + 1;
+      if (p.streak > (p.streakRecord || 0)) p.streakRecord = p.streak;
+    }
+  });
+  if (!changed) return;
+  save();
+  // Hozir Reyting tabida bo'lsak — ro'yxatni shu zahoti qayta chizamiz
+  var reytingView = document.getElementById('view-reyting');
+  if (reytingView && reytingView.style.display !== 'none') renderReyting();
+  // Bot uchun Player Profile Modal ochiq bo'lsa — uni qayta qurmasdan
+  // (flicker bo'lmasligi uchun) faqat 3 ta statistika qiymatini yangilaymiz
+  if (_openPlayerProfileId && _openPlayerProfileId !== '__me__' && document.getElementById('player-profile-modal')) {
+    var p2 = findReytingPlayerById(_openPlayerProfileId);
+    if (p2) {
+      var elS = document.getElementById('pp-stat-streak'); if (elS) elS.textContent = (p2.streakRecord||0)+' '+t('reyting_days_unit');
+      var elT = document.getElementById('pp-stat-tasks'); if (elT) elT.textContent = (p2.tasksCompleted||0);
+      var elC = document.getElementById('pp-stat-coins'); if (elC) elC.textContent = (p2.totalCoins||0)+' 🪙';
+      var elCS = document.getElementById('pp-stat-curstreak'); if (elCS) elCS.textContent = (p2.streak||0)+' '+t('reyting_days_unit');
+    }
+  }
+}
+
+function startMockLeaderboardTicker() {
+  if (_mockLeaderboardTickTimer) return;
+  _mockLeaderboardTickTimer = setInterval(tickMockLeaderboardStats, MOCK_LEADERBOARD_TICK_MS);
+}
+
 // Haqiqiy foydalanuvchining reyting uchun "kartochkasi"
 function getRealUserEntry() {
   // Haqiqiy foydalanuvchi uchun "qo'shilgan sana" birinchi marta shu yerda
@@ -10719,10 +11568,17 @@ function getRealUserEntry() {
   }
   return {
     id: '__me__',
-    name: (S.profile && S.profile.name) || t('header_default_name'),
+    name: getDisplayUsername(),
     photo: (S.profile && S.profile.photo) || null,
     country: (S.profile && S.profile.country) || null,
-    coins: S.totalCoins || 0,
+    // Reyting uchun "Tanga" — umrbod yig'ilgan jami tanga (S.totalCoins) emas,
+    // balki joriy mavsum boshlanganidan beri qo'lga kiritilgan tanga miqdori
+    // (hozirgi hamyon balansidan mavsum boshlanishidagi bazaviy qiymat
+    // ayirilgan holda). Har oy checkReytingMonthlySeason() ichida bazaviy
+    // qiymat qayta o'rnatiladi — shu sabab bu ko'rsatkich har oy 0'dan
+    // qayta boshlanadi, lekin foydalanuvchining haqiqiy hamyoni (S.coins)
+    // hech qachon tozalanmaydi.
+    coins: Math.max(0, (S.coins || 0) - (S.reytingSeasonCoinsBase || 0)),
     xp: myXp,
     streak: S.streak || 0,
     isMe: true,
@@ -10805,7 +11661,7 @@ function renderReytingCard(p, metric) {
   var avatarHtml = p.photo
     ? '<img src="'+p.photo+'" style="width:40px;height:40px;border-radius:50%;object-fit:cover" />'
     : '<span style="font-family:Syne,sans-serif;font-weight:700;color:#fff;font-size:16px">'+esc((p.name||'?').charAt(0).toUpperCase())+'</span>';
-  var flag = p.country ? countryFlag(p.country) : '🏳️';
+  var flag = countryFlagImg(p.country, 13);
   return (
     '<div class="'+cls+'" id="'+(p.isMe?'reyting-me-card':'')+'" onclick="showPlayerProfileModal(\''+esc(p.id)+'\')" style="cursor:pointer">'+
       '<div style="width:30px;text-align:center;flex-shrink:0;font-size:'+(p.rank<=3?'20px':'14px')+';font-weight:700;color:'+(p.rank<=3?'inherit':'var(--text-muted)')+';font-family:Syne,sans-serif">'+rankBadge+'</div>'+
@@ -10851,6 +11707,7 @@ function showPlayerProfileModal(id) {
   var p = findReytingPlayerById(id);
   if (!p) return;
   try { SFX.click(); } catch(e) {}
+  _openPlayerProfileId = id;
 
   var ov = document.getElementById('player-profile-modal'); if (ov) ov.remove();
   var overlay = document.createElement('div');
@@ -10863,13 +11720,13 @@ function showPlayerProfileModal(id) {
   var avatarHtml = p.photo
     ? '<img src="'+p.photo+'" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:2px solid var(--accent)" />'
     : '<div style="width:72px;height:72px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#fff;font-family:Syne,sans-serif;border:2px solid var(--accent)">'+esc((p.name||'?').charAt(0).toUpperCase())+'</div>';
-  var flag = p.country ? countryFlag(p.country) : '🏳️';
+  var flag = countryFlagImg(p.country, 16);
   var lv = getLevel(p.xp || 0);
 
-  var statCard = function(icon, label, value) {
+  var statCard = function(icon, label, value, valId) {
     return '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:10px;text-align:center">'+
         '<div style="font-size:18px;margin-bottom:4px">'+icon+'</div>'+
-        '<div style="font-family:Syne,sans-serif;font-size:14px;font-weight:700;color:var(--text);word-break:break-word">'+value+'</div>'+
+        '<div'+(valId?' id="'+valId+'"':'')+' style="font-family:Syne,sans-serif;font-size:14px;font-weight:700;color:var(--text);word-break:break-word">'+value+'</div>'+
         '<div style="font-size:10px;color:var(--text-muted);margin-top:2px">'+label+'</div>'+
       '</div>';
   };
@@ -10889,11 +11746,12 @@ function showPlayerProfileModal(id) {
       '</div>'+
       '<div style="font-size:11px;color:var(--text-dim);margin-top:6px">📅 '+t('pp_joined_label')+': '+_ppFormatJoinedDate(p.joinedDate)+'</div>'+
     '</div>'+
-    // Stats grid (Max Streak / Tasks / Coins)
+    // Stats grid (Max Streak / Tasks / Coins / Current Streak)
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+
-      statCard('⚡', t('pp_max_streak_label'), (p.streakRecord||0)+' '+t('reyting_days_unit')) +
-      statCard('✅', t('pp_tasks_completed_label'), (p.tasksCompleted||0)) +
-      statCard('💰', t('pp_total_coins_label'), (p.totalCoins||0)+' 🪙') +
+      statCard('⚡', t('pp_max_streak_label'), (p.streakRecord||0)+' '+t('reyting_days_unit'), 'pp-stat-streak') +
+      statCard('✅', t('pp_tasks_completed_label'), (p.tasksCompleted||0), 'pp-stat-tasks') +
+      statCard('💰', t('pp_total_coins_label'), (p.totalCoins||0)+' 🪙', 'pp-stat-coins') +
+      statCard('🔥', t('pp_cur_streak_label'), (p.streak||0)+' '+t('reyting_days_unit'), 'pp-stat-curstreak') +
     '</div>'+
     // Maqsad (Goal) — tanlangan barcha yo'nalishlar yonma-yon badge shaklida
     '<div style="margin-top:8px;background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:10px">'+
@@ -10906,8 +11764,8 @@ function showPlayerProfileModal(id) {
   overlay.appendChild(box);
   document.body.appendChild(overlay);
 
-  document.getElementById('pp-close').onclick = function(){ overlay.remove(); };
-  overlay.addEventListener('click', function(e){ if (e.target === overlay) overlay.remove(); });
+  document.getElementById('pp-close').onclick = function(){ overlay.remove(); _openPlayerProfileId = null; };
+  overlay.addEventListener('click', function(e){ if (e.target === overlay) { overlay.remove(); _openPlayerProfileId = null; } });
 }
 
 function renderReyting() {
@@ -10922,7 +11780,7 @@ function renderReyting() {
   if (hBtn) hBtn.classList.toggle('active', reytingMetric === 'hp');
   if (sBtn) sBtn.classList.toggle('active', reytingMetric === 'streak');
   var myCountry = (S.profile && S.profile.country) || null;
-  if (lBtn) lBtn.innerHTML = (myCountry?countryFlag(myCountry):'🏳️') + ' <span data-i18n="reyting_scope_local">' + t('reyting_scope_local') + '</span>';
+  if (lBtn) lBtn.innerHTML = countryFlagImg(myCountry,14) + ' <span data-i18n="reyting_scope_local">' + t('reyting_scope_local') + '</span>';
 
   var listEl = document.getElementById('reyting-list');
   var res = getReytingRanked(reytingScope, reytingMetric);
@@ -10948,7 +11806,7 @@ function renderReyting() {
   var avEl = document.getElementById('reyting-myrank-avatar');
   if (meGlobal && nameEl) {
     nameEl.textContent = meGlobal.name;
-    flagEl.textContent = meGlobal.country ? countryFlag(meGlobal.country) : '🏳️';
+    flagEl.innerHTML = countryFlagImg(meGlobal.country,15);
     rankEl.textContent = '#' + meGlobal.rank;
     if (meGlobal.photo) { avEl.style.background='none'; avEl.innerHTML='<img src="'+meGlobal.photo+'" style="width:38px;height:38px;border-radius:50%;object-fit:cover" />'; }
     else { avEl.style.background='var(--accent)'; avEl.innerHTML='<span>'+esc((meGlobal.name||'?').charAt(0).toUpperCase())+'</span>'; }
@@ -10960,6 +11818,7 @@ function renderReyting() {
       motivEl.textContent = t('reyting_gap_to_top3_msg').replace('{gap}', gap).replace('{unit}', reytingMetricUnit(reytingMetric));
     }
   }
+  startReytingCountdown();
 }
 
 // "🎯 O'z o'rnimga o'tish" — ro'yxatni smooth scroll bilan foydalanuvchi
@@ -10988,18 +11847,64 @@ function getMonthKey(d) {
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
 }
 
+// ---- Yangi mavsumgacha qolgan vaqt — sekundigacha jonli hisoblagich ----
+// Mavsum har oyning 1-sanasi 00:00'da (mahalliy vaqt bo'yicha) almashadi
+// (checkReytingMonthlySeason() shu vaqtda ishga tushadi), shu sabab
+// hisoblagich ham aynan o'sha lahzagacha bo'lgan qolgan vaqtni ko'rsatadi.
+var _reytingCountdownTimer = null;
+function getMsUntilNextReytingSeason() {
+  var now = new Date();
+  var nextSeasonStart = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0, 0);
+  return Math.max(0, nextSeasonStart - now);
+}
+function formatReytingCountdown(ms) {
+  var totalSec = Math.floor(ms / 1000);
+  var days = Math.floor(totalSec / 86400);
+  var hours = Math.floor((totalSec % 86400) / 3600);
+  var mins = Math.floor((totalSec % 3600) / 60);
+  var secs = totalSec % 60;
+  function pad2(n){ return n < 10 ? '0' + n : '' + n; }
+  return (days > 0 ? (days + ' ' + t('reyting_days_unit') + ' ') : '') + pad2(hours) + ':' + pad2(mins) + ':' + pad2(secs);
+}
+function tickReytingCountdown() {
+  var el = document.getElementById('reyting-season-countdown-val');
+  if (!el) { stopReytingCountdown(); return; }
+  var ms = getMsUntilNextReytingSeason();
+  el.textContent = formatReytingCountdown(ms);
+  // Vaqt tugagan bo'lsa (foydalanuvchi Reyting tabida turgan holda oy
+  // almashib qolsa) — mavsumni darhol qayta tekshirib, ro'yxatni yangilaymiz.
+  if (ms <= 0) {
+    stopReytingCountdown();
+    checkReytingMonthlySeason();
+    renderReyting();
+  }
+}
+function startReytingCountdown() {
+  stopReytingCountdown();
+  tickReytingCountdown();
+  _reytingCountdownTimer = setInterval(tickReytingCountdown, 1000);
+}
+function stopReytingCountdown() {
+  if (_reytingCountdownTimer) { clearInterval(_reytingCountdownTimer); _reytingCountdownTimer = null; }
+}
+
 function checkReytingMonthlySeason() {
   ensureMockLeaderboard();
   var curMonth = getMonthKey();
   if (!S.reytingSeasonMonth) {
-    // Birinchi ishga tushirish — mukofotsiz, faqat joriy oyni belgilaymiz.
+    // Birinchi ishga tushirish — mukofotsiz, faqat joriy oy va Tanga
+    // bazaviy qiymatini (hozirgi hamyon balansi) belgilaymiz.
     S.reytingSeasonMonth = curMonth;
+    S.reytingSeasonCoinsBase = S.coins || 0;
     save();
     return;
   }
   if (S.reytingSeasonMonth === curMonth) return; // Mavsum hali davom etyapti
 
   // Oy almashgan — avvalgi mavsum GLOBAL (Tanga bo'yicha) Top-3'ini tekshiramiz
+  // MUHIM: reyting bu yerda ESKI (hali qayta o'rnatilmagan) Tanga bazasi bilan
+  // hisoblanadi — shunda tugagan mavsumning haqiqiy natijasi bo'yicha
+  // mukofot beriladi, keyin esa yangi mavsum uchun baza qayta o'rnatiladi.
   var ranked = getReytingRanked('global', 'coins').list;
   var meEntry = ranked.find(function(p){ return p.isMe; });
   var reward = 0, rankAchieved = 0;
@@ -11014,7 +11919,16 @@ function checkReytingMonthlySeason() {
     addTarixLog('in', t('reyting_monthly_reward_log').replace('{rank}', rankAchieved), reward);
     S.pendingReytingReward = { rank: rankAchieved, reward: reward };
   }
-  // Yangi mavsum — bot o'yinchilarni qayta generatsiya qilamiz
+  // Yangi mavsum: FAQAT Tanga (Coins) ko'rsatkichi 0'dan qayta boshlanadi —
+  // bazaviy qiymat hozirgi hamyon balansiga tenglashtiriladi (hamyonning
+  // o'zi tozalanmaydi, faqat reyting hisobi shu nuqtadan qayta sanaladi).
+  // HP (XP/Level) va Streak ko'rsatkichlari RESET QILINMAYDI — ular
+  // foydalanuvchining umumiy taraqqiyoti sifatida oylar osha davom etadi.
+  S.reytingSeasonCoinsBase = S.coins || 0;
+  // Bot o'yinchilarni ham qayta generatsiya qilamiz — ularning "coins"
+  // maydoni yangi mavsum uchun tasodifiy 0'ga yaqin qiymatdan boshlanadi,
+  // xp/streak esa (haqiqiy foydalanuvchidagi kabi) shunchaki yangi
+  // tasodifiy o'yinchilar to'plami sifatida qayta hisoblanadi.
   S.mockLeaderboard = null;
   S.reytingSeasonMonth = curMonth;
   ensureMockLeaderboard();
@@ -11441,6 +12355,202 @@ function confirmRestart() {
 }
 
 
+// ============================================================
+// "AKKAUNTNI QAYTA BOSHLASH" — TANLOVLI RESET OYNASI
+// ============================================================
+// Foydalanuvchi 4 ta bo'limdan istaganini tanlashi mumkin: Tanga, Statistika,
+// Vazifalar, Hammasi. "Hammasi" belgilansa qolgan uchtasi ham avtomatik
+// belgilanadi (va o'zgartirib bo'lmaydi). Kamida bitta bo'lim tanlanmaguncha
+// "Restart berish" tugmasi faol emas.
+
+// -------- Har bir bo'lim uchun alohida tozalash funksiyalari --------
+function _rstResetCoins() {
+  // Tangalar va ular bilan bog'liq tranzaksiya tarixi
+  S.coins = 0;
+  S.totalCoins = 0;
+  S.totalPurchases = 0;
+  S.tarix = [];
+  S.rewardClaims = {};
+  S.usageLog = {};
+  S.rewardPenalties = {};
+}
+
+function _rstResetStats() {
+  // XP/Streak/kunlik bajarilish tarixi + IELTS/SAT natijalari + kalendar
+  S.xp = 0;
+  S.streak = 0;
+  S.bestStreak = 0;
+  S.totalTasksDone = 0;
+  S.taskDoneCount = {};
+  S.hardTasksDone = 0;
+  S.taskDoneLog = {};
+  S.taskDoneHourLog = {};
+  S.calDoneHour = {};
+  S.taskSkipLog = {};
+  S.weekDoneLog = {};
+  S.taskDayFlags = {};
+  S.chestDoneHistory = [];
+  S.chestHistory = [];
+  S.chestAllDoneDate = null;
+  S.isChestQuestActive = false;
+  S.chestQuest = null;
+  S.dailyBonusDate = null;
+  S.pendingLevelUp = null;
+  S.pendingMissedMsg = null;
+  S.pendingStreakMsg = null;
+  S.ieltsResults = [];
+  S.satResults = [];
+  if (S.secretHabit) S.secretHabit.log = {}; // PIN o'zgarmaydi
+
+  // Mavjud vazifalarning davriylik/bajarilish holati bugundan qayta boshlanadi
+  var todayStr = today();
+  (S.tasks || []).forEach(function (tsk) {
+    tsk.createdAt = todayStr;
+    tsk.done = false;
+    tsk.doneDate = null;
+    tsk.skipped = false;
+    tsk.skippedDate = null;
+    tsk.lastDoneDate = null;
+    delete tsk._lastPenalizedFor;
+    if (tsk.repeat === 'interval') tsk.nextDate = todayStr;
+  });
+}
+
+function _rstResetTasks() {
+  // Barcha vazifalar, maqsadlar (goals), mukofotlar (rewards) va
+  // xazina (chest) tuzilmasi butunlay o'chiriladi
+  S.tasks = [];
+  S.taskOrder = [];
+  S.goals = [];
+  S.rewards = [];
+  S.chestTasks = [];
+  S.chestQuest = null;
+  S.isChestQuestActive = false;
+  S.chestHistory = [];
+  S.chestDoneHistory = [];
+  S.chestAllDoneDate = null;
+}
+
+// -------- Tanlangan bo'limlarga qarab reset'ni bajarish --------
+function _rstPerform(doCoins, doStats, doTasks) {
+  if (doStats) _rstResetStats();
+  if (doCoins) _rstResetCoins();
+  if (doTasks) _rstResetTasks();
+
+  save();
+  if (typeof recalcStreakFromLog === 'function') recalcStreakFromLog();
+  render();
+  if (typeof renderTaskList === 'function') renderTaskList();
+  if (typeof renderRewards === 'function') renderRewards();
+  if (typeof renderGoals === 'function') renderGoals();
+  if (typeof renderChest === 'function') renderChest();
+  toast(t('reset_done_toast'));
+  showTab('tasks');
+}
+
+// -------- Tanga manfiy bo'lganda ogohlantirish oynasi --------
+function openNegativeCoinsWarning(coinsVal, onConfirm) {
+  var ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px';
+  var box = document.createElement('div');
+  box.style.cssText = 'background:#1C1C25;border:2px solid rgba(248,113,113,0.4);border-radius:20px;padding:28px 24px;width:100%;max-width:340px;text-align:center';
+  box.innerHTML =
+    '<div style="font-size:44px;margin-bottom:12px">⚠️</div>' +
+    '<h3 style="font-family:Syne,sans-serif;font-size:17px;font-weight:700;color:#F87171;margin-bottom:10px">' + t('reset_neg_coins_title') + '</h3>' +
+    '<p style="font-size:13px;color:var(--text-muted);margin-bottom:10px;line-height:1.7">' + t('reset_neg_coins_desc1').replace('{coins}', coinsVal) + '</p>' +
+    '<p style="font-size:12.5px;color:#F87171;margin-bottom:22px;line-height:1.6">' + t('reset_neg_coins_desc2') + '</p>' +
+    '<div style="display:flex;gap:10px">' +
+      '<button id="rnc-cancel" style="flex:1;padding:12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:14px;cursor:pointer">' + t('btn_cancel') + '</button>' +
+      '<button id="rnc-confirm" style="flex:2;padding:12px;border-radius:12px;border:none;background:#F87171;color:#fff;font-size:14px;font-weight:700;cursor:pointer">' + t('restart_confirm_btn') + '</button>' +
+    '</div>';
+  ov.appendChild(box);
+  document.body.appendChild(ov);
+  document.getElementById('rnc-cancel').onclick = function () { ov.remove(); };
+  document.getElementById('rnc-confirm').onclick = function () { ov.remove(); onConfirm(); };
+  ov.addEventListener('mousedown', function (e) { if (e.target === ov) ov.remove(); });
+}
+
+// -------- Tanlov oynasi uchun bitta checkbox qatorini quradi --------
+function _rstOptRow(cbId, icon, label) {
+  return '<label style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);cursor:pointer">' +
+    '<input type="checkbox" id="' + cbId + '" style="width:18px;height:18px;accent-color:#F87171;cursor:pointer;flex-shrink:0">' +
+    '<span style="font-size:15px;flex-shrink:0">' + icon + '</span>' +
+    '<span style="font-size:13.5px;font-weight:600;color:var(--text)">' + label + '</span>' +
+  '</label>';
+}
+
+// -------- Asosiy oyna: Tanga / Statistika / Vazifalar / Hammasi --------
+function openResetOptionsModal() {
+  var ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px';
+  var box = document.createElement('div');
+  box.style.cssText = 'background:#1C1C25;border:2px solid rgba(248,113,113,0.4);border-radius:20px;padding:26px 22px;width:100%;max-width:360px';
+  box.innerHTML =
+    '<div style="text-align:center;font-size:40px;margin-bottom:10px">⚠️</div>' +
+    '<h3 style="text-align:center;font-family:Syne,sans-serif;font-size:17px;font-weight:700;color:#F87171;margin-bottom:8px">' + t('reset_opts_title') + '</h3>' +
+    '<p style="text-align:center;font-size:12.5px;color:var(--text-muted);margin-bottom:18px;line-height:1.6">' + t('reset_opts_desc') + '</p>' +
+    '<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">' +
+      _rstOptRow('ro-coins-cb', '🪙', t('reset_opt_coins')) +
+      _rstOptRow('ro-stats-cb', '📊', t('reset_opt_stats')) +
+      _rstOptRow('ro-tasks-cb', '📋', t('reset_opt_tasks')) +
+      _rstOptRow('ro-all-cb', '💥', t('reset_opt_all')) +
+    '</div>' +
+    '<div style="display:flex;gap:10px">' +
+      '<button id="reset-opts-cancel" style="flex:1;padding:12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:14px;cursor:pointer">' + t('btn_cancel') + '</button>' +
+      '<button id="reset-opts-confirm" disabled style="flex:2;padding:12px;border-radius:12px;border:none;background:#F87171;color:#fff;font-size:14px;font-weight:700;cursor:pointer;opacity:0.5">' + t('restart_confirm_btn') + '</button>' +
+    '</div>';
+  ov.appendChild(box);
+  document.body.appendChild(ov);
+
+  var cbCoins = document.getElementById('ro-coins-cb');
+  var cbStats = document.getElementById('ro-stats-cb');
+  var cbTasks = document.getElementById('ro-tasks-cb');
+  var cbAll = document.getElementById('ro-all-cb');
+  var confirmBtn = document.getElementById('reset-opts-confirm');
+
+  function syncUI() {
+    var allOn = cbAll.checked;
+    [cbCoins, cbStats, cbTasks].forEach(function (cb) {
+      cb.disabled = allOn;
+      if (allOn) cb.checked = true;
+    });
+    var any = cbCoins.checked || cbStats.checked || cbTasks.checked || cbAll.checked;
+    confirmBtn.disabled = !any;
+    confirmBtn.style.opacity = any ? '1' : '0.5';
+  }
+  [cbCoins, cbStats, cbTasks, cbAll].forEach(function (cb) {
+    cb.addEventListener('change', syncUI);
+  });
+  syncUI();
+
+  function close() { ov.remove(); }
+  document.getElementById('reset-opts-cancel').onclick = close;
+  ov.addEventListener('mousedown', function (e) { if (e.target === ov) close(); });
+
+  confirmBtn.onclick = function () {
+    if (confirmBtn.disabled) return;
+    var doCoins = cbAll.checked || cbCoins.checked;
+    var doStats = cbAll.checked || cbStats.checked;
+    var doTasks = cbAll.checked || cbTasks.checked;
+
+    // Maxsus holat: tanga manfiy (masalan -10) va statistika alohida
+    // tanlanmagan bo'lsa — avval ogohlantiramiz. Tasdiqlansa, tanga bilan
+    // birga statistika ham majburiy tozalanadi.
+    if (doCoins && !doStats && S.coins < 0) {
+      var coinsVal = S.coins;
+      close();
+      openNegativeCoinsWarning(coinsVal, function () {
+        _rstPerform(true, true, doTasks);
+      });
+      return;
+    }
+
+    close();
+    _rstPerform(doCoins, doStats, doTasks);
+  };
+}
+
+
 
 // == GLOBAL RESTART (davriylikni ham bugundan boshlaydi) ==
 // MUHIM: todayStr uchun new Date().toISOString() ATAYLAB ishlatilmadi —
@@ -11558,6 +12668,14 @@ function saveSecretData(d) {
 }
 
 function openSecretTab() {
+  // PIN himoyasi o'chirilgan bo'lsa — PIN so'ramasdan to'g'ridan-to'g'ri kiritamiz
+  if (!S.pcPinProtectionEnabled) {
+    _secretUnlocked = true;
+    document.getElementById('secret-pin-overlay').style.display = 'none';
+    document.getElementById('secret-content').style.display = '';
+    renderSecretContent();
+    return;
+  }
   _pinBuffer = '';
   updatePinDots();
   document.getElementById('secret-pin-overlay').style.display = 'flex';
@@ -11706,11 +12824,20 @@ function ensurePersonalCheckDefaults() {
   if (typeof S.personalCheckEnabled === 'undefined' || S.personalCheckEnabled === null) {
     S.personalCheckEnabled = pcHasPinSet();
   }
+  // pcPinProtectionEnabled — bo'limga kirishda PIN so'ralishi kerakmi. Eski
+  // foydalanuvchilar uchun orqaga moslik: PIN allaqachon o'rnatilgan bo'lsa,
+  // himoya yoqilgan holatda qoladi (avvalgidek doim PIN so'ralardi).
+  if (typeof S.pcPinProtectionEnabled === 'undefined' || S.pcPinProtectionEnabled === null) {
+    S.pcPinProtectionEnabled = pcHasPinSet();
+  }
 }
 
 function updatePcToggleUI() {
   var sw = document.getElementById('pc-toggle-switch');
   var knob = document.getElementById('pc-toggle-knob');
+  var pinRow = document.getElementById('pc-pin-protection-row');
+  var pinSw = document.getElementById('pc-pin-toggle-switch');
+  var pinKnob = document.getElementById('pc-pin-toggle-knob');
   var chBtn = document.getElementById('pc-change-pin-btn');
   if (!sw || !knob) return;
   var on = !!S.personalCheckEnabled;
@@ -11718,7 +12845,17 @@ function updatePcToggleUI() {
   sw.style.borderColor = on ? 'var(--accent)' : 'var(--border)';
   knob.style.left = on ? '22px' : '2px';
   knob.style.background = on ? '#fff' : 'var(--text-dim)';
-  if (chBtn) chBtn.style.display = on ? '' : 'none';
+  // Personal Check o'chirilgan bo'lsa, PIN himoyasi qatori butunlay yashiriladi
+  if (pinRow) pinRow.style.display = on ? '' : 'none';
+  var pinOn = !!S.pcPinProtectionEnabled;
+  if (pinSw && pinKnob) {
+    pinSw.style.background = pinOn ? 'var(--accent)' : 'var(--surface2)';
+    pinSw.style.borderColor = pinOn ? 'var(--accent)' : 'var(--border)';
+    pinKnob.style.left = pinOn ? '22px' : '2px';
+    pinKnob.style.background = pinOn ? '#fff' : 'var(--text-dim)';
+  }
+  // "PIN ni o'zgartirish" tugmasi faqat PIN himoyasi yoqilgan bo'lsagina kerak
+  if (chBtn) chBtn.style.display = (on && pinOn) ? '' : 'none';
 }
 
 // 🧍 Xarakter (Steve) ko'rinishini yoqish/o'chirish — Settings ichidagi switch.
@@ -11830,30 +12967,48 @@ function togglePersonalCheck() {
     save();
     updatePcToggleUI();
     toast(t('pc_disabled_toast'));
-  } else if (pcHasPinSet()) {
-    openPcInfoModal('verify');
   } else {
-    openPcInfoModal('create');
+    // ON: endi PIN talab qilinmaydi — shunchaki tushuntirish oynasi ko'rsatiladi
+    // (bo'lim nima uchun kerakligi va unga qanday kirish mumkinligi). PIN himoyasi
+    // alohida "PIN himoyasi" kichik toggle orqali sozlanadi.
+    openPcInfoModal();
   }
 }
 
 // -------- Tushuntirish oynasi (ON qilinganda birinchi ko'rinadi) --------
-var _pcInfoNextAction = null; // 'create' yoki 'verify' — OK/Enter bosilgach nima ochilishi
-function openPcInfoModal(nextAction) {
-  _pcInfoNextAction = nextAction;
+function openPcInfoModal() {
   document.getElementById('pc-info-overlay').style.display = 'flex';
 }
 function closePcInfoModal() {
   document.getElementById('pc-info-overlay').style.display = 'none';
-  _pcInfoNextAction = null;
   updatePcToggleUI(); // bekor qilindi — toggle OFF holatida qoladi
 }
 function confirmPcInfoModal() {
   document.getElementById('pc-info-overlay').style.display = 'none';
-  var next = _pcInfoNextAction;
-  _pcInfoNextAction = null;
-  if (next === 'create') openPcCreatePinModal();
-  else if (next === 'verify') openPcVerifyPinModal();
+  S.personalCheckEnabled = true;
+  save();
+  updatePcToggleUI();
+  toast(t('pc_enabled_toast'));
+}
+
+// -------- PIN himoyasi — alohida kichik toggle --------
+// Yoqilganda bo'limga kirish uchun PIN so'raladi. O'chirilganda PIN so'ralmasdan
+// to'g'ridan-to'g'ri kiriladi (lekin PIN o'zi, o'rnatilgan bo'lsa, saqlanib qoladi).
+function togglePinProtection() {
+  if (S.pcPinProtectionEnabled) {
+    S.pcPinProtectionEnabled = false;
+    save();
+    updatePcToggleUI();
+    toast(t('pc_pin_disabled_toast'));
+  } else if (pcHasPinSet()) {
+    S.pcPinProtectionEnabled = true;
+    save();
+    updatePcToggleUI();
+    toast(t('pc_pin_enabled_toast'));
+  } else {
+    // PIN hali o'rnatilmagan — avval yangi PIN yaratish so'raladi
+    openPcCreatePinModal();
+  }
 }
 
 // -------- Birinchi marta PIN yaratish --------
@@ -11870,7 +13025,7 @@ function openPcCreatePinModal() {
 function closePcCreatePinModal() {
   document.getElementById('pc-create-pin-overlay').style.display = 'none';
   _pcCreateBuf = ''; _pcCreateNew = ''; _pcCreateStep = 'new';
-  updatePcToggleUI(); // tasdiqlanmadi — toggle OFF holatida qoladi
+  updatePcToggleUI(); // bekor qilindi — PIN himoyasi OFF holatida qoladi
 }
 function pcCreateKey(k) {
   if (k === 'del') {
@@ -11896,12 +13051,12 @@ function pcCreateKey(k) {
       d.pin = _pcCreateNew;
       d.pinSet = true;
       saveSecretData(d);
-      S.personalCheckEnabled = true;
+      S.pcPinProtectionEnabled = true;
       save();
       document.getElementById('pc-create-pin-overlay').style.display = 'none';
       _pcCreateBuf = ''; _pcCreateNew = ''; _pcCreateStep = 'new';
       updatePcToggleUI();
-      toast(t('pc_enabled_toast'));
+      toast(t('pc_pin_enabled_toast'));
     } else {
       document.getElementById('pc-create-error').textContent = t('chpin_mismatch');
       _pcCreateBuf = ''; _pcCreateStep = 'new'; _pcCreateNew = '';
@@ -12030,13 +13185,59 @@ function yesterday() {
   return d2.getFullYear()+'-'+String(d2.getMonth()+1).padStart(2,'0')+'-'+String(d2.getDate()).padStart(2,'0');
 }
 
+// ⚙️ Sozlamalar > "Kechagi kun bilan ishlash" — Goals, Sirli joy kabi
+// bo'limlarda savol qaysi kun uchun beriladi (kecha yoki bugun)ni
+// belgilaydi. Standart holat (S.useYesterdayMode === undefined) — TRUE,
+// ya'ni eski xatti-harakat saqlanadi: "kecha bajardizmi?" deb so'raydi.
+function isYesterdayMode() {
+  return S.useYesterdayMode !== false;
+}
+
+// Joriy rejimga qarab "hisoblanadigan kun"ni qaytaradi — rejim yoqilgan
+// bo'lsa kecha, o'chirilgan bo'lsa bugun.
+function trackDate() {
+  return isYesterdayMode() ? yesterday() : today();
+}
+
+function ensureYesterdayModeDefaults() {
+  if (typeof S.useYesterdayMode === 'undefined' || S.useYesterdayMode === null) {
+    S.useYesterdayMode = true;
+  }
+}
+
+function updateYdayModeToggleUI() {
+  var sw = document.getElementById('yday-mode-switch');
+  var knob = document.getElementById('yday-mode-knob');
+  if (!sw || !knob) return;
+  var on = isYesterdayMode();
+  sw.style.background = on ? 'var(--accent)' : 'var(--surface2)';
+  sw.style.borderColor = on ? 'var(--accent)' : 'var(--border)';
+  knob.style.left = on ? '22px' : '2px';
+  knob.style.background = on ? '#fff' : 'var(--text-dim)';
+}
+
+function toggleYesterdayMode() {
+  ensureYesterdayModeDefaults();
+  S.useYesterdayMode = !S.useYesterdayMode;
+  save();
+  updateYdayModeToggleUI();
+  try { renderGoals(); } catch (e) {}
+  try { renderSecretContent(); } catch (e) {}
+  try { SFX.click(); } catch (e) {}
+  try { toast(isYesterdayMode() ? t('yday_mode_on_toast') : t('yday_mode_off_toast')); } catch (e) {}
+}
+document.addEventListener('DOMContentLoaded', function () {
+  ensureYesterdayModeDefaults();
+  updateYdayModeToggleUI();
+});
+
 function secretLog(status, when) {
   var d = getSecretData();
   // MUHIM TUZATISH: bu o'zgaruvchi ilgari "t" deb nomlangan edi va shu funksiya
   // ichidagi setTimeout callback'larda global tarjima funksiyasi t()ni "soyalab"
   // qo'yardi (chaqirilganda "t is not a function" xatosi berardi, natijada
   // jazo/bonus toast xabarlari umuman chiqmasdi). Endi nom to'qnashuvi yo'q.
-  var logDate = (when === 'yesterday') ? yesterday() : today();
+  var logDate = (when === 'yesterday') ? trackDate() : today();
   var prevStatus = d.log[logDate];
 
   // Streak bonus: sana+milestone bo'yicha saqlash (e.g. "2026-06-11_3")
@@ -12165,6 +13366,16 @@ function secretLog(status, when) {
 // Agar kecha kiritilmagan bo'lsa → kecha; aks holda → bugun
 var _secretLogTarget = 'yesterday'; // 'yesterday' yoki 'today'
 
+// Hali javob berilmagan holatda tugmalar avtomatik ko'rinmaydi (bezovta
+// qiluvchi "notification"ga o'xshamasin deb) — foydalanuvchi shu tugmani
+// bosgandagina Ha/Yo'q tugmalari ochiladi.
+function revealSecretLogButtons() {
+  var btnRow = document.getElementById('secret-log-buttons');
+  var statusEl = document.getElementById('secret-today-status');
+  if(btnRow) btnRow.style.display = 'flex';
+  if(statusEl) { statusEl.style.marginTop = '12px'; statusEl.innerHTML = ''; }
+}
+
 function secretEditLog() {
   // Tugmalarni qayta yoqish — foydalanuvchi javobni o'zgartira olsin
   var btnYes = document.getElementById('sec-btn-yes');
@@ -12182,7 +13393,7 @@ function secretEditLog() {
   }
   // Avvalgi javobni log dan o'chirish va tangalarni qaytarish
   var d = getSecretData();
-  var yday = yesterday();
+  var yday = trackDate();
   var prevStatus = d.log[yday];
   if(!d.streakBonusByDate) d.streakBonusByDate = {};
   if(!d.streakBonusGiven) d.streakBonusGiven = {};
@@ -12231,39 +13442,55 @@ function renderSecretContent() {
   var log = d.log || {};
   var t = today();
   var yday = yesterday();
+  var ydMode = isYesterdayMode();
 
-  // Kecha kiritilmagan bo'lsa — har doim KECHA so'rasin avval
-  // Agar bugun kiritilgan lekin kecha yo'q bo'lsa (eski versiyadan) — bugunni o'chirib KECHA so'rasin
-  if(!log[yday] && log[t]) { delete log[t]; d.log = log; saveSecretData(d); }
-  // Har doim faqat KECHA
+  // Eski (KECHA) rejimda: agar kecha kiritilmagan, lekin bugun kiritilgan
+  // bo'lsa (eski versiyadan qolgan) — bugunni o'chirib KECHA so'rasin.
+  // Bu tozalash faqat KECHA rejimida amal qiladi — BUGUN rejimida
+  // foydalanuvchining bugungi haqiqiy yozuvini o'chirib qo'ymaslik kerak.
+  if(ydMode && !log[yday] && log[t]) { delete log[t]; d.log = log; saveSecretData(d); }
+  // _secretLogTarget har doim 'yesterday' — bu qiymat secretLog()ga
+  // "joriy kuzatiladigan sana"ni ishlatishni bildiradi (trackDate() orqali
+  // haqiqiy sana rejimga qarab kecha yoki bugun bo'ladi).
   _secretLogTarget = 'yesterday';
-  var activeDate = yday;
+  var activeDate = trackDate();
   var activeStatus = log[activeDate];
   var labelEl = document.getElementById('secret-log-label');
   if(labelEl) {
     // Sana ham ko'rsatiladi (masalan "KECHA (18.07)") — shu orqali foydalanuvchi
     // ikki xil kunni bir xil savol deb adashtirmaydi (avval faqat "KECHA" deb
     // umumiy yozilardi, sana ko'rinmasdi).
-    var ydayParts = yday.split('-');
-    var ydayNice = ydayParts[2] + '.' + ydayParts[1];
-    labelEl.textContent = tr('ki_yesterday_caps') + ' (' + ydayNice + ')';
+    var adParts = activeDate.split('-');
+    var adNice = adParts[2] + '.' + adParts[1];
+    labelEl.textContent = tr(ydMode ? 'ki_yesterday_caps' : 'ki_today_caps') + ' (' + adNice + ')';
   }
   var statusEl = document.getElementById('secret-today-status');
+  var btnRow = document.getElementById('secret-log-buttons');
   var btnYes = document.getElementById('sec-btn-yes');
   var btnNo  = document.getElementById('sec-btn-no');
   if(activeStatus === 'clean') {
-    statusEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span style="color:#34D399;font-weight:600">✅ '+tr('ki_yesterday_clean')+'</span><button onclick="secretEditLog()" style="padding:4px 10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:11px;cursor:pointer;font-family:DM Sans,sans-serif">✏️ '+tr('btn_edit')+'</button></div>';
+    if(btnRow) btnRow.style.display = 'flex';
+    statusEl.style.marginTop = '12px';
+    statusEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span style="color:#34D399;font-weight:600">✅ '+tr(ydMode ? 'ki_yesterday_clean' : 'ki_today_clean')+'</span><button onclick="secretEditLog()" style="padding:4px 10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:11px;cursor:pointer;font-family:DM Sans,sans-serif">✏️ '+tr('btn_edit')+'</button></div>';
     if(btnYes){btnYes.style.borderWidth='2px';btnYes.style.borderColor='#34D399';btnYes.style.background='rgba(52,211,153,0.2)';btnYes.style.opacity='1';btnYes.disabled=true;}
     if(btnNo){btnNo.style.opacity='0.35';btnNo.disabled=true;}
   } else if(activeStatus === 'fail' || activeStatus === 'fail2x') {
+    if(btnRow) btnRow.style.display = 'flex';
+    statusEl.style.marginTop = '12px';
     var penText = activeStatus==='fail2x'? tr('ki_pen_2x') : tr('ki_pen_normal');
     statusEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span style="color:#F87171;font-weight:600">'+tr('ki_fail_label')+' '+penText+'</span><button onclick="secretEditLog()" style="padding:4px 10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:11px;cursor:pointer;font-family:DM Sans,sans-serif">✏️ '+tr('btn_edit')+'</button></div>';
     if(btnNo){btnNo.style.borderWidth='2px';btnNo.style.borderColor='#F87171';btnNo.style.background='rgba(248,113,113,0.2)';btnNo.style.opacity='1';btnNo.disabled=true;}
     if(btnYes){btnYes.style.opacity='0.35';btnYes.disabled=true;}
   } else {
-    statusEl.textContent = tr('ki_not_entered_yet');
+    // Hali javob kiritilmagan: MAJBURIY savol/tugmalarni avtomatik
+    // ko'rsatmaymiz (bu "notification"ga o'xshab har safar bezovta qilardi).
+    // Buning o'rniga neytral holat matni + o'zi bosadigan "Belgilash" tugmasi
+    // ko'rsatiladi — tugmalar faqat shu bosilgandan keyin chiqadi.
+    if(btnRow) btnRow.style.display = 'none';
     if(btnYes){btnYes.style.opacity='1';btnYes.style.background='rgba(52,211,153,0.08)';btnYes.style.borderColor='rgba(52,211,153,0.3)';btnYes.disabled=false;}
     if(btnNo){btnNo.style.opacity='1';btnNo.style.background='rgba(248,113,113,0.08)';btnNo.style.borderColor='rgba(248,113,113,0.3)';btnNo.disabled=false;}
+    statusEl.style.marginTop = '0';
+    statusEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span>'+tr(ydMode ? 'ki_not_entered_yet' : 'ki_not_entered_today')+'</span><button onclick="revealSecretLogButtons()" style="padding:6px 12px;border-radius:8px;border:1px solid var(--border-hover);background:var(--surface2);color:var(--text);font-size:11px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif">✏️ '+tr('sec_mark_btn')+'</button></div>';
   }
     // Calendar — last 30 days
   var cal = document.getElementById('secret-calendar');
@@ -12487,7 +13714,7 @@ function goalCheckToday(id) {
   var g = (S.goals||[]).find(function(x){return x.id===id;}); if(!g) return;
   if(!g.daysChecked) g.daysChecked = {};
   if(!g.daysCoinsGiven) g.daysCoinsGiven = {};
-  var yd = yesterday();
+  var yd = trackDate();
   var coinAward = g.coins || 1;
 
   if(g.daysChecked[yd]) {
@@ -12537,7 +13764,7 @@ function renderGoals() {
     var days = g.daysChecked ? Object.keys(g.daysChecked).length : 0;
     var total = g.duration || 1;
     var pct = Math.min(100, Math.round(days / total * 100));
-    var checkedToday = g.daysChecked && g.daysChecked[yesterday()];
+    var checkedToday = g.daysChecked && g.daysChecked[trackDate()];
     var expired = g.endDate && g.endDate < td && !g.done;
     var completed = days >= total;
 
@@ -12576,7 +13803,7 @@ function renderGoals() {
       '</div>' +
       (!completed && !expired ?
         '<button onclick="goalCheckToday('+g.id+')" style="width:100%;padding:10px;border-radius:10px;border:' + (checkedToday?'2px solid #34D399':'1px solid var(--border)') + ';background:' + (checkedToday?'rgba(52,211,153,0.15)':'var(--surface2)') + ';color:' + (checkedToday?'#34D399':'var(--text-muted)') + ';font-size:13px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif">' +
-          (checkedToday ? t('goal_check_done') : t('goal_check_todo')) +
+          (checkedToday ? t(isYesterdayMode() ? 'goal_check_done' : 'goal_check_done_today') : t(isYesterdayMode() ? 'goal_check_todo' : 'goal_check_todo_today')) +
         '</button>'
       : '');
     list.appendChild(card);
@@ -13951,20 +15178,21 @@ function showDayDetail(dateStr) {
   var totalCount = 0;
   var doneCount = 0;
 
-  S.tasks.forEach(function(t) {
+  try {
+  (S.tasks || []).forEach(function(tsk) {
     // Vazifa qo'shilguncha bo'lgan kunlarga ta'sir qilmasin
-    if (t.createdAt && dateStr < t.createdAt) return;
+    if (tsk.createdAt && dateStr < tsk.createdAt) return;
 
-    var doneOnDate = !!(S.taskDoneLog && S.taskDoneLog[t.id] && S.taskDoneLog[t.id].indexOf(dateStr) !== -1);
-    var skipOnDate = !!(S.taskSkipLog && S.taskSkipLog[t.id] && S.taskSkipLog[t.id].indexOf(dateStr) !== -1);
+    var doneOnDate = !!(S.taskDoneLog && S.taskDoneLog[tsk.id] && S.taskDoneLog[tsk.id].indexOf(dateStr) !== -1);
+    var skipOnDate = !!(S.taskSkipLog && S.taskSkipLog[tsk.id] && S.taskSkipLog[tsk.id].indexOf(dateStr) !== -1);
     // Kalendar orqali shu sana uchun qo'lda belgilangan (bosilgan) vazifalar —
     // ptichka olib tashlansa ham ro'yxatdan g'oyib bo'lmasligi uchun saqlanadi.
-    var pinnedOnDate = !!(S.calPinnedDates && S.calPinnedDates[t.id] && S.calPinnedDates[t.id].indexOf(dateStr) !== -1);
+    var pinnedOnDate = !!(S.calPinnedDates && S.calPinnedDates[tsk.id] && S.calPinnedDates[tsk.id].indexOf(dateStr) !== -1);
 
     // Bitta yagona manba — getDayStats() bilan AYNAN bir xil funksiya,
     // shu sababli rang (yashil/qizil) va ro'yxat har doim bir-biriga mos
     // keladi va boshqa kunning vazifalari aralashmaydi.
-    var isDue = calIsTaskDueOnDate(t, dateStr, dow);
+    var isDue = calIsTaskDueOnDate(tsk, dateStr, dow);
     if (!isDue && pinnedOnDate) isDue = true;
 
     if (!isDue) return;
@@ -13972,8 +15200,8 @@ function showDayDetail(dateStr) {
 
     var done, skipped;
     if (isToday) {
-      done    = t.done;
-      skipped = t.skipped;
+      done    = tsk.done;
+      skipped = tsk.skipped;
     } else {
       done    = doneOnDate;
       skipped = skipOnDate;
@@ -13987,21 +15215,29 @@ function showDayDetail(dateStr) {
 
     var icon  = done ? '✅' : skipped ? '⏭️' : '⬜';
     var color = done ? '#34D399' : skipped ? '#F5A623' : 'var(--text-dim)';
-    var coins = done ? '+' + t.coins + ' 🪙' : '';
+    var coins = done ? '+' + tsk.coins + ' 🪙' : '';
+
+    // Qiyinlik darajasiga qarab qatorning orqa foni rangi: 1=Oson (yashil),
+    // 2=O'rtacha (sariq), 3=Qiyin (qizil) — vazifaning o'zi bajarilgan/
+    // bajarilmaganidan qat'i nazar (buni ✅/⬜ belgisi alohida ko'rsatadi).
+    var diffRgb = tsk.diff === 3 ? '248,113,113' : tsk.diff === 2 ? '245,166,35' : '52,211,153';
+    var rowBg = 'rgba(' + diffRgb + ',0.12)';
+    var rowBorder = 'rgba(' + diffRgb + ',0.3)';
 
     html +=
-      '<div id="calrow-' + t.id + '" style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface2);border-radius:10px">' +
-        '<button id="calicon-' + t.id + '" onclick="calToggleTaskDone(' + t.id + ',\'' + dateStr + '\')" title="Bajarilgan/bajarilmagan deb belgilash" ' +
+      '<div id="calrow-' + tsk.id + '" style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:' + rowBg + ';border:1px solid ' + rowBorder + ';border-radius:10px">' +
+        '<button id="calicon-' + tsk.id + '" onclick="calToggleTaskDone(' + tsk.id + ',\'' + dateStr + '\')" title="Bajarilgan/bajarilmagan deb belgilash" ' +
           'style="background:none;border:none;padding:0;margin:0;cursor:pointer;font-size:16px;flex-shrink:0;line-height:1">' + icon + '</button>' +
-        '<span style="flex:1;font-size:13px;color:var(--text)">' + esc(t.name) + '</span>' +
-        '<span id="calcoin-' + t.id + '" style="font-size:12px;color:#F5A623;font-weight:600">' + coins + '</span>' +
-        '<button onclick="calEditTask(' + t.id + ',\'' + dateStr + '\')" title="' + t('cal_edit_task_title') + '" ' +
-          'style="background:none;border:none;padding:2px;margin:0;cursor:pointer;font-size:14px;flex-shrink:0;line-height:1;opacity:0.6" ' +
-          'onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6">✏️</button>' +
+        '<span style="flex:1;font-size:13px;color:var(--text)">' + esc(tsk.name) + '</span>' +
+        '<span id="calcoin-' + tsk.id + '" style="font-size:12px;color:#F5A623;font-weight:600">' + coins + '</span>' +
       '</div>';
   });
+  } catch (e) {
+    console.error('showDayDetail xatosi:', e);
+    html = '<div style="color:#F87171;font-size:12px;text-align:center;padding:12px">Xatolik yuz berdi, konsolni tekshiring.</div>';
+  }
 
-  if (!anyTask) {
+  if (!anyTask && !html) {
     html = '<div style="color:var(--text-dim);font-size:13px;text-align:center;padding:12px">Bu kunda vazifa yo\u2019q edi</div>';
   }
   if (isDateFrozen(dateStr)) {
@@ -14030,6 +15266,15 @@ function showDayDetail(dateStr) {
   detail.dataset.openDate = dateStr;
   if (body) body.style.display = alreadyOpen ? 'none' : '';
   if (arrow) arrow.style.transform = alreadyOpen ? '' : 'rotate(90deg)';
+
+  // Panel ochilganda ekranda ko'rinadigan joyga avtomatik skrol qilamiz —
+  // shunda foydalanuvchi bosish natijasini har doim aniq ko'radi (skrol
+  // pastda/tepada bo'lishidan qat'i nazar).
+  if (!alreadyOpen) {
+    setTimeout(function () {
+      try { detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {}
+    }, 50);
+  }
 }
 
 // Kalendar kun-detali ichidagi ✅/⬜ belgisini bosganda ishlaydi.
@@ -15301,6 +16546,7 @@ function openTaskSheet(id) {
   if (t.skipped && !t.done) {
     btns += `<button class="sheet-btn" onclick="closeTaskSheet();unskipTask(${id})">🔄 Qaytarish</button>`;
   }
+  btns += `<button class="sheet-btn" onclick="closeTaskSheet();freezeTask(${id})">🧊 ${tr('freeze_task_sheet_btn')}</button>`;
   btns += `<button class="sheet-btn" onclick="closeTaskSheet();editTask(${id})">✏️ Tahrirlash</button>`;
   btns += `<button class="sheet-btn danger" onclick="closeTaskSheet();deleteTask(${id})">🗑 O'chirish</button>`;
   document.getElementById('sheet-btns').innerHTML = btns;
@@ -16923,19 +18169,19 @@ function getOnboardingTourSteps() {
         }
       }
     },
-    // 10. Musiqa (Ambient Focus Sound) — Sozlamalar ichidagi accordion kartada
-    //     yashiringan, shu sababli avval Sozlamalar panelini va shu kartani ochamiz.
-    { tab: 'profile', target: '#ambient-focus-settings-card', placement: 'top', icon: '🎶', title: t('onb_step_music_title'), desc: t('onb_step_music_desc'), advanced: t('onb_step_music_advanced'),
+    // 10. Musiqa (Ambient Focus Sound) — endi "Ovoz va Musiqa" kartasi ichiga
+    //     birlashtirilgan, shu sababli avval Sozlamalar panelini va shu kartani ochamiz.
+    { tab: 'profile', target: '#sound-audio-settings-card', placement: 'top', icon: '🎶', title: t('onb_step_music_title'), desc: t('onb_step_music_desc'), advanced: t('onb_step_music_advanced'),
       prepare: function () {
         var panel = document.getElementById('settings-panel');
         if (panel && panel.style.display === 'none') {
           try { toggleSettingsPanel(); } catch (e) {}
         }
-        var card = document.getElementById('ambient-focus-settings-card');
+        var card = document.getElementById('sound-audio-settings-card');
         if (card) {
           var body = card.querySelector('.settings-sub-body');
           if (body && body.style.display === 'none') {
-            try { toggleSettingsSubCard('ambient-focus-settings-card'); } catch (e) {}
+            try { toggleSettingsSubCard('sound-audio-settings-card'); } catch (e) {}
           }
         }
       }
