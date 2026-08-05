@@ -7408,36 +7408,112 @@ async function loadFromLocalStorage() {
 var BACKUP_KEY_PREFIX = 'todolist_'; // shu prefiks bilan boshlanuvchi barcha kalitlar zaxiralanadi
 
 function exportAppData() {
-  try {
-    var keys = {};
-    var taskCount = 0, coinCount = 0;
-    for (var i = 0; i < localStorage.length; i++) {
-      var k = localStorage.key(i);
-      if (k && k.indexOf(BACKUP_KEY_PREFIX) === 0) {
-        keys[k] = localStorage.getItem(k);
-      }
-    }
-    try { taskCount = (JSON.parse(keys[LOCAL_TASKS_KEY] || '[]') || []).length; } catch(e) {}
-    try { coinCount = (JSON.parse(keys[LOCAL_STATE_KEY] || 'null') || {}).data ? JSON.parse(keys[LOCAL_STATE_KEY]).data.coins : 0; } catch(e) {}
+  // Popup modal ko'rsatish
+  showExportSelectModal();
+}
 
+function showExportSelectModal() {
+  var ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px';
+  
+  var box = document.createElement('div');
+  box.style.cssText = 'background:#1C1C25;border:2px solid rgba(52,211,153,0.4);border-radius:20px;padding:28px 24px;width:100%;max-width:360px;text-align:center';
+  
+  box.innerHTML =
+    '<div style="font-size:44px;margin-bottom:12px">📥</div>' +
+    '<h3 style="font-family:Syne,sans-serif;font-size:18px;font-weight:700;color:#34D399;margin-bottom:16px">Nimani eksport qilish?</h3>' +
+    '<p style="font-size:13px;color:var(--text-muted);margin-bottom:20px;line-height:1.6">Faqat kerakli ma\'lumotlarni tanlang:</p>' +
+    '<div style="display:flex;flex-direction:column;gap:10px">' +
+      '<button id="export-ielts" style="width:100%;padding:14px;border-radius:12px;border:1px solid rgba(59,130,246,0.4);background:rgba(59,130,246,0.08);color:#60A5FA;font-size:14px;font-weight:600;cursor:pointer;font-family:\'DM Sans\',sans-serif;transition:all 0.2s">📚 IELTS/SAT</button>' +
+      '<button id="export-stats" style="width:100%;padding:14px;border-radius:12px;border:1px solid rgba(168,85,247,0.4);background:rgba(168,85,247,0.08);color:#D8B4FE;font-size:14px;font-weight:600;cursor:pointer;font-family:\'DM Sans\',sans-serif;transition:all 0.2s">📊 Statistika</button>' +
+      '<button id="export-tasks" style="width:100%;padding:14px;border-radius:12px;border:1px solid rgba(249,115,22,0.4);background:rgba(249,115,22,0.08);color:#FDBA74;font-size:14px;font-weight:600;cursor:pointer;font-family:\'DM Sans\',sans-serif;transition:all 0.2s">✅ Vazifalar</button>' +
+      '<button id="export-all" style="width:100%;padding:14px;border-radius:12px;border:1px solid rgba(34,197,94,0.4);background:rgba(34,197,94,0.08);color:#86EFAC;font-size:14px;font-weight:600;cursor:pointer;font-family:\'DM Sans\',sans-serif;transition:all 0.2s">🎯 Barchasi</button>' +
+    '</div>' +
+    '<button id="export-cancel" style="width:100%;margin-top:14px;padding:12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:14px;cursor:pointer;font-family:\'DM Sans\',sans-serif">Bekor qilish</button>';
+  
+  ov.appendChild(box);
+  document.body.appendChild(ov);
+  
+  // Tugmalar
+  document.getElementById('export-ielts').onclick = function() { 
+    ov.remove(); 
+    performExport('ielts'); 
+  };
+  document.getElementById('export-stats').onclick = function() { 
+    ov.remove(); 
+    performExport('stats'); 
+  };
+  document.getElementById('export-tasks').onclick = function() { 
+    ov.remove(); 
+    performExport('tasks'); 
+  };
+  document.getElementById('export-all').onclick = function() { 
+    ov.remove(); 
+    performExport('all'); 
+  };
+  document.getElementById('export-cancel').onclick = function() { 
+    ov.remove(); 
+  };
+  
+  // Fonni bosish
+  ov.addEventListener('mousedown', function(e) { 
+    if (e.target === ov) ov.remove(); 
+  });
+}
+
+function performExport(exportType) {
+  try {
     var backup = {
-      type: 'todolist_full_backup',
+      type: 'todolist_export',
       version: 2,
       app: 'ToDoList',
       exported_at: new Date().toISOString(),
-      meta: { taskCount: taskCount, coins: coinCount || 0 },
-      keys: keys
+      exportType: exportType,
+      data: {}
     };
 
+    // LocalStorage-dan ma'lumotlarni olish
+    var allKeys = {};
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && k.indexOf(BACKUP_KEY_PREFIX) === 0) {
+        allKeys[k] = localStorage.getItem(k);
+      }
+    }
+
+    // Tanlashga qarab ma'lumotlarni saqlash
+    if (exportType === 'ielts') {
+      // Faqat IELTS/SAT ma'lumotlari
+      if (allKeys[LOCAL_STATE_KEY]) backup.data.state = allKeys[LOCAL_STATE_KEY];
+      backup.meta = { type: 'IELTS/SAT' };
+    } else if (exportType === 'stats') {
+      // Faqat statistika
+      if (allKeys[LOCAL_STATE_KEY]) backup.data.state = allKeys[LOCAL_STATE_KEY];
+      backup.meta = { type: 'Statistics' };
+    } else if (exportType === 'tasks') {
+      // Faqat vazifalar
+      if (allKeys[LOCAL_TASKS_KEY]) backup.data.tasks = allKeys[LOCAL_TASKS_KEY];
+      backup.meta = { type: 'Tasks' };
+    } else if (exportType === 'all') {
+      // Barchasi
+      backup.data = allKeys;
+      var taskCount = 0, coinCount = 0;
+      try { taskCount = (JSON.parse(allKeys[LOCAL_TASKS_KEY] || '[]') || []).length; } catch(e) {}
+      try { coinCount = (JSON.parse(allKeys[LOCAL_STATE_KEY] || 'null') || {}).data ? JSON.parse(allKeys[LOCAL_STATE_KEY]).data.coins : 0; } catch(e) {}
+      backup.meta = { taskCount: taskCount, coins: coinCount || 0, type: 'All Data' };
+    }
+
+    // JSON faylga yozish
     var blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url;
-    a.download = 'todolist_backup.json';
+    a.download = 'todolist_' + exportType + '_' + new Date().getTime() + '.json';
     document.body.appendChild(a);
     a.click();
     a.remove();
     setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+    
     toast(t('data_export_success'));
   } catch(e) {
     console.warn('Eksport xatosi:', e);
@@ -7450,6 +7526,50 @@ function triggerImportAppData() {
   if (input) { input.value = ''; input.click(); }
 }
 
+// Turli xil eksport formatlarini (joriy performExport() formati va eski
+// formatlar) bitta ichki ko'rinishga keltiradi:
+//   { keys: { <localStorage kaliti>: <JSON string qiymat>, ... },
+//     exportType, meta, exported_at }
+// Shu funksiya tufayli export formati kelajakda o'zgarsa ham, faqat shu
+// yerni yangilash kifoya — qolgan import kodi o'zgarmaydi.
+function normalizeImportedBackup(backup) {
+  if (!backup || typeof backup !== 'object') return null;
+  var keys = {};
+  var exportType = backup.exportType || 'all';
+
+  if (backup.data && typeof backup.data === 'object') {
+    // JORIY FORMAT (performExport tomonidan yaratiladi)
+    if (exportType === 'all') {
+      // "Barchasi" eksportida data — to'g'ridan-to'g'ri localStorage
+      // kalit->qiymat xaritasi (allKeys).
+      Object.keys(backup.data).forEach(function(k){
+        if (k.indexOf(BACKUP_KEY_PREFIX) === 0) keys[k] = backup.data[k];
+      });
+    } else {
+      // "IELTS/SAT", "Statistika" yoki "Vazifalar" — faqat tegishli
+      // qismgina bor, shuning uchun faqat mos kalitlarni tiklaymiz.
+      if (typeof backup.data.state === 'string') keys[LOCAL_STATE_KEY] = backup.data.state;
+      if (typeof backup.data.tasks === 'string') keys[LOCAL_TASKS_KEY] = backup.data.tasks;
+    }
+  } else if (backup.keys && typeof backup.keys === 'object') {
+    // Vaqtinchalik/eski "yangi format" — { keys: {...} }
+    Object.keys(backup.keys).forEach(function(k){ keys[k] = backup.keys[k]; });
+  } else if (Array.isArray(backup.tasks) || backup.state) {
+    // Eng eski format — { tasks: [...], state: {...} }
+    if (Array.isArray(backup.tasks)) keys[LOCAL_TASKS_KEY] = JSON.stringify(backup.tasks);
+    if (backup.state) keys[LOCAL_STATE_KEY] = JSON.stringify(backup.state);
+  }
+
+  if (Object.keys(keys).length === 0) return null;
+
+  return {
+    keys: keys,
+    exportType: exportType,
+    meta: backup.meta || {},
+    exported_at: backup.exported_at || null
+  };
+}
+
 function importAppData(event) {
   var file = event.target.files && event.target.files[0];
   if (!file) return;
@@ -7457,16 +7577,12 @@ function importAppData(event) {
   reader.onload = function(e) {
     try {
       var backup = JSON.parse(e.target.result);
-
-      // Yangi format ('keys' obyekti) yoki eski format (tasks/state) — ikkalasini ham qo'llab-quvvatlaymiz
-      var hasNewFormat = backup && backup.keys && typeof backup.keys === 'object';
-      var hasOldFormat = backup && (Array.isArray(backup.tasks) || backup.state);
-      if (!backup || (!hasNewFormat && !hasOldFormat)) {
+      var norm = normalizeImportedBackup(backup);
+      if (!norm) {
         toast(t('data_import_error'));
         return;
       }
-
-      showImportConfirmModal(backup, hasNewFormat);
+      showImportConfirmModal(norm);
     } catch(err) {
       console.warn('Import xatosi:', err);
       toast(t('data_import_error'));
@@ -7477,7 +7593,8 @@ function importAppData(event) {
 
 // O'yinlardagi "Load Game" so'rovi kabi — joriy ma'lumot ustidan
 // yozilishidan oldin foydalanuvchidan aniq tasdiq so'raydi.
-function showImportConfirmModal(backup, hasNewFormat) {
+// "backup" — normalizeImportedBackup() dan qaytgan ichki format: { keys, exportType, meta, exported_at }
+function showImportConfirmModal(backup) {
   var dateStr = '—';
   try {
     if (backup.exported_at) {
@@ -7490,12 +7607,14 @@ function showImportConfirmModal(backup, hasNewFormat) {
   var taskCount = '—';
   var coinCount = '—';
   try {
-    if (hasNewFormat) {
+    if (backup.keys[LOCAL_TASKS_KEY]) {
       taskCount = backup.meta && typeof backup.meta.taskCount === 'number' ? backup.meta.taskCount : (JSON.parse(backup.keys[LOCAL_TASKS_KEY]||'[]')||[]).length;
-      coinCount = backup.meta && typeof backup.meta.coins === 'number' ? backup.meta.coins : '—';
     } else {
-      taskCount = Array.isArray(backup.tasks) ? backup.tasks.length : 0;
-      coinCount = backup.state && backup.state.data ? (backup.state.data.coins||0) : '—';
+      taskCount = 0; // bu eksportda vazifalar umuman yo'q (masalan faqat IELTS/SAT)
+    }
+    if (backup.keys[LOCAL_STATE_KEY]) {
+      var stParsed = JSON.parse(backup.keys[LOCAL_STATE_KEY]);
+      coinCount = backup.meta && typeof backup.meta.coins === 'number' ? backup.meta.coins : (stParsed && stParsed.data ? (stParsed.data.coins||0) : '—');
     }
   } catch(e) {}
 
@@ -7524,57 +7643,66 @@ function showImportConfirmModal(backup, hasNewFormat) {
 
   document.getElementById('import-confirm').onclick = function(){
     ov.remove();
-    applyImportedBackup(backup, hasNewFormat);
+    applyImportedBackup(backup);
   };
 }
 
-// Backup'dagi ma'lumotlarni LocalStorage'ga to'liq yozib chiqadi
-// (avval eski 'todolist_' kalitlarini tozalab, keyin backup'dagilarni yozadi —
-// shunda eski va yangi ma'lumot aralashib ketmaydi), so'ng sahifani qayta yuklaydi.
-function applyImportedBackup(backup, hasNewFormat) {
+// Backup'dagi ma'lumotlarni LocalStorage'ga yozib chiqadi va sahifani qayta yuklaydi.
+// "backup" — normalizeImportedBackup() dan qaytgan ichki format: { keys, exportType, meta, exported_at }
+//
+// MUHIM: faqat "Barchasi" (exportType === 'all') import qilinganda barcha eski
+// 'todolist_' kalitlari tozalanadi (to'liq Save/Load xatti-harakati). Agar
+// foydalanuvchi faqat bitta bo'limni (masalan faqat IELTS/SAT yoki faqat
+// Vazifalar) eksport qilib import qilsa — faqat o'sha faylda mavjud bo'lgan
+// kalitlar yoziladi, qolgan ma'lumotlar (masalan vazifalar) tegilmasdan qoladi.
+function applyImportedBackup(backup) {
   try {
-    // 1) Joriy 'todolist_' kalitlarini tozalash (faqat shu ilovaga tegishli kalitlar)
-    var toRemove = [];
-    for (var i = 0; i < localStorage.length; i++) {
-      var k = localStorage.key(i);
-      if (k && k.indexOf(BACKUP_KEY_PREFIX) === 0) toRemove.push(k);
-    }
-    toRemove.forEach(function(k){ localStorage.removeItem(k); });
+    var isFullImport = backup.exportType === 'all';
 
-    // 2) Backup'dagi kalitlarni yozish
+    // 1) To'liq importda — joriy 'todolist_' kalitlarini tozalash
+    if (isFullImport) {
+      var toRemove = [];
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf(BACKUP_KEY_PREFIX) === 0) toRemove.push(k);
+      }
+      toRemove.forEach(function(k){ localStorage.removeItem(k); });
+    }
+
+    // 2) Backup'dagi kalitlarni yozish (vazifalardan tashqari — ular pastda
+    // alohida, writeLocalTasks() orqali yoziladi)
+    Object.keys(backup.keys).forEach(function(k){
+      if (k.indexOf(BACKUP_KEY_PREFIX) === 0 && k !== LOCAL_TASKS_KEY) {
+        localStorage.setItem(k, backup.keys[k]);
+      }
+    });
+
+    // 3) Vazifalar — faqat backup faylida haqiqatan mavjud bo'lsa yoziladi.
+    // Aks holda (masalan faqat IELTS/SAT eksport qilingan bo'lsa) joriy
+    // vazifalar bilan ishlanmaydi va o'zgarishsiz qoladi.
+    var hasTasksInBackup = typeof backup.keys[LOCAL_TASKS_KEY] === 'string';
     var expectedTaskCount = 0;
-    var importedTasks = [];
-    if (hasNewFormat) {
-      Object.keys(backup.keys).forEach(function(k){
-        if (k.indexOf(BACKUP_KEY_PREFIX) === 0 && k !== LOCAL_TASKS_KEY) {
-          localStorage.setItem(k, backup.keys[k]);
-        }
-      });
-      var importedTasksRaw = backup.keys[LOCAL_TASKS_KEY];
-      try { importedTasks = importedTasksRaw ? JSON.parse(importedTasksRaw) : []; } catch(e) { importedTasks = []; }
+    var verifyTasks = readLocalTasks();
+
+    if (hasTasksInBackup) {
+      var importedTasks = [];
+      try { importedTasks = JSON.parse(backup.keys[LOCAL_TASKS_KEY]); } catch(e) { importedTasks = []; }
       if (!Array.isArray(importedTasks)) importedTasks = [];
       expectedTaskCount = (backup.meta && typeof backup.meta.taskCount === 'number') ? backup.meta.taskCount : importedTasks.length;
-    } else {
-      // Eski format bilan orqaga moslik (faqat tasks + state bo'lgan eksportlar)
-      importedTasks = Array.isArray(backup.tasks) ? backup.tasks : [];
-      expectedTaskCount = importedTasks.length;
-      if (backup.state) {
-        localStorage.setItem(LOCAL_STATE_KEY, JSON.stringify(backup.state));
+
+      // Vazifalar HAR DOIM writeLocalTasks() orqali yoziladi — shu funksiya
+      // yozuvni darhol tasdiqlaydi va zaxira nusxa ('todolist_tasks_backup')
+      // ni ham avtomatik yaratadi.
+      writeLocalTasks(importedTasks);
+
+      // 4) YOZUVNI TASDIQLASH: qayta o'qib, kutilgan sondagi vazifalar
+      // haqiqatan ham diskka tushganini tekshiramiz.
+      verifyTasks = readLocalTasks();
+      if (expectedTaskCount > 0 && verifyTasks.length !== expectedTaskCount) {
+        console.warn('Import tekshiruvi mos kelmadi: kutilgan', expectedTaskCount, 'topilgan', verifyTasks.length);
+        toast(t('data_import_error'));
+        return; // sahifani qayta yuklamaymiz — muvaffaqiyatsiz importdan keyin bo'sh holatga tushib qolmaslik uchun
       }
-    }
-
-    // Vazifalar HAR DOIM writeLocalTasks() orqali yoziladi — shu funksiya
-    // yozuvni darhol tasdiqlaydi va zaxira nusxa ('todolist_tasks_backup')
-    // ni ham avtomatik yaratadi.
-    writeLocalTasks(importedTasks);
-
-    // 3) YOZUVNI TASDIQLASH: qayta o'qib, kutilgan sondagi vazifalar
-    // haqiqatan ham diskka tushganini tekshiramiz.
-    var verifyTasks = readLocalTasks();
-    if (expectedTaskCount > 0 && verifyTasks.length !== expectedTaskCount) {
-      console.warn('Import tekshiruvi mos kelmadi: kutilgan', expectedTaskCount, 'topilgan', verifyTasks.length);
-      toast(t('data_import_error'));
-      return; // sahifani qayta yuklamaymiz — muvaffaqiyatsiz importdan keyin bo'sh holatga tushib qolmaslik uchun
     }
 
     // 4) Ichki holatni ham darhol yangilab, ekranni bir zumda qayta chizamiz
