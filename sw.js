@@ -1,76 +1,11 @@
 // ============================================================
-// ToDoList PWA — Service Worker
-// Har bir deploy'da CACHE_VERSION'ni oshiring (masalan v11 -> v12),
-// shunda eski kesh avtomatik "activate" bosqichida o'chib, yangi
-// fayllar bilan almashtiriladi.
-// MUHIM: index.html'ga yangi o'zgarish kiritilganda, foydalanuvchi
-// eski keshlangan versiyani ko'rmasligi uchun bu versiya raqami
-// albatta oshirilishi shart — aks holda Service Worker eski faylni
-// keshdan qaytaraverib, yangi kod hech qachon ishga tushmaydi.
-// To'liq offline (LocalStorage asosidagi) ilova uchun.
-// Supabase olib tashlangan, SortableJS CDN orqali ulanadi.
+// ToDoList PWA — Service Worker (v12 Optimallashtirilgan)
 // ============================================================
 
-// v12: Ushbu deployda kiritilgan o'zgarishlar:
-//  - Davlat bayroqlari: emoji bayroq shrifti yo'q qurilmalarda (ko'pincha
-//    Windows) "AF", "AL" kabi harflar chiqib qolish muammosi tuzatildi —
-//    endi flagcdn.com'dan haqiqiy bayroq rasmi ko'rsatiladi, rasm
-//    yuklanmasa eski emoji-bayroqqa avtomatik qaytadi
-//  - Level (daraja) nomlari endi barcha 3 tilga (uz/en/ru) to'liq
-//    tarjima qilingan: daraja nomlari, "SEN/YOU/ТЫ" belgisi va
-//    "Daraja/Level/Уровень" so'zi til almashtirilganda mos ravishda
-//    o'zgaradi
-//  - "Maqsadlarim" (Goals) bo'limiga yangi foydalanuvchilar uchun
-//    birinchi ochilishda avtomatik namuna maqsad qo'shiladi
-//    (masalan "10 ta lug'at yodlash" — 7 kunga), tilga mos tarjima bilan
-//  - "Chest Vazifalar" bo'limiga ham xuddi shunday yangi foydalanuvchilar
-//    uchun namuna vazifa qo'shiladi (masalan "Podcast ko'rish"/"Watch a
-//    podcast"), tilga mos tarjima bilan
-//  - Sirli joy (Personal Check): "kecha/bugun qildingizmi?" savoli endi
-//    avtomatik/majburiy chiqmaydi — faqat foydalanuvchi "✏️ Belgilash"
-//    tugmasini bosgandagina Ha/Yo'q tugmalari ko'rinadi
-//  - O'yinchi profili (Player Profile) oynasidagi statistika to'rida
-//    bo'sh qolib ketgan 4-katak endi "🔥 Joriy Streak" bilan to'ldirildi
-//
-// v11: Ushbu deployda kiritilgan o'zgarishlar:
-//  - IELTS va SAT endi ikkita mustaqil tab: profilda ikkalasi ham
-//    tanlansa, ikkala tab bir vaqtda ko'rinadi va natijalar (tarix,
-//    o'rtacha ball, "Yangi natija qo'shish") bir-biriga aralashmaydi
-//  - Bug: IELTS tabidagi "+ Yangi natija qo'shish" tugmasi ba'zan
-//    SAT modalini ochib yuborayotgan qoldiq kod olib tashlandi
-//  - Bug: esc() funksiyasi ikki marta e'lon qilingan bo'lib, xavfsiz
-//    (XSS'dan himoyalangan) versiya eskirgan versiya bilan bosilib
-//    qolgan edi — endi faqat xavfsiz versiya ishlatiladi
-//  - Bug: requestNotifPermission() ikki marta e'lon qilingan bo'lib,
-//    sahifa ochilganda avtomatik chaqiriladigan "sokin" tekshiruv
-//    interaktiv (toast ko'rsatadigan) versiya bilan almashib, ruxsat
-//    allaqachon berilgan foydalanuvchilarda ham har ochilishda keraksiz
-//    toast chiqarardi — endi ikkalasi alohida funksiya
-//
-// v10: Ushbu deployda kiritilgan o'zgarishlar:
-//  - Sirli joy: "KECHA" yorlig'iga aniq sana qo'shildi (masalan "KECHA (18.07)")
-//  - Reward ishlatilganda (0 tangalik) tarixga endi yozuv qo'shilmaydi
-//  - Reward Statistics endi XARID emas, ISHLATISH (usage) tarixini ko'rsatadi
-//    (yangi doimiy todolist_usage_history kaliti orqali)
-//  - Minecraft Steve: HP formulasi tuzatildi (tiklanish endi 0.5x/tanga,
-//    jazo bilan bir xil 2x emas)
-//  - Minecraft Steve: oyoqlar orasiga bo'shliq va konturlar qo'shildi
-//    (yassi/"qog'oz" ko'rinish muammosi)
-//  - Ko'p oyna/tab holatida IELTS natijalar va boshqa umumiy holat
-//    ba'zan yo'qolib qolish xatosi tuzatildi (visibilitychange orqali
-//    diskdagi so'nggi holat bilan sinxronlash)
-//  - "Top Task" statistikasi: Undone bosilganda taskDoneCount endi
-//    to'g'ri kamayadi + eskirgan sonlar bir martalik tuzatiladi
-//  - IELTS Detailed analysis: "i" tugmasi qo'shildi — Listening/Reading
-//    uchun rasmiy ball jadvalini ko'rsatadi
-//  - Reward tahrirlashda (Edit) endi vaqtli mukofotning haqiqiy
-//    daqiqasi (amount) ham nomga mos yangilanadi
-//  - Instagram bloklanish muddati endi qat'iy 30 kun emas — oxirgi
-//    ban tugagan kundan (yoki ilovani boshlagan kundan) hisoblanadi
 const CACHE_VERSION = 'v12';
 const CACHE_NAME = `todolist-cache-${CACHE_VERSION}`;
 
-// Ilova offline'da ishlashi uchun oldindan keshlanadigan fayllar.
+// Pre-cache qilinadigan asosiy fayllar
 const PRECACHE_URLS = [
   '/ToDoList/',
   '/ToDoList/index.html',
@@ -82,16 +17,13 @@ const PRECACHE_URLS = [
 ];
 
 // ---------------- INSTALL ----------------
-// Barcha zarur fayllarni keshga oldindan yuklaydi va darhol
-// yangi Service Worker versiyasini faollashtirishga tayyorlanadi.
 self.addEventListener('install', (event) => {
   event.waitUntil(
     (async () => {
       const cache = await caches.open(CACHE_NAME);
-      // Har bir faylni alohida qo'shamiz — birortasi (masalan tashqi
-      // CDN vaqtincha ishlamay qolsa) butun pre-cache jarayonini
-      // to'xtatib qo'ymasligi uchun.
-      await Promise.all(
+      
+      // Har bir faylni alohida keshga yuklash
+      await Promise.allSettled(
         PRECACHE_URLS.map(async (url) => {
           try {
             const request = new Request(url, { cache: 'reload' });
@@ -104,18 +36,18 @@ self.addEventListener('install', (event) => {
           }
         })
       );
-      // Eski SW hali faol bo'lsa ham, yangisini kutmasdan ishga tushiramiz.
+      
+      // Yangi SW tayyor bo'lishi bilan kutmasdan ishga tushadi
       self.skipWaiting();
     })()
   );
 });
 
 // ---------------- ACTIVATE ----------------
-// Eski versiyadagi barcha keshlarni avtomatik o'chirib tashlaydi
-// va Service Worker'ni darhol barcha ochiq oynalar ustidan nazoratga oladi.
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
+      // Eski versiyadagi keshlar tozalanadi
       const cacheNames = await caches.keys();
       await Promise.all(
         cacheNames
@@ -125,37 +57,36 @@ self.addEventListener('activate', (event) => {
             return caches.delete(name);
           })
       );
+      // Barcha ochiq oynalarni zudlik bilan nazoratga olish
       await self.clients.claim();
     })()
   );
 });
 
 // ---------------- FETCH ----------------
-// Strategiya:
-//  - HTML sahifa so'rovlari (navigatsiya): Network-First, keshga zaxira
-//    bilan — internet bo'lsa eng yangi versiya, bo'lmasa keshdan offline
-//    ishlaydi.
-//  - Qolgan barcha resurslar (JS/CSS/rasm/CDN va h.k.): Cache-First,
-//    tarmoqqa tezkor zaxira bilan — imkon qadar tezroq yuklanadi va
-//    fon rejimida keshni yangilab boradi (stale-while-revalidate uslubida).
 self.addEventListener('fetch', (event) => {
   const { request } = event;
 
-  // Faqat GET so'rovlarini keshlaymiz — POST/PUT va h.k. tegilmaydi.
+  // Faqat GET so'rovlarini qayta ishlaymiz
   if (request.method !== 'GET') return;
 
+  const url = new URL(request.url);
+
+  // 1. HTML sahifa so'rovlari (Navigatsiya): Network-First
   const isNavigation =
     request.mode === 'navigate' ||
-    (request.method === 'GET' && request.headers.get('accept')?.includes('text/html'));
+    (request.headers.get('accept') && request.headers.get('accept').includes('text/html'));
 
   if (isNavigation) {
     event.respondWith(networkFirstFallingBackToCache(request));
-  } else {
-    event.respondWith(cacheFirstWithBackgroundUpdate(request));
+    return;
   }
+
+  // 2. Tashqi rasmlar (masalan, flagcdn.com bayroqlari) va statik fayllar: Cache-First
+  event.respondWith(cacheFirstWithNetworkFallbackAndCache(request));
 });
 
-// Network-First, Falling Back to Cache — asosan HTML navigatsiya uchun.
+// HTML uchun: Network-First (Internet bo'lsa yangi kod, bo'lmasa kesh)
 async function networkFirstFallingBackToCache(request) {
   const cache = await caches.open(CACHE_NAME);
   try {
@@ -165,13 +96,14 @@ async function networkFirstFallingBackToCache(request) {
     }
     return networkResponse;
   } catch (err) {
-    // Internet yo'q — keshdan qaytaramiz.
     const cached = await cache.match(request, { ignoreSearch: true });
     if (cached) return cached;
-    // So'nggi chora: asosiy sahifani beramiz (offline fallback).
+    
+    // Offline zaxira sahifasi
     const fallback = await cache.match('/ToDoList/index.html');
     if (fallback) return fallback;
-    return new Response('Offline: sahifa keshda topilmadi.', {
+
+    return new Response('Offline: Sahifa keshda topilmadi.', {
       status: 503,
       statusText: 'Offline',
       headers: { 'Content-Type': 'text/plain; charset=utf-8' }
@@ -179,36 +111,35 @@ async function networkFirstFallingBackToCache(request) {
   }
 }
 
-// Cache-First + fon rejimida yangilash — statik resurslar (JS, CSS,
-// rasmlar, tashqi CDN kutubxonalari) uchun eng tezkor strategiya.
-async function cacheFirstWithBackgroundUpdate(request) {
+// Statik va dynamic resurslar uchun: Cache-First + Avto-keshlash
+async function cacheFirstWithNetworkFallbackAndCache(request) {
   const cache = await caches.open(CACHE_NAME);
   const cached = await cache.match(request, { ignoreSearch: true });
 
-  // Fonda tarmoqdan yangi versiyani olib, keshni yangilab qo'yamiz
-  // (keyingi safar ochilganda eng so'nggi fayl ishlatiladi).
-  const networkFetchPromise = fetch(request)
-    .then((networkResponse) => {
-      if (networkResponse && (networkResponse.ok || networkResponse.type === 'opaque')) {
-        cache.put(request, networkResponse.clone());
-      }
-      return networkResponse;
-    })
-    .catch(() => null);
-
-  // Keshda bo'lsa — darhol shuni qaytaramiz (eng tez javob).
+  // Keshda bo'lsa darhol beriladi
   if (cached) {
-    networkFetchPromise; // fon rejimida yangilanishda davom etadi
+    // Fonda yangilab qo'yish (Stale-while-revalidate)
+    fetch(request).then((networkResponse) => {
+      if (networkResponse && (networkResponse.ok || networkResponse.type === 'opaque')) {
+        cache.put(request, networkResponse);
+      }
+    }).catch(() => {/* Offline bo'lsa e'tiborsiz qoldiriladi */});
+
     return cached;
   }
 
-  // Keshda yo'q bo'lsa — tarmoqdan kutamiz, u ham bo'lmasa xatolik.
-  const networkResponse = await networkFetchPromise;
-  if (networkResponse) return networkResponse;
-
-  return new Response('Offline: resurs keshda topilmadi.', {
-    status: 503,
-    statusText: 'Offline',
-    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-  });
+  // Keshda bo'lmasa tarmoqdan olinadi va keshga saqlanadi (masalan, yangi flagcdn rasmlari)
+  try {
+    const networkResponse = await fetch(request);
+    if (networkResponse && (networkResponse.ok || networkResponse.type === 'opaque')) {
+      cache.put(request, networkResponse.clone());
+    }
+    return networkResponse;
+  } catch (err) {
+    return new Response('Offline: Resurs yuklanmadi.', {
+      status: 503,
+      statusText: 'Offline',
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+    });
+  }
 }
