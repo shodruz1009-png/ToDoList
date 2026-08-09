@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="uz">
 <head>
 <meta charset="UTF-8">
@@ -527,10 +527,14 @@
   html.layout-desktop .task-quick-btn { display:inline-flex; align-items:center; justify-content:center; }
   .task-quick-btn:hover { border-color:var(--accent); color:var(--accent); }
   .task-quick-btn.skipped-active { border-color:var(--accent); color:var(--accent); }
-  /* Desktop'da ⋮ menyudan Tahrirlash va Skip band'lari olib tashlanadi (dublikat bo'lmasin) */
+  /* Desktop'da ⋮ menyudan Skip band'i olib tashlanadi (dublikat bo'lmasin,
+     chunki Skip alohida tezkor tugma sifatida ko'rinadi). Tahrirlash (qalam)
+     esa aksincha — endi DESKTOP'da alohida tugma sifatida ko'RSATILMAYDI,
+     faqat ⋮ menyu ichida qoladi (o'ng tarafda ortiqcha joy olmasligi uchun) — 
+     shu sabab dd-item-edit endi desktop'da yashirilmaydi. */
   html.layout-desktop .task-dropdown-item.dd-item-skip,
-  html.layout-desktop .task-dropdown-item.dd-item-unskip,
-  html.layout-desktop .task-dropdown-item.dd-item-edit { display:none; }
+  html.layout-desktop .task-dropdown-item.dd-item-unskip { display:none; }
+  html.layout-desktop .task-quick-btn.qb-edit { display:none !important; }
   .subtask-list { margin-top:8px; display:flex; flex-direction:column; gap:5px; }
   .subtask-item { display:flex; align-items:center; gap:8px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:6px 8px; }
   .subtask-check { width:18px; height:18px; border-radius:var(--radius-2xs); border:1.5px solid var(--border-hover); background:transparent; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; padding:0; transition:all 0.15s; }
@@ -540,6 +544,10 @@
   .subtask-item.done .subtask-name { text-decoration:line-through; color:var(--text-dim); }
   .subtask-del { background:none; border:none; cursor:pointer; color:var(--text-dim); font-size:var(--fs-sm); padding:2px 4px; border-radius:var(--radius-2xs); flex-shrink:0; transition:all 0.15s; }
   .subtask-del:hover { color:var(--red); }
+  .subtask-edit, .subtask-extract { background:none; border:none; cursor:pointer; color:var(--text-dim); font-size:var(--fs-xs); padding:2px 4px; border-radius:var(--radius-2xs); flex-shrink:0; transition:all 0.15s; line-height:1; }
+  .subtask-edit:hover, .subtask-extract:hover { color:var(--accent); }
+  .subtask-item.skipped { opacity:0.45; border-style:dashed; }
+  .subtask-dots-wrap .task-dots-btn { padding:4px 7px; font-size:var(--fs-sm); }
   .subtask-progress { font-size:var(--fs-3xs); color:var(--text-dim); margin-top:6px; }
   .subtask-done-toggle { background:none; border:none; cursor:pointer; color:var(--accent); font-size:var(--fs-2xs); padding:4px 0; font-family:'DM Sans',sans-serif; display:block; margin-top:6px; }
   .subtask-done-toggle:hover { text-decoration:underline; }
@@ -2725,7 +2733,7 @@ if ('serviceWorker' in navigator) {
 <!-- Sub-task qo'shish popup oynasi -->
 <div class="modal-overlay" id="subtask-modal-overlay">
   <div class="modal" id="subtask-modal-box">
-    <h2 data-i18n="subtask_modal_title">Sub-task qo'shish</h2>
+    <h2 id="subtask-modal-title" data-i18n="subtask_modal_title">Sub-task qo'shish</h2>
 
     <div class="modal-field">
       <label data-i18n="subtask_name_label">Sub-task nomi</label>
@@ -2794,6 +2802,7 @@ if ('serviceWorker' in navigator) {
         <button class="label-chip" data-color="#FACC15" style="background:#FACC15" onclick="stSelLabel('#FACC15')" title="Sariq" data-i18n-title="task_label_yellow"></button>
         <button class="label-chip" data-color="#34D399" style="background:#34D399" onclick="stSelLabel('#34D399')" title="Yashil" data-i18n-title="task_label_green"></button>
         <button class="label-chip" data-color="#60A5FA" style="background:#60A5FA" onclick="stSelLabel('#60A5FA')" title="Ko'k" data-i18n-title="task_label_blue"></button>
+        <button class="label-chip" data-color="#FFFFFF" style="background:#FFFFFF;border-color:var(--border)" onclick="stSelLabel('#FFFFFF')" title="Oq" data-i18n-title="task_label_white"></button>
       </div>
     </div>
 
@@ -2899,6 +2908,7 @@ if ('serviceWorker' in navigator) {
         <button class="label-chip" data-color="#FACC15" style="background:#FACC15" onclick="selLabel('#FACC15')" title="Sariq" data-i18n-title="task_label_yellow"></button>
         <button class="label-chip" data-color="#34D399" style="background:#34D399" onclick="selLabel('#34D399')" title="Yashil" data-i18n-title="task_label_green"></button>
         <button class="label-chip" data-color="#60A5FA" style="background:#60A5FA" onclick="selLabel('#60A5FA')" title="Ko'k" data-i18n-title="task_label_blue"></button>
+        <button class="label-chip" data-color="#FFFFFF" style="background:#FFFFFF;border-color:var(--border)" onclick="selLabel('#FFFFFF')" title="Oq" data-i18n-title="task_label_white"></button>
       </div>
     </div>
 
@@ -3425,6 +3435,13 @@ const I18N = {
     subtask_restored_toast: "Sub-task tiklandi",
     subtask_trash_parent_label: "Asosiy vazifa:",
     subtask_delete_title: "O'chirish",
+    subtask_edit_title: "Tahrirlash",
+    subtask_modal_title_edit: "Sub-taskni tahrirlash",
+    subtask_updated_toast: "Sub-task yangilandi",
+    subtask_extract_title: "Alohida vazifa qilib chiqarish",
+    subtask_extracted_toast: "Sub-task alohida vazifaga aylantirildi",
+    subtask_skipped_toast: "Sub-task o'tkazib yuborildi",
+    subtask_unskipped_toast: "Sub-task qaytarildi",
     level_panel_levels: 'Barcha darajalar',
     // Rewards
     rewards_empty: 'Hali mukofot yoq.',
@@ -3868,6 +3885,7 @@ const I18N = {
     task_label_yellow: 'Sariq',
     task_label_green: 'Yashil',
     task_label_blue: "Ko'k",
+    task_label_white: 'Oq',
     label_breakdown_title: "🎨 Bugungi vazifalar — ranglar bo'yicha",
     task_note_label: 'Izoh / Note',
     task_note_ph: "Qo'shimcha ma'lumot...",
@@ -4502,6 +4520,13 @@ const I18N = {
     subtask_restored_toast: "Sub-task restored",
     subtask_trash_parent_label: "Parent task:",
     subtask_delete_title: "Delete",
+    subtask_edit_title: "Edit",
+    subtask_modal_title_edit: "Edit sub-task",
+    subtask_updated_toast: "Sub-task updated",
+    subtask_extract_title: "Extract as a standalone task",
+    subtask_extracted_toast: "Sub-task extracted as a standalone task",
+    subtask_skipped_toast: "Sub-task skipped",
+    subtask_unskipped_toast: "Sub-task skip undone",
     level_panel_levels: 'All levels',
     // Rewards
     rewards_empty: 'No rewards yet.',
@@ -4950,6 +4975,7 @@ const I18N = {
     task_label_yellow: 'Yellow',
     task_label_green: 'Green',
     task_label_blue: 'Blue',
+    task_label_white: 'White',
     label_breakdown_title: '🎨 Today\'s tasks — by color',
     task_note_label: 'Note',
     task_note_ph: 'Additional info...',
@@ -5585,6 +5611,13 @@ const I18N = {
     subtask_restored_toast: "Подзадача восстановлена",
     subtask_trash_parent_label: "Основная задача:",
     subtask_delete_title: "Удалить",
+    subtask_edit_title: "Редактировать",
+    subtask_modal_title_edit: "Редактировать подзадачу",
+    subtask_updated_toast: "Подзадача обновлена",
+    subtask_extract_title: "Сделать отдельной задачей",
+    subtask_extracted_toast: "Подзадача стала отдельной задачей",
+    subtask_skipped_toast: "Подзадача пропущена",
+    subtask_unskipped_toast: "Пропуск подзадачи отменён",
     level_panel_levels: 'Все уровни',
     // Награды
     rewards_empty: 'Наград пока нет.',
@@ -6032,6 +6065,7 @@ const I18N = {
     task_label_yellow: 'Жёлтый',
     task_label_green: 'Зелёный',
     task_label_blue: 'Синий',
+    task_label_white: 'Белый',
     label_breakdown_title: '🎨 Сегодняшние задачи — по цветам',
     task_note_label: 'Заметка / Note',
     task_note_ph: 'Дополнительная информация...',
@@ -9756,7 +9790,7 @@ function checkReset() {
       // qayta reset qilamiz.
       ensureSubtasks(t).forEach(function(s) {
         if (s.repeat === 'once') return; // bir martalik sub-task avtomatik reset bo'lmaydi
-        if (subtaskDueToday(s)) { s.done = false; s.doneDate = null; }
+        if (subtaskDueToday(s)) { s.done = false; s.doneDate = null; s.skipped = false; s.skippedDate = null; }
       });
       // Bajarilgan "bir martalik" sub-tasklarni ro'yxatdan olib tashlaymiz
       // (asosiy "once" tasklar bilan bir xil xulq-atvor).
@@ -11253,6 +11287,7 @@ function toggleTaskDropdown(id, btnEl, ev) {
   if (!menu) return;
   var willOpen = !menu.classList.contains('open');
   closeAllTaskDropdowns();
+  closeAllSubtaskDropdowns();
   if (willOpen) {
     menu.classList.add('open');
     if (btnEl) btnEl.classList.add('active');
@@ -11263,12 +11298,37 @@ function toggleTaskDropdown(id, btnEl, ev) {
 document.addEventListener('click', function(e) {
   if (e.target.closest && (e.target.closest('.task-dots-wrap'))) return;
   closeAllTaskDropdowns();
+  closeAllSubtaskDropdowns();
 });
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') closeAllTaskDropdowns();
+  if (e.key === 'Escape') { closeAllTaskDropdowns(); closeAllSubtaskDropdowns(); }
 });
 // Task ro'yxati sudrab-tashlanganda (drag boshlanganda) ochiq menyularni yopamiz
-document.addEventListener('scroll', closeAllTaskDropdowns, true);
+document.addEventListener('scroll', function(){ closeAllTaskDropdowns(); closeAllSubtaskDropdowns(); }, true);
+
+// ============================================================
+// ⋮ SUB-TASK DROPDOWN MENU — asosiy task-dropdown bilan bir xil
+// uslub/sinflardan (task-dots-btn, task-dropdown-menu, task-dropdown-item)
+// foydalanadi, shu bilan Sortable drag-filter ham avtomatik ishlaydi.
+// Har bir sub-task o'zining alohida menyusiga ega (subtask-dd-{taskId}-{subId}).
+// ============================================================
+function closeAllSubtaskDropdowns() {
+  document.querySelectorAll('.subtask-dropdown-menu.open').forEach(function(m){ m.classList.remove('open'); });
+  document.querySelectorAll('.subtask-dots-btn.active').forEach(function(b){ b.classList.remove('active'); });
+}
+
+function toggleSubtaskDropdown(taskId, subId, btnEl, ev) {
+  if (ev) { ev.stopPropagation(); ev.preventDefault(); }
+  var menu = document.getElementById('subtask-dd-' + taskId + '-' + subId);
+  if (!menu) return;
+  var willOpen = !menu.classList.contains('open');
+  closeAllSubtaskDropdowns();
+  closeAllTaskDropdowns();
+  if (willOpen) {
+    menu.classList.add('open');
+    if (btnEl) btnEl.classList.add('active');
+  }
+}
 
 // ================= SUB-TASKLAR =================
 // Har bir asosiy task o'zining ichida `subtasks` massiviga ega:
@@ -11304,14 +11364,27 @@ function subtaskItemHtml(t, s) {
   const tintStyle = s.label
     ? `background:color-mix(in srgb, ${s.label} 26%, var(--surface2));border-left:3px solid ${s.label};`
     : '';
+  const ddId = 'subtask-dd-' + t.id + '-' + s.id;
+  // Har bir sub-task qatorida endi alohida edit/extract/delete tugmalari
+  // o'rniga, asosiy tasklardagi kabi bitta "⋮" menyu tugmasi bor — ichida
+  // Skip/Qaytarish, Tahrirlash, Chiqarish va O'chirish variantlari.
   return `
-      <div class="subtask-item${s.done?' done':''}" style="${tintStyle}">
+      <div class="subtask-item${s.done?' done':''}${(s.skipped&&!s.done)?' skipped':''}" style="${tintStyle}">
         <button class="subtask-check${s.done?' checked':''}" onclick="event.stopPropagation();toggleSubtask(${t.id},${s.id})">
           ${s.done?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':''}
         </button>
         <span class="subtask-name">${esc(s.name)}</span>
         ${s.coins ? `<span class="badge badge-coins">+${s.coins}🪙</span>` : ''}
-        <button class="subtask-del" onclick="event.stopPropagation();deleteSubtask(${t.id},${s.id})" title="${tr('subtask_delete_title')}">✕</button>
+        <div class="task-dots-wrap subtask-dots-wrap">
+          <button class="task-dots-btn subtask-dots-btn" onclick="event.stopPropagation();toggleSubtaskDropdown(${t.id},${s.id},this,event)" title="${tr('task_actions_title')}">⋮</button>
+          <div class="task-dropdown-menu subtask-dropdown-menu" id="${ddId}">
+            ${(!s.done&&!s.skipped)?`<button class="task-dropdown-item" onclick="event.stopPropagation();closeAllSubtaskDropdowns();skipSubtask(${t.id},${s.id})"><span class="tdi-icon">⏩</span>${tr('skip_dd_item')}</button>`:''}
+            ${(s.skipped&&!s.done)?`<button class="task-dropdown-item" onclick="event.stopPropagation();closeAllSubtaskDropdowns();unskipSubtask(${t.id},${s.id})"><span class="tdi-icon">↩️</span>${tr('unskip_dd_item')}</button>`:''}
+            <button class="task-dropdown-item" onclick="event.stopPropagation();closeAllSubtaskDropdowns();openSubtaskModal(${t.id},${s.id})"><span class="tdi-icon">✏️</span>${tr('subtask_edit_title')}</button>
+            <button class="task-dropdown-item" onclick="event.stopPropagation();closeAllSubtaskDropdowns();extractSubtaskToTask(${t.id},${s.id})"><span class="tdi-icon">↗️</span>${tr('subtask_extract_title')}</button>
+            <button class="task-dropdown-item danger" onclick="event.stopPropagation();closeAllSubtaskDropdowns();deleteSubtask(${t.id},${s.id})"><span class="tdi-icon">🗑</span>${tr('subtask_delete_title')}</button>
+          </div>
+        </div>
       </div>`;
 }
 
@@ -11336,7 +11409,13 @@ function toggleSubtaskDoneSection(taskId, btn, count) {
 function renderSubtasksHtml(t) {
   const subs = ensureSubtasks(t);
   if (subs.length === 0) return '';
-  const pending = subs.filter(function(s){ return !s.done; });
+  // BUG FIX: avval bu yerda faqat s.done tekshirilardi — shu sababli
+  // "Kunlarni tanlash" yoki "Har N kunda" turidagi sub-tasklar ham,
+  // navbati kelmagan kunlarda ham, ro'yxatda doim ko'rinib turardi
+  // (asosiy tasklar esa taskDueToday() orqali to'g'ri filtrlanadi).
+  // Endi sub-tasklar ham xuddi shunday — faqat bugun navbati kelganlari
+  // (subtaskDueToday) pending ro'yxatida ko'rsatiladi.
+  const pending = subs.filter(function(s){ return !s.done && subtaskDueToday(s); });
   const done = subs.filter(function(s){ return s.done; });
   let html = '';
   if (pending.length) {
@@ -11350,21 +11429,59 @@ function renderSubtasksHtml(t) {
     done.forEach(function(s){ html += subtaskItemHtml(t, s); });
     html += '</div>';
   }
-  html += `<div class="subtask-progress">${tr('subtask_progress_label').replace('{done}', done.length).replace('{total}', subs.length)}</div>`;
+  // Progress hisobi endi faqat EKRANDA ko'rinayotgan sub-tasklarga (pending+done)
+  // asoslanadi — avval har doim subs.length (hali navbati kelmagan, ko'rinmas
+  // sub-tasklarni ham) ishlatilardi, bu esa "0/3" kabi chalkash ko'rsatkich berardi.
+  // Agar bugun umuman hech qaysi sub-task navbati kelmagan bo'lsa (0/0), progress
+  // qatorini ko'rsatmaymiz.
+  if (pending.length + done.length > 0) {
+    html += `<div class="subtask-progress">${tr('subtask_progress_label').replace('{done}', done.length).replace('{total}', pending.length + done.length)}</div>`;
+  }
   return html;
 }
 
-// Hozir sub-task qo'shilayotgan asosiy task id'si (popup ochiq bo'lganda)
+// Hozir sub-task qo'shilayotgan/tahrirlanayotgan asosiy task id'si (popup ochiq bo'lganda)
 var _subtaskParentId = null;
+// Tahrirlanayotgan sub-taskning id'si — null bo'lsa, YANGI sub-task qo'shilyapti,
+// aks holda mavjud sub-task shu id bo'yicha yangilanadi (openSubtaskModal ikkinchi
+// argumenti orqali beriladi).
+var _subtaskEditId = null;
 
-function openSubtaskModal(taskId) {
+function openSubtaskModal(taskId, subId) {
   _subtaskParentId = taskId;
+  _subtaskEditId = (subId === undefined) ? null : subId;
   const input = document.getElementById('subtask-name-input');
-  if (input) input.value = '';
-  stDiff=1; stRepeat='daily'; stDays=[]; stLabel='';
-  const stInt = document.getElementById('st-interval'); if (stInt) stInt.value='4';
-  const stSd = document.getElementById('st-startdate'); if (stSd) stSd.value = today();
-  stSelDiff(1); stSelRepeat('daily'); stSelLabel('');
+  const titleEl = document.getElementById('subtask-modal-title');
+  const stInt = document.getElementById('st-interval');
+  const stSd = document.getElementById('st-startdate');
+
+  let existing = null;
+  if (_subtaskEditId !== null) {
+    const tk = S.tasks.find(function(x){ return x.id === taskId; });
+    existing = tk ? ensureSubtasks(tk).find(function(s){ return s.id === _subtaskEditId; }) : null;
+  }
+
+  if (existing) {
+    // Tahrirlash rejimi — mavjud sub-task qiymatlari bilan to'ldiramiz.
+    if (input) input.value = existing.name;
+    stDiff = existing.diff||0; stRepeat = existing.repeat||'daily';
+    stDays = Array.isArray(existing.days) ? [...existing.days] : [];
+    stLabel = existing.label||'';
+    if (stInt) stInt.value = existing.interval ? String(existing.interval) : '4';
+    if (stSd) stSd.value = existing.startDate || today();
+    if (titleEl) titleEl.textContent = t('subtask_modal_title_edit');
+  } else {
+    // Yangi qo'shish rejimi — standart qiymatlarga qaytaramiz.
+    if (input) input.value = '';
+    stDiff=1; stRepeat='daily'; stDays=[]; stLabel='';
+    if (stInt) stInt.value='4';
+    if (stSd) stSd.value = today();
+    if (titleEl) titleEl.textContent = t('subtask_modal_title');
+  }
+  stSelDiff(stDiff); stSelRepeat(stRepeat); stSelLabel(stLabel);
+  document.querySelectorAll('#subtask-modal-box .day-btn').forEach(function(el){
+    el.classList.toggle('sel', stDays.includes(parseInt(el.dataset.d)));
+  });
   document.getElementById('subtask-modal-overlay').classList.add('open');
   setTimeout(function(){ if(input) input.focus(); }, 150);
 }
@@ -11372,6 +11489,7 @@ function openSubtaskModal(taskId) {
 function closeSubtaskModal() {
   document.getElementById('subtask-modal-overlay').classList.remove('open');
   _subtaskParentId = null;
+  _subtaskEditId = null;
 }
 
 function saveSubtaskModal() {
@@ -11385,6 +11503,27 @@ function saveSubtaskModal() {
   const stInt = document.getElementById('st-interval');
   const stSd = document.getElementById('st-startdate');
   const stStartDate = stRepeat==='interval' ? (stSd&&stSd.value||today()) : null;
+
+  if (_subtaskEditId !== null) {
+    // TAHRIRLASH: mavjud sub-taskni joyida yangilaymiz (id/done/doneDate saqlanadi).
+    const sub = ensureSubtasks(tk).find(function(s){ return s.id === _subtaskEditId; });
+    if (!sub) { closeSubtaskModal(); return; }
+    sub.name = name;
+    sub.diff = stDiff; sub.coins = stDiff;
+    sub.repeat = stRepeat;
+    sub.days = stRepeat==='custom-days' ? [...stDays] : null;
+    sub.interval = stRepeat==='interval' ? (parseInt(stInt&&stInt.value)||4) : null;
+    sub.startDate = stStartDate;
+    // Takrorlanish turi o'zgargan bo'lishi mumkin — nextDate'ni ham
+    // yangi boshlanish sanasiga moslab qo'yamiz (aks holda eski sanada qolib ketardi).
+    sub.nextDate = stRepeat==='interval' ? stStartDate : sub.nextDate;
+    sub.label = stLabel;
+    save(); render();
+    closeSubtaskModal();
+    toast(t('subtask_updated_toast'));
+    return;
+  }
+
   ensureSubtasks(tk).push({
     id: Date.now(), name: name, done: false,
     diff: stDiff, coins: stDiff,
@@ -11404,6 +11543,36 @@ function saveSubtaskModal() {
   save(); render();
   closeSubtaskModal();
   toast(t('subtask_added_toast'));
+}
+
+// Sub-taskni ota-taskdan chiqarib, ALOHIDA asosiy vazifaga aylantiradi
+// (aksincha jarayoni — addTaskAsSubtask'ga qarang). Barcha
+// sozlamalari (qiyinlik, takrorlanish, rang) saqlanib qoladi.
+function extractSubtaskToTask(taskId, subId) {
+  const tk = S.tasks.find(function(x){ return x.id === taskId; });
+  if (!tk) return;
+  const subs = ensureSubtasks(tk);
+  const idx = subs.findIndex(function(s){ return s.id === subId; });
+  if (idx === -1) return;
+  const sub = subs[idx];
+  const newTask = {
+    id: S.nextId++, name: sub.name, diff: sub.diff||0, coins: sub.coins||0,
+    repeat: sub.repeat || 'daily',
+    days: sub.repeat==='custom-days' ? (sub.days||[]) : null,
+    interval: sub.repeat==='interval' ? (sub.interval||4) : null,
+    nextDate: sub.repeat==='interval' ? (sub.nextDate || sub.startDate || today()) : null,
+    done: !!sub.done, doneDate: sub.doneDate||null, skipped:false, skippedDate:null, lastDoneDate:null,
+    createdAt: sub.repeat==='interval' ? (sub.startDate || today()) : today(),
+    label: sub.label || null,
+    note: null, emoji: null,
+    isFrozen: false, frozenAt: null,
+    subtasks: Array.isArray(sub.subtasks) ? sub.subtasks : [],
+  };
+  S.tasks.push(newTask);
+  subs.splice(idx, 1);
+  ensureFullTaskOrder();
+  save(); render();
+  toast(t('subtask_extracted_toast'));
 }
 
 function toggleSubtask(taskId, subId) {
@@ -11444,6 +11613,32 @@ function toggleSubtask(taskId, subId) {
     SFX.click();
   }
   save(); render();
+}
+
+// Sub-taskni bugun uchun o'tkazib yuborish (asosiy tasklardagi skipTask
+// bilan bir xil g'oya, lekin sub-tasklar uchun tanga jarimasi qo'llanmaydi —
+// faqat "bugun bajarilmadi" belgisi qo'yiladi va ro'yxatda xiralashtirilib
+// ko'rsatiladi). "Har N kunda" turi uchun keyingi muddat oldinga suriladi.
+function skipSubtask(taskId, subId) {
+  const tk = S.tasks.find(function(x){ return x.id === taskId; });
+  if (!tk) return;
+  const sub = ensureSubtasks(tk).find(function(s){ return s.id === subId; });
+  if (!sub || sub.done || sub.skipped) return;
+  sub.skipped = true; sub.skippedDate = today();
+  if (sub.repeat === 'interval') { sub.nextDate = addDays(today(), Number(sub.interval)||1); }
+  save(); render();
+  toast(t('subtask_skipped_toast'));
+}
+
+function unskipSubtask(taskId, subId) {
+  const tk = S.tasks.find(function(x){ return x.id === taskId; });
+  if (!tk) return;
+  const sub = ensureSubtasks(tk).find(function(s){ return s.id === subId; });
+  if (!sub || !sub.skipped) return;
+  sub.skipped = false; sub.skippedDate = null;
+  if (sub.repeat === 'interval') { sub.nextDate = today(); }
+  save(); render();
+  toast(t('subtask_unskipped_toast'));
 }
 
 // Sub-task o'chirishdan oldin tasdiqlash so'raymiz va uni butunlay
@@ -11765,7 +11960,7 @@ function makeTaskEl(t) {
     <button class="subtask-add-quick-btn" onclick="openSubtaskModal(${t.id})" title="${tr('subtask_add_quick_title')}">➕</button>
     ${!t.done&&!t.skipped?`<button class="task-quick-btn" onclick="skipTask(${t.id})" title="${tr('skip_dd_item')}">⏩</button>`:''}
     ${t.skipped&&!t.done?`<button class="task-quick-btn skipped-active" onclick="unskipTask(${t.id})" title="${tr('unskip_dd_item')}">↩️</button>`:''}
-    <button class="task-quick-btn" onclick="editTask(${t.id})" title="${tr('edit_dd_item')}">✏️</button>
+    <button class="task-quick-btn qb-edit" onclick="editTask(${t.id})" title="${tr('edit_dd_item')}">✏️</button>
     <div class="task-dots-wrap">
       <button class="task-dots-btn" onclick="toggleTaskDropdown(${t.id}, this, event)" title="${tr('task_actions_title')}">⋮</button>
       <div class="task-dropdown-menu" id="task-dd-${t.id}">
@@ -12585,6 +12780,7 @@ function render() {
       {key:'#34D399', i18n:'task_label_green'},
       {key:'#FACC15', i18n:'task_label_yellow'},
       {key:'#60A5FA', i18n:'task_label_blue'},
+      {key:'#FFFFFF', i18n:'task_label_white'},
       {key:'',        i18n:'task_label_none'}
     ];
     // Foydalanuvchi bu qatorlarni sudrab tartibini o'zgartirgan bo'lsa,
@@ -12609,7 +12805,7 @@ function render() {
     lbListEl.innerHTML = orderedColors.map(function(c){
       var cnt = lbCounts[c.key] || 0;
       var dotStyle = c.key
-        ? 'background:' + c.key
+        ? (c.key === '#FFFFFF' ? 'background:' + c.key + ';border:2px solid var(--border)' : 'background:' + c.key)
         : 'background:transparent;border:2px solid var(--text-dim)';
       return '<div class="lb-row" data-color="' + c.key + '" style="display:flex;align-items:center;justify-content:space-between">' +
         '<div style="display:flex;align-items:center;gap:9px"><span style="color:var(--text-dim);font-size:var(--fs-xs);flex-shrink:0">⠿</span><span style="width:13px;height:13px;border-radius:50%;flex-shrink:0;' + dotStyle + '"></span><span style="color:var(--text-muted);font-size:var(--fs-sm)">' + t(c.i18n) + '</span></div>' +
@@ -14559,6 +14755,27 @@ function showPlayerProfileModal(id) {
   var flag = countryFlagImg(p.country, 16);
   var lv = getLevel(p.xp || 0);
 
+  // 🤝 Do'stlik holati bo'yicha tugma/holat (o'zi bo'lmasa va tizimga
+  // kirgan bo'lsa) — Qo'shish / Kutilmoqda / Qabul-Rad et / Do'stsiz.
+  var friendActionHtml = '';
+  if (!p.isMe && window.FC && FC.uid) {
+    var isFriend = (FC.friends || []).some(function (f) { return f.uid === p.id; });
+    var outReq = (FC.friendRequestsOut || []).find(function (r) { return r.uid === p.id; });
+    var inReq = (FC.friendRequestsIn || []).find(function (r) { return r.uid === p.id; });
+    if (isFriend) {
+      friendActionHtml = '<div style="margin-top:10px;padding:6px 14px;border-radius:var(--radius-full);background:var(--surface2);border:1px solid var(--border);color:var(--text-muted);font-size:var(--fs-2xs);font-weight:600">🤝 Do\'stsiz</div>';
+    } else if (inReq) {
+      friendActionHtml = '<div style="margin-top:10px;display:flex;gap:8px">' +
+        '<button id="pp-freq-decline" data-id="'+inReq.id+'" style="padding:7px 14px;border-radius:var(--radius-full);border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:var(--fs-2xs);cursor:pointer">Rad etish</button>' +
+        '<button id="pp-freq-accept" data-id="'+inReq.id+'" style="padding:7px 14px;border-radius:var(--radius-full);border:none;background:var(--accent);color:#fff;font-size:var(--fs-2xs);font-weight:600;cursor:pointer">Qabul qilish</button>' +
+      '</div>';
+    } else if (outReq) {
+      friendActionHtml = '<button disabled style="margin-top:10px;padding:7px 16px;border-radius:var(--radius-full);border:1px solid var(--border);background:transparent;color:var(--text-dim);font-size:var(--fs-2xs);font-weight:600;cursor:default">⏳ So\'rov yuborilgan</button>';
+    } else {
+      friendActionHtml = '<button id="pp-add-friend-btn" data-uid="'+esc(p.id)+'" data-name="'+esc(p.name||'')+'" style="margin-top:10px;padding:7px 16px;border-radius:var(--radius-full);border:none;background:var(--accent);color:#fff;font-size:var(--fs-2xs);font-weight:600;cursor:pointer">➕ Do\'stlikka qo\'shish</button>';
+    }
+  }
+
   var statCard = function(icon, label, value, valId) {
     return '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-md);padding:10px;text-align:center">'+
         '<div style="font-size:var(--fs-lg);margin-bottom:4px">'+icon+'</div>'+
@@ -14581,6 +14798,7 @@ function showPlayerProfileModal(id) {
         '<span style="font-size:var(--fs-2xs);color:var(--text-muted)">'+(p.country?esc(countryName(p.country)):t('pe_country_none'))+'</span>'+
       '</div>'+
       '<div style="font-size:var(--fs-2xs);color:var(--text-dim);margin-top:6px">📅 '+t('pp_joined_label')+': '+_ppFormatJoinedDate(p.joinedDate)+'</div>'+
+      friendActionHtml+
     '</div>'+
     // Stats grid (Max Streak / Tasks / Coins / Current Streak)
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+
@@ -14602,6 +14820,19 @@ function showPlayerProfileModal(id) {
 
   document.getElementById('pp-close').onclick = function(){ overlay.remove(); _openPlayerProfileId = null; };
   overlay.addEventListener('click', function(e){ if (e.target === overlay) { overlay.remove(); _openPlayerProfileId = null; } });
+
+  var ppAddBtn = document.getElementById('pp-add-friend-btn');
+  if (ppAddBtn) ppAddBtn.onclick = function(){
+    if (typeof window.fcSendFriendRequest === 'function') window.fcSendFriendRequest(ppAddBtn.getAttribute('data-uid'), ppAddBtn.getAttribute('data-name'));
+  };
+  var ppAcceptBtn = document.getElementById('pp-freq-accept');
+  if (ppAcceptBtn) ppAcceptBtn.onclick = function(){
+    if (typeof window.fcRespondFriendRequest === 'function') window.fcRespondFriendRequest(ppAcceptBtn.getAttribute('data-id'), true);
+  };
+  var ppDeclineBtn = document.getElementById('pp-freq-decline');
+  if (ppDeclineBtn) ppDeclineBtn.onclick = function(){
+    if (typeof window.fcRespondFriendRequest === 'function') window.fcRespondFriendRequest(ppDeclineBtn.getAttribute('data-id'), false);
+  };
 }
 
 function renderReyting() {
@@ -22953,11 +23184,19 @@ function wsAttachHandlers() {
   if (regNameInput) regNameInput.oninput = function () { wsState.regName = regNameInput.value; };
   var regPassInput = document.getElementById('ws-reg-pass-input');
   if (regPassInput) regPassInput.oninput = function () { wsState.regPass = regPassInput.value; };
+  // MUHIM TUZATISH: avval bu tugma faqat "Google ham ulansin" NIYATINI
+  // belgilab, hech qanday amaliy harakat qilmasdi — foydalanuvchi tugmani
+  // bosganda ekranda "✅ Google ulandi" degan yozuv chiqar, lekin haqiqiy
+  // Google oynasi umuman ochilmasdi (chunki haqiqiy ulanish faqat keyinroq,
+  // "Ro'yxatdan o'tish" bosilganda ishga tushardi). Bu chalkash edi. Endi
+  // bu tugma darhol nik/parolni tekshiradi va (to'g'ri bo'lsa) ro'yxatdan
+  // o'tishni ham shu yerning o'zida yakunlab, HAQIQIY Google oynasini ochadi.
   var regGoogleBtn = document.getElementById('ws-reg-google-btn');
   if (regGoogleBtn) regGoogleBtn.onclick = function () {
     wsState.googleLinked = true;
     wsRenderStep();
     try { toast(t('ws_reg_google_linked_toast')); } catch (e) {}
+    wsSubmitRegister();
   };
   var regSubmitBtn = document.getElementById('ws-reg-submit-btn');
   if (regSubmitBtn) regSubmitBtn.onclick = wsSubmitRegister;
@@ -23050,8 +23289,14 @@ function wsSubmitRegister() {
   wsFinish('register', 'ws_reg_success_toast');
 }
 
-// Google orqali kirish (kosmetik) — real OAuth yo'q, shuning uchun
-// darhol mahalliy holatda davom etiladi.
+// Google orqali kirish. Bu funksiya o'zi hech qanday Supabase so'rovi
+// yubormaydi — u faqat mahalliy holatni (S.profile, wsState) yakunlaydi
+// (wsFinish orqali). Haqiqiy Google OAuth so'rovi (supabase.auth.signInWithOAuth
+// / linkIdentity) esa wsFinish tugagach, uni "wrap" qiluvchi fcInstallHooks
+// (pastdagi <script type="module"> ichida) orqali avtomatik ishga tushadi —
+// qarang: fcOnAuthMethod('google'). Shu tartib muhim: mahalliy saqlash (save())
+// va oyna yopilishi HAR DOIM brauzer Google login sahifasiga ko'chishidan
+// (redirect) OLDIN yakunlanadi.
 function wsGoogleLogin() {
   wsFinish('google', 'ws_login_success_toast');
 }
@@ -23120,9 +23365,14 @@ function wsFinish(method, toastKey) {
   S.ambientFocusEnabled = !!wsState.ambientFocusEnabled;
   S.difficulty = (typeof DIFFICULTY_MULTIPLIERS !== 'undefined' && DIFFICULTY_MULTIPLIERS[wsState.difficulty]) ? wsState.difficulty : 'normal';
 
-  // Eslatma: haqiqiy backend/OAuth yo'q — bitta umumiy mahalliy holat
-  // (S) davom etadi. loginMethod va googleLinked faqat qaysi yo'l orqali
-  // kirilganini eslab qolish uchun kosmetik maydonlar.
+  // loginMethod va googleLinked — qaysi yo'l orqali kirilganini eslab
+  // qolish uchun mahalliy (S) maydonlar; UI shularga qarab chiziladi.
+  // ESLATMA: bu funksiya faqat MAHALLIY holatni yakunlaydi. Haqiqiy
+  // Supabase Authentication so'rovi (anonim sessiya yoki Google OAuth)
+  // bu yerda emas, balki wsFinish tugagandan keyin uni "wrap" qiluvchi
+  // fcInstallHooks orqali (pastdagi <script type="module">, fcOnAuthMethod())
+  // avtomatik yuboriladi — shu tufayli mahalliy save() har doim OAuth
+  // redirectidan oldin bajarilishi kafolatlanadi.
   S.profile.loginMethod = method;
   S.profile.googleLinked = method === 'google' || !!wsState.googleLinked;
   S.welcomeSurveyDone = true;
@@ -24782,8 +25032,11 @@ window.FC = {
   uid: null,
   myCode: null,
   friends: [],           // [{uid,name,photo,since}]
+  friendRequestsIn: [],   // menga kelgan so'rovlar: [{id,uid,name,photo,since}]
+  friendRequestsOut: [],  // men yuborgan so'rovlar: [{id,uid,name,photo,since}]
   challenges: [],         // barcha challenge qatorlari (men ishtirokchi bo'lganlar)
   _chFriends: null,
+  _chFriendReq: null,
   _chChallenges: null,
   ready: sbReady
 };
@@ -24834,6 +25087,7 @@ function fcSetupAuthListener() {
       fcEnsureUserDoc(user.id).then(function () {
         fcListenChallenges();
         fcListenFriends();
+        fcListenFriendRequests();
         try { fcRenderFriendsModalIfOpen(); } catch (e) {}
         try { fcSyncProfileNow(); } catch (e) {}
         try { fcCheckSeasonReward(); } catch (e) {}
@@ -24842,6 +25096,7 @@ function fcSetupAuthListener() {
     } else {
       FC.uid = null;
       if (FC._chFriends) { supabase.removeChannel(FC._chFriends); FC._chFriends = null; }
+      if (FC._chFriendReq) { supabase.removeChannel(FC._chFriendReq); FC._chFriendReq = null; }
       if (FC._chChallenges) { supabase.removeChannel(FC._chChallenges); FC._chChallenges = null; }
     }
   });
@@ -24852,8 +25107,16 @@ function fcSetupAuthListener() {
 // login — anonim Supabase Auth bilan bog'lanadi (signInAnonymously);
 // google — anonim bo'lsa linkIdentity (bir xil user ID saqlanib qoladi),
 // aks holda to'g'ridan-to'g'ri signInWithOAuth.
+// Qaytariladigan qiymat: { ok: true } — so'rov muvaffaqiyatli yuborildi
+// (google holatida bu ko'pincha ahamiyatsiz, chunki muvaffaqiyatli
+// signInWithOAuth/linkIdentity brauzerni darhol Google sahifasiga olib
+// ketadi va shu joyda JS ijrosi to'xtaydi); { ok: false, reason } —
+// internet/Supabase yo'q ('offline') yoki so'rov xato qaytardi ('error').
+// Chaqiruvchi (fcInstallHooks ichidagi wsFinish wrapper) shu natijaga
+// qarab, faqat HAQIQIY muvaffaqiyatsizlikda foydalanuvchiga aniq
+// ogohlantirish ko'rsatadi — soxta "ulandi" taassurotini oldini olish uchun.
 async function fcOnAuthMethod(method) {
-  if (!fcOnline()) return; // internet/Supabase yo'q — jimgina local rejimda qolamiz
+  if (!fcOnline()) return { ok: false, reason: 'offline' }; // internet/Supabase yo'q — jimgina local rejimda qolamiz
   try {
     if (method === 'google') {
       const { data: sessData } = await supabase.auth.getSession();
@@ -24862,18 +25125,29 @@ async function fcOnAuthMethod(method) {
         const { error } = await supabase.auth.linkIdentity({ provider: 'google' });
         // "Allow manual linking" o'chirilgan bo'lsa yoki xato bo'lsa — oddiy
         // signInWithOAuth'ga qaytamiz (bu holda yangi user ID yaratiladi).
-        if (error) { await supabase.auth.signInWithOAuth({ provider: 'google' }); }
+        if (error) {
+          const { error: error2 } = await supabase.auth.signInWithOAuth({ provider: 'google' });
+          if (error2) return { ok: false, reason: 'error', error: error2 };
+        }
       } else {
-        await supabase.auth.signInWithOAuth({ provider: 'google' });
+        const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
+        if (error) return { ok: false, reason: 'error', error: error };
       }
+      // Eslatma: muvaffaqiyatli bo'lsa, brauzer shu paytda allaqachon Google
+      // login sahifasiga ko'chib ketgan (yoki ketmoqda) bo'ladi — shuning
+      // uchun quyidagi qatorga ko'pincha yetib kelinmaydi.
+      return { ok: true };
     } else {
       const { data: sessData2 } = await supabase.auth.getSession();
       if (!sessData2 || !sessData2.session) {
-        await supabase.auth.signInAnonymously();
+        const { error } = await supabase.auth.signInAnonymously();
+        if (error) return { ok: false, reason: 'error', error: error };
       }
+      return { ok: true };
     }
   } catch (e) {
     console.warn('[FC] Auth xatosi — local rejimda davom etiladi:', e);
+    return { ok: false, reason: 'error', error: e };
   }
 }
 
@@ -25050,6 +25324,161 @@ async function fcAddFriendByCode(codeRaw) {
     toast('🤝 Do\'st qo\'shildi!');
     fcRefreshFriends();
   } catch (e) { console.warn('[FC] Do\'st qo\'shishda xatolik:', e); toast('⚠️ Do\'st qo\'shib bo\'lmadi'); }
+}
+
+// ======================================================================
+// 3b) DO'STLIK SO'ROVLARI — ism orqali qidirib, so'rov yuborish/qabul
+//     qilish/rad etish/bekor qilish (friend_requests jadvali + RPC'lar,
+//     qarang: supabase_friend_requests.sql).
+// ======================================================================
+function fcListenFriendRequests() {
+  if (!sbReady || !FC.uid) return;
+  if (FC._chFriendReq) { supabase.removeChannel(FC._chFriendReq); FC._chFriendReq = null; }
+  fcRefreshFriendRequests();
+  FC._chFriendReq = supabase
+    .channel('friend-requests-' + FC.uid)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'friend_requests' }, function () { fcRefreshFriendRequests(); })
+    .subscribe();
+}
+async function fcRefreshFriendRequests() {
+  if (!FC.uid) return;
+  try {
+    const { data: inData, error: inErr } = await supabase
+      .from('friend_requests')
+      .select('id, from_id, created_at, profiles:from_id(name, photo_url)')
+      .eq('to_id', FC.uid).eq('status', 'pending');
+    if (inErr) throw inErr;
+    FC.friendRequestsIn = (inData || []).map(function (r) {
+      return { id: r.id, uid: r.from_id, name: (r.profiles && r.profiles.name) || '', photo: (r.profiles && r.profiles.photo_url) || null, since: r.created_at };
+    });
+    const { data: outData, error: outErr } = await supabase
+      .from('friend_requests')
+      .select('id, to_id, created_at, profiles:to_id(name, photo_url)')
+      .eq('from_id', FC.uid).eq('status', 'pending');
+    if (outErr) throw outErr;
+    FC.friendRequestsOut = (outData || []).map(function (r) {
+      return { id: r.id, uid: r.to_id, name: (r.profiles && r.profiles.name) || '', photo: (r.profiles && r.profiles.photo_url) || null, since: r.created_at };
+    });
+    try { fcRenderFriendsModalIfOpen(); } catch (e) {}
+    try { fcUpdatePlayerProfileFriendBtnIfOpen(); } catch (e) {}
+  } catch (e) { console.warn('[FC] Do\'stlik so\'rovlarini yuklashda xatolik:', e); }
+}
+
+// Reyting'dagi Player Profile Modal ochiq bo'lsa (do'stlik holati o'zgargach)
+// uni joriy ma'lumotlar bilan qayta chizadi.
+function fcUpdatePlayerProfileFriendBtnIfOpen() {
+  if (window._openPlayerProfileId && document.getElementById('player-profile-modal') && typeof window.showPlayerProfileModal === 'function') {
+    window.showPlayerProfileModal(window._openPlayerProfileId);
+  }
+}
+
+async function fcSendFriendRequest(toId, toName) {
+  if (!fcOnline() || !FC.uid) { toast('⚠️ Internet yo\'q — so\'rov yuborib bo\'lmaydi'); return; }
+  if (!toId || toId === FC.uid) return;
+  try {
+    const { error } = await supabase.rpc('send_friend_request', { p_to_id: toId });
+    if (error) {
+      const msg = (error.message || '');
+      if (msg.indexOf('already_friends') !== -1) toast('🤝 Siz allaqachon do\'stsiz');
+      else if (msg.indexOf('already_sent') !== -1) toast('⏳ So\'rov allaqachon yuborilgan');
+      else if (msg.indexOf('self') !== -1) toast('❌ O\'zingizga so\'rov yubora olmaysiz');
+      else toast('⚠️ So\'rov yuborilmadi');
+      return;
+    }
+    toast('📨 ' + (toName || 'Foydalanuvchi') + 'ga do\'stlik so\'rovi yuborildi!');
+    fcRefreshFriendRequests();
+    fcRefreshFriends();
+  } catch (e) { console.warn('[FC] So\'rov yuborishda xatolik:', e); toast('⚠️ So\'rov yuborilmadi'); }
+}
+
+async function fcRespondFriendRequest(id, accept) {
+  if (!fcOnline()) { toast('⚠️ Internet yo\'q'); return; }
+  try {
+    const { error } = await supabase.rpc('respond_friend_request', { p_id: id, p_accept: accept });
+    if (error) throw error;
+    toast(accept ? '🤝 Do\'st qo\'shildi!' : '❌ So\'rov rad etildi');
+    fcRefreshFriendRequests();
+    fcRefreshFriends();
+  } catch (e) { console.warn('[FC] So\'rovga javob berishda xatolik:', e); toast('⚠️ Amalga oshmadi'); }
+}
+
+async function fcCancelFriendRequest(id) {
+  if (!fcOnline()) { toast('⚠️ Internet yo\'q'); return; }
+  try {
+    const { error } = await supabase.rpc('cancel_friend_request', { p_id: id });
+    if (error) throw error;
+    toast('🗑️ So\'rov bekor qilindi');
+    fcRefreshFriendRequests();
+  } catch (e) { console.warn('[FC] So\'rovni bekor qilishda xatolik:', e); }
+}
+// player-profile-modal (asosiy, module bo'lmagan skriptda joylashgan)
+// shu funksiyalarni chaqira olishi uchun window ob'ektiga chiqarib qo'yamiz.
+window.fcSendFriendRequest = fcSendFriendRequest;
+window.fcRespondFriendRequest = fcRespondFriendRequest;
+window.fcCancelFriendRequest = fcCancelFriendRequest;
+
+// Ism bo'yicha foydalanuvchi qidirish ("profiles" jadvalidan, RLS bo'yicha
+// hammaga o'qish ruxsat etilgan — reyting ham xuddi shu jadvaldan o'qiydi).
+var _fcSearchToken = 0;
+async function fcSearchUsersByName(qRaw) {
+  var q = (qRaw || '').trim();
+  var resEl = document.getElementById('fc-search-results');
+  if (!resEl) return;
+  if (!q) { resEl.innerHTML = ''; return; }
+  if (!fcOnline() || !FC.uid) { resEl.innerHTML = '<div style="color:var(--text-dim);font-size:var(--fs-2xs);padding:6px 0">⚠️ Internet yo\'q</div>'; return; }
+  var myToken = ++_fcSearchToken;
+  resEl.innerHTML = '<div style="color:var(--text-dim);font-size:var(--fs-2xs);padding:6px 0">⏳ Qidirilmoqda…</div>';
+  try {
+    const { data, error } = await supabase.from('profiles').select('id,name,photo_url').ilike('name', '%' + q + '%').neq('id', FC.uid).limit(15);
+    if (myToken !== _fcSearchToken) return;
+    if (error) throw error;
+    if (!data || !data.length) { resEl.innerHTML = '<div style="color:var(--text-dim);font-size:var(--fs-2xs);padding:6px 0">Hech kim topilmadi</div>'; return; }
+    resEl.innerHTML = data.map(function (u) { return fcSearchResultCardHtml(u); }).join('');
+    resEl.querySelectorAll('.fc-search-add-btn').forEach(function (btn) {
+      btn.onclick = function () { fcSendFriendRequest(btn.getAttribute('data-uid'), btn.getAttribute('data-name')); };
+    });
+  } catch (e) {
+    console.warn('[FC] Qidirishda xatolik:', e);
+    if (myToken === _fcSearchToken) resEl.innerHTML = '<div style="color:var(--text-dim);font-size:var(--fs-2xs);padding:6px 0">⚠️ Xatolik yuz berdi</div>';
+  }
+}
+
+function fcSearchResultCardHtml(u) {
+  var isFriend = (FC.friends || []).some(function (f) { return f.uid === u.id; });
+  var isPending = (FC.friendRequestsOut || []).some(function (r) { return r.uid === u.id; });
+  var isIncoming = (FC.friendRequestsIn || []).some(function (r) { return r.uid === u.id; });
+  var btnHtml;
+  if (isFriend) btnHtml = '<span style="font-size:var(--fs-2xs);color:var(--text-dim);white-space:nowrap">🤝 Do\'stsiz</span>';
+  else if (isPending) btnHtml = '<span style="font-size:var(--fs-2xs);color:var(--text-dim);white-space:nowrap">⏳ Yuborilgan</span>';
+  else if (isIncoming) btnHtml = '<span style="font-size:var(--fs-2xs);color:var(--text-dim);white-space:nowrap">📨 Sizga so\'rov bor</span>';
+  else btnHtml = '<button class="fc-search-add-btn" data-uid="' + u.id + '" data-name="' + esc(u.name || '') + '" style="padding:6px 10px;border-radius:var(--radius-sm);border:1px solid var(--accent);background:transparent;color:var(--accent);font-size:var(--fs-2xs);font-weight:600;cursor:pointer;white-space:nowrap">➕ Qo\'shish</button>';
+  return '<div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-md);margin-bottom:6px">' +
+    fcAvatar(u.name, u.photo_url, 34) +
+    '<div style="flex:1;min-width:0;font-size:var(--fs-sm);color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(u.name || 'Foydalanuvchi') + '</div>' +
+    btnHtml +
+  '</div>';
+}
+
+function fcFriendRequestCardHtml(r) {
+  return '<div style="padding:10px;background:var(--surface2);border:1px solid var(--accent);border-radius:var(--radius-md);margin-bottom:8px">' +
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">' +
+      fcAvatar(r.name, r.photo, 30) +
+      '<div style="font-size:var(--fs-sm);color:var(--text);min-width:0"><b>' + esc(r.name || 'Foydalanuvchi') + '</b> sizga do\'stlik so\'rovi yubordi</div>' +
+    '</div>' +
+    '<div style="display:flex;gap:8px">' +
+      '<button class="fc-freq-decline-btn" data-id="' + r.id + '" style="flex:1;padding:7px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:var(--fs-xs);cursor:pointer">Rad etish</button>' +
+      '<button class="fc-freq-accept-btn" data-id="' + r.id + '" style="flex:1;padding:7px;border-radius:var(--radius-sm);border:none;background:var(--accent);color:#fff;font-size:var(--fs-xs);font-weight:600;cursor:pointer">Qabul qilish</button>' +
+    '</div>' +
+  '</div>';
+}
+
+function fcOutgoingRequestCardHtml(r) {
+  return '<div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-md);margin-bottom:6px">' +
+    fcAvatar(r.name, r.photo, 34) +
+    '<div style="flex:1;min-width:0;font-size:var(--fs-sm);color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(r.name || 'Foydalanuvchi') + '</div>' +
+    '<span style="font-size:var(--fs-2xs);color:var(--text-dim);white-space:nowrap">⏳</span>' +
+    '<button class="fc-freq-cancel-btn" data-id="' + r.id + '" style="padding:6px 10px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:var(--fs-2xs);cursor:pointer;white-space:nowrap">Bekor qilish</button>' +
+  '</div>';
 }
 
 // ======================================================================
@@ -25235,23 +25664,27 @@ function fcRenderFriendsModal() {
   '</div>';
 
   if (tab === 'friends') {
-    html += '<div style="margin-bottom:14px;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-md)">' +
-      '<div style="' + fcLabelStyle() + '">Sizning kodingiz</div>' +
-      '<div style="display:flex;align-items:center;gap:8px">' +
-        '<div style="font-family:Syne,sans-serif;font-size:var(--fs-xl);font-weight:700;letter-spacing:0.1em;color:var(--accent)">' + (FC.myCode || (FC.uid ? '…' : '—')) + '</div>' +
-        '<button id="fc-copy-code" style="padding:5px 9px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);color:var(--text-muted);font-size:var(--fs-2xs);cursor:pointer">📋 Nusxa</button>' +
-      '</div>' +
-    '</div>';
+    if ((FC.friendRequestsIn || []).length) {
+      html += '<div style="' + fcLabelStyle() + '">📨 Do\'stlik so\'rovlari (' + FC.friendRequestsIn.length + ')</div>';
+      FC.friendRequestsIn.forEach(function (r) { html += fcFriendRequestCardHtml(r); });
+    }
     html += '<div style="margin-bottom:14px">' +
-      '<label style="' + fcLabelStyle() + '">Do\'stni kod orqali qo\'shish</label>' +
+      '<label style="' + fcLabelStyle() + '">Do\'stni ism bilan qidirish</label>' +
       '<div style="display:flex;gap:8px">' +
-        '<input id="fc-add-code-inp" maxlength="6" inputmode="numeric" placeholder="123456" style="' + fcFieldStyle() + '" />' +
-        '<button id="fc-add-code-btn" style="padding:8px 12px;border-radius:var(--radius-sm);border:none;background:var(--accent);color:#fff;font-size:var(--fs-xs);font-weight:600;cursor:pointer;white-space:nowrap">Qo\'shish</button>' +
+        '<input id="fc-search-inp" placeholder="Ism kiriting…" style="' + fcFieldStyle() + '" />' +
+        '<button id="fc-search-btn" style="padding:8px 12px;border-radius:var(--radius-sm);border:none;background:var(--accent);color:#fff;font-size:var(--fs-xs);font-weight:600;cursor:pointer;white-space:nowrap">🔍 Qidirish</button>' +
       '</div>' +
+      '<div id="fc-search-results" style="margin-top:8px"></div>' +
     '</div>';
+    if ((FC.friendRequestsOut || []).length) {
+      html += '<div style="' + fcLabelStyle() + '">⏳ Yuborilgan so\'rovlar (' + FC.friendRequestsOut.length + ')</div>';
+      html += '<div style="margin-bottom:10px">';
+      FC.friendRequestsOut.forEach(function (r) { html += fcOutgoingRequestCardHtml(r); });
+      html += '</div>';
+    }
     html += '<div style="' + fcLabelStyle() + '">Do\'stlarim (' + (FC.friends || []).length + ')</div>';
     if (!FC.friends || FC.friends.length === 0) {
-      html += '<div style="color:var(--text-dim);font-size:var(--fs-2xs);padding:10px 0">Hali do\'stlar yo\'q — kod orqali qo\'shing 🙂</div>';
+      html += '<div style="color:var(--text-dim);font-size:var(--fs-2xs);padding:10px 0">Hali do\'stlar yo\'q — ismini qidirib qo\'shing 🙂</div>';
     } else {
       html += '<div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">';
       FC.friends.forEach(function (f) {
@@ -25290,16 +25723,19 @@ function fcRenderFriendsModal() {
   box.querySelectorAll('.fc-tab-btn').forEach(function (btn) {
     btn.onclick = function () { window._fcTab = btn.getAttribute('data-tab'); fcRenderFriendsModal(); };
   });
-  var copyBtn = document.getElementById('fc-copy-code');
-  if (copyBtn) copyBtn.onclick = function () {
-    if (!FC.myCode) return;
-    try { navigator.clipboard.writeText(FC.myCode); toast('📋 Kod nusxalandi!'); } catch (e) {}
-  };
-  var addBtn = document.getElementById('fc-add-code-btn');
-  if (addBtn) addBtn.onclick = function () {
-    var inp = document.getElementById('fc-add-code-inp');
-    fcAddFriendByCode(inp ? inp.value : '');
-  };
+  var searchBtn = document.getElementById('fc-search-btn');
+  var searchInp = document.getElementById('fc-search-inp');
+  if (searchBtn) searchBtn.onclick = function () { fcSearchUsersByName(searchInp ? searchInp.value : ''); };
+  if (searchInp) searchInp.onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); fcSearchUsersByName(searchInp.value); } };
+  box.querySelectorAll('.fc-freq-accept-btn').forEach(function (btn) {
+    btn.onclick = function () { fcRespondFriendRequest(btn.getAttribute('data-id'), true); };
+  });
+  box.querySelectorAll('.fc-freq-decline-btn').forEach(function (btn) {
+    btn.onclick = function () { fcRespondFriendRequest(btn.getAttribute('data-id'), false); };
+  });
+  box.querySelectorAll('.fc-freq-cancel-btn').forEach(function (btn) {
+    btn.onclick = function () { fcCancelFriendRequest(btn.getAttribute('data-id')); };
+  });
   box.querySelectorAll('.fc-challenge-start-btn').forEach(function (btn) {
     btn.onclick = function () {
       openChallengeCreateModal(btn.getAttribute('data-friend-uid'), btn.getAttribute('data-friend-name'));
@@ -25478,12 +25914,33 @@ function fcShowChallengeWinModal(amIWinner, isDraw, reward) {
 // GLOBAL FUNKSIYALARNI "WRAP" QILISH (mavjud kodga tegmasdan ulanish)
 // ======================================================================
 function fcInstallHooks() {
-  // 1) Auth: wsFinish (guest/register/login/google) yakunida chaqiriladi
+  // 1) Auth: wsFinish (guest/register/login/google) yakunida chaqiriladi.
+  // MUHIM TARTIB: avval original wsFinish (mahalliy save(), oyna yopilishi,
+  // toast) TO'LIQ bajariladi, so'ngina Supabase so'rovi yuboriladi — chunki
+  // Google OAuth muvaffaqiyatli bo'lsa, brauzer darhol boshqa sahifaga
+  // (Google login) ko'chib ketadi va shu joydan keyingi JS ijro etilmay qoladi.
   if (typeof window.wsFinish === 'function' && !window.wsFinish._fcWrapped) {
     var _origWsFinish = window.wsFinish;
     window.wsFinish = function (method, toastKey) {
       _origWsFinish(method, toastKey);
-      fcOnAuthMethod(method);
+      // Ro'yxatdan o'tish qadamida "🔵 Google bilan ulash" tugmasi bosilgan
+      // bo'lsa (S.profile.googleLinked), method 'register' bo'lsa ham
+      // haqiqiy Google OAuth oqimini ishga tushiramiz — faqat method==='google'
+      // (Kirish qadamidagi Google tugmasi) holatida emas.
+      var wantsGoogle = method === 'google' || !!(window.S && S.profile && S.profile.googleLinked);
+      var authMethod = wantsGoogle ? 'google' : method;
+      fcOnAuthMethod(authMethod).then(function (result) {
+        // Muvaffaqiyatli Google holatida bu yerga odatda yetib kelinmaydi
+        // (sahifa Google'ga redirect bo'ladi). Faqat HAQIQIY muvaffaqiyatsizlikda
+        // (internet yo'q yoki Supabase xatosi) foydalanuvchiga aniq xabar
+        // beramiz — soxta "muvaffaqiyatli ulandi" taassurotini oldini olish uchun.
+        if (result && result.ok === false && wantsGoogle && typeof toast === 'function') {
+          var msg = result.reason === 'offline'
+            ? '⚠️ Internet yo\'q — Google akkaunt hozircha ulanmadi, mahalliy rejimda davom etilmoqda'
+            : '⚠️ Google akkauntni ulab bo\'lmadi — mahalliy rejimda davom etilmoqda';
+          try { toast(msg); } catch (e) {}
+        }
+      });
     };
     window.wsFinish._fcWrapped = true;
   }
