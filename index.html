@@ -324,6 +324,7 @@
   .tab { padding:9px 20px; border-radius:var(--radius-full); font-size:var(--fs-base); font-weight:500; cursor:pointer; border:1px solid var(--border); color:var(--text-muted); background:var(--surface); transition:all 0.2s; font-family:'DM Sans',sans-serif; }
   .tab:hover { border-color:var(--border-hover); color:var(--text); }
   .tab.active { background:var(--accent); color:#fff; border-color:transparent; box-shadow:0 4px 20px var(--accent-glow); }
+  #tabs-bar .tab, html.layout-desktop #ds-sidebar .tab { touch-action:none; }
   .tab.tab-dragging { opacity:0.35; border:2px dashed var(--accent); background:rgba(124,92,252,0.08); }
   /* Profil ichidagi 4 ta ichki tab (Umumiy/Statistika/Yutuqlar/Sozlamalar) —
      asosiy .tab uslubini meros oladi, faqat biroz ixchamroq (ikkinchi
@@ -18354,6 +18355,8 @@ setInterval(function(){ if(document.getElementById('view-spin') && document.getE
   var dragActive = false;
   var pressTimer = null;
   var startX = 0, startY = 0;
+  var activePointerId = null;
+  var _tabDragInited = false; // ikki marta ro'yxatdan o'tishning oldini oladi
 
   function getTabOrder() {
     var saved = S.tabOrder || null;
@@ -18392,12 +18395,21 @@ setInterval(function(){ if(document.getElementById('view-spin') && document.getE
     clearDragOverStyles(bar);
     dragActive = false;
     dragSrcTab = null;
+    activePointerId = null;
   }
 
   function initTabDrag() {
     applyTabOrder();
     var bar = document.getElementById('tabs-bar');
     if (!bar) return;
+    // MUHIM: agar bu funksiya biror sabab bilan ikki marta chaqirilib
+    // qolsa (masalan DOMContentLoaded ikki marta ishlab ketsa), pastdagi
+    // addEventListener'lar IKKI MARTA ro'yxatdan o'tib, bitta tizimning
+    // o'zi o'ziga zid ishlab ketishi mumkin edi. Shu guard buni butunlay
+    // oldini oladi — xuddi shu xato ilgari "ikkita tizim" shaklida
+    // yuzaga kelgan edi.
+    if (_tabDragInited) return;
+    _tabDragInited = true;
 
     bar.addEventListener('pointerdown', function(e) {
       var btn = e.target.closest('[data-tab]');
@@ -18408,6 +18420,8 @@ setInterval(function(){ if(document.getElementById('view-spin') && document.getE
       pressTimer = setTimeout(function() {
         dragSrcTab = btn;
         dragActive = true;
+        activePointerId = e.pointerId;
+        try { btn.setPointerCapture(e.pointerId); } catch (err) {}
         btn.classList.add('tab-dragging');
         if (navigator.vibrate) navigator.vibrate(30);
       }, LONG_PRESS_MS);
@@ -18426,6 +18440,7 @@ setInterval(function(){ if(document.getElementById('view-spin') && document.getE
         }
         return;
       }
+      if (activePointerId !== null && e.pointerId !== activePointerId) return;
       e.preventDefault();
       var el = document.elementFromPoint(e.clientX, e.clientY);
       var target = el && el.closest('[data-tab]');
@@ -18434,7 +18449,9 @@ setInterval(function(){ if(document.getElementById('view-spin') && document.getE
     }, { passive: false });
 
     function finishDrag(e) {
+      if (activePointerId !== null && e.pointerId !== activePointerId) return;
       if (!dragActive || !dragSrcTab) { resetDragState(bar); return; }
+      if (dragSrcTab) { try { dragSrcTab.releasePointerCapture(e.pointerId); } catch (err) {} }
       var el = document.elementFromPoint(e.clientX, e.clientY);
       var target = el && el.closest('[data-tab]');
       if (target && target !== dragSrcTab) {
