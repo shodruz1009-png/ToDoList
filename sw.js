@@ -1,8 +1,11 @@
 // ============================================================
-// ToDoList PWA — Service Worker (v13 Optimallashtirilgan)
+// ToDoList PWA — Service Worker (v14 — kesh muammosi tuzatildi)
 // ============================================================
 
-const CACHE_VERSION = 'v13';
+// MUHIM: har safar index.html (yoki boshqa kod)ni yangilab qayta
+// joylashtirganingizda, bu raqamni oshiring (v14 -> v15 -> ...).
+// Shunda eski kesh butunlay o'chiriladi va yangi fayllar qayta yuklanadi.
+const CACHE_VERSION = 'v14';
 const CACHE_NAME = `todolist-cache-${CACHE_VERSION}`;
 
 // Pre-cache qilinadigan asosiy fayllar
@@ -21,7 +24,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     (async () => {
       const cache = await caches.open(CACHE_NAME);
-      
+
       // Har bir faylni alohida keshga yuklash
       await Promise.allSettled(
         PRECACHE_URLS.map(async (url) => {
@@ -36,7 +39,7 @@ self.addEventListener('install', (event) => {
           }
         })
       );
-      
+
       // Yangi SW tayyor bo'lishi bilan kutmasdan ishga tushadi
       self.skipWaiting();
     })()
@@ -87,10 +90,29 @@ self.addEventListener('fetch', (event) => {
 });
 
 // HTML uchun: Network-First (Internet bo'lsa yangi kod, bo'lmasa kesh)
+//
+// MUHIM TUZATISH: ilgari bu yerda oddiy `fetch(request)` chaqirilardi.
+// Muammo shundaki, bu faqat Service Worker keshini chetlab o'tardi —
+// BRAUZERNING O'ZINING HTTP keshini (disk cache) chetlab o'tmasdi.
+// Ba'zi hostinglar HTML uchun ham cache sarlavhalari yuborgani sabab,
+// brauzer "tarmoqdan olyapman" deb turib, aslida o'zining eski HTTP
+// keshidan javob qaytarib yuborishi mumkin edi — natijada yangilangan
+// index.html HECH QACHON ko'rinmasdi, garchi SW "network-first"
+// siyosatini to'g'ri bajarayotgan bo'lsa ham. Endi so'rov doim
+// `cache: 'no-store'` bilan yuboriladi — bu brauzerni HAR SAFAR
+// haqiqiy tarmoqqa murojaat qilishga majbur qiladi.
 async function networkFirstFallingBackToCache(request) {
   const cache = await caches.open(CACHE_NAME);
   try {
-    const networkResponse = await fetch(request);
+    const freshRequest = new Request(request.url, {
+      method: request.method,
+      headers: request.headers,
+      mode: request.mode === 'navigate' ? 'same-origin' : request.mode,
+      credentials: request.credentials,
+      redirect: 'follow',
+      cache: 'no-store' // <-- brauzer HTTP keshini ham chetlab o'tadi
+    });
+    const networkResponse = await fetch(freshRequest);
     if (networkResponse && networkResponse.ok) {
       cache.put(request, networkResponse.clone());
     }
@@ -98,7 +120,7 @@ async function networkFirstFallingBackToCache(request) {
   } catch (err) {
     const cached = await cache.match(request, { ignoreSearch: true });
     if (cached) return cached;
-    
+
     // Offline zaxira sahifasi
     const fallback = await cache.match('/ToDoList/index.html');
     if (fallback) return fallback;
