@@ -1492,13 +1492,13 @@ if ('serviceWorker' in navigator) {
 
 
   <div class="tabs" id="tabs-bar">
-    <button class="tab active" id="tab-tasks"   draggable="true" data-tab="tasks"   onclick="showTab('tasks')" data-i18n="tab_tasks">📋 Vazifalar</button>
-    <button class="tab"        id="tab-rewards" draggable="true" data-tab="rewards" onclick="showTab('rewards')" data-i18n="tab_rewards">🎁 Mukofotlar</button>
-    <button class="tab"        id="tab-goals"   draggable="true" data-tab="goals"   onclick="showTab('goals')" data-i18n="tab_goals">🎯 Maqsadlar</button>
-    <button class="tab"        id="tab-chest"   draggable="true" data-tab="chest"   onclick="showTab('chest')" data-i18n="tab_chest">🎲 Chest</button>
-    <button class="tab"        id="tab-ielts"   draggable="true" data-tab="ielts"   onclick="showTab('ielts')" data-i18n="tab_ielts">📊 IELTS</button>
-    <button class="tab"        id="tab-sat"     draggable="true" data-tab="sat"     onclick="showTab('sat')" data-i18n="tab_sat">📐 SAT</button>
-    <button class="tab"        id="tab-pomo"    draggable="true" data-tab="pomo"    onclick="pomoOpenModal()" title="Pomodoro / Ish vaqti">⏱️ <span id="pomo-header-label">Pomodoro</span></button>
+    <button class="tab active" id="tab-tasks"   data-tab="tasks"   onclick="showTab('tasks')" data-i18n="tab_tasks">📋 Vazifalar</button>
+    <button class="tab"        id="tab-rewards" data-tab="rewards" onclick="showTab('rewards')" data-i18n="tab_rewards">🎁 Mukofotlar</button>
+    <button class="tab"        id="tab-goals"   data-tab="goals"   onclick="showTab('goals')" data-i18n="tab_goals">🎯 Maqsadlar</button>
+    <button class="tab"        id="tab-chest"   data-tab="chest"   onclick="showTab('chest')" data-i18n="tab_chest">🎲 Chest</button>
+    <button class="tab"        id="tab-ielts"   data-tab="ielts"   onclick="showTab('ielts')" data-i18n="tab_ielts">📊 IELTS</button>
+    <button class="tab"        id="tab-sat"     data-tab="sat"     onclick="showTab('sat')" data-i18n="tab_sat">📐 SAT</button>
+    <button class="tab"        id="tab-pomo"    data-tab="pomo"    onclick="pomoOpenModal()" title="Pomodoro / Ish vaqti">⏱️ <span id="pomo-header-label">Pomodoro</span></button>
     <button class="tab" id="tab-profile" data-tab="profile" onclick="showTab('profile')" data-i18n="guide_step_profile_title">👤 Profil</button>
   </div>
 
@@ -18327,12 +18327,33 @@ document.addEventListener('DOMContentLoaded', function(){
 setInterval(function(){ if(document.getElementById('view-spin') && document.getElementById('view-spin').style.display!=='none') renderSpin(); }, 60000);
 
 // ============================================================
-// TAB DRAG-AND-DROP (sichqoncha bilan joy almashtirish)
+// TAB DRAG-AND-DROP (BIRLASHTIRILGAN — sichqoncha VA barmoq uchun
+// bitta Pointer Events tizimi)
+// ------------------------------------------------------------
+// MUHIM: ilgari bu yerda IKKITA mustaqil tizim bor edi — biri
+// native HTML5 drag (dragstart/dragover/drop, faqat sichqoncha
+// uchun ishonchli) va ikkinchisi qo'lda yozilgan touch tizimi
+// (touchstart/touchmove/touchend). Ikkalasi ham AYNAN BIR XIL
+// tugmalarga ulangan edi, shu sababli ba'zi qurilma/brauzerlarda
+// bitta barmoq bilan sudrash amalida ikkalasi BIR VAQTDA ishga
+// tushib, tugmalarni bir-birining ustidan turlicha joylarga
+// surar edi (shu "o'zidan-o'zi tez-tez aylanish" effektini
+// bergan). Ustiga-ustak, touch tizimining saveTabOrder() funksiyasi
+// BO'SH edi — hech narsa saqlamas edi — shuning uchun keyin
+// applyTabOrder() qayta chaqirilganda (masalan ilova fon/oldinga
+// o'tganda) DOM yana eski saqlangan tartibga "sakrab" qaytardi.
+// Endi FAQAT bitta tizim bor va u sichqoncha ham, barmoq ham
+// uchun bir xil ishlaydi, natijasi doim S.tabOrder ga saqlanadi.
 // ============================================================
 (function setupTabDrag() {
-  var dragSrcTab = null;
-
   var DEFAULT_ORDER = ['tasks','rewards','goals','chest','ielts','sat','pomo'];
+  var LONG_PRESS_MS = 300;
+  var MOVE_CANCEL_PX = 8;
+
+  var dragSrcTab = null;
+  var dragActive = false;
+  var pressTimer = null;
+  var startX = 0, startY = 0;
 
   function getTabOrder() {
     var saved = S.tabOrder || null;
@@ -18360,60 +18381,80 @@ setInterval(function(){ if(document.getElementById('view-spin') && document.getE
   }
   window.applyTabOrder = applyTabOrder;
 
+  function clearDragOverStyles(bar) {
+    bar.querySelectorAll('[data-tab]').forEach(function(b) { b.classList.remove('tab-drag-over'); });
+  }
+
+  function resetDragState(bar) {
+    clearTimeout(pressTimer);
+    pressTimer = null;
+    if (dragSrcTab) dragSrcTab.classList.remove('tab-dragging');
+    clearDragOverStyles(bar);
+    dragActive = false;
+    dragSrcTab = null;
+  }
+
   function initTabDrag() {
     applyTabOrder();
     var bar = document.getElementById('tabs-bar');
     if (!bar) return;
 
-    bar.addEventListener('dragstart', function(e) {
+    bar.addEventListener('pointerdown', function(e) {
       var btn = e.target.closest('[data-tab]');
       if (!btn) return;
-      dragSrcTab = btn;
-      setTimeout(function() { btn.classList.add('tab-dragging'); }, 0);
-      e.dataTransfer.effectAllowed = 'move';
+      startX = e.clientX;
+      startY = e.clientY;
+      clearTimeout(pressTimer);
+      pressTimer = setTimeout(function() {
+        dragSrcTab = btn;
+        dragActive = true;
+        btn.classList.add('tab-dragging');
+        if (navigator.vibrate) navigator.vibrate(30);
+      }, LONG_PRESS_MS);
     });
 
-    bar.addEventListener('dragend', function(e) {
-      var btn = e.target.closest('[data-tab]');
-      if (btn) btn.classList.remove('tab-dragging');
-      bar.querySelectorAll('[data-tab]').forEach(function(b) { b.classList.remove('tab-drag-over'); });
-      dragSrcTab = null;
-    });
-
-    bar.addEventListener('dragover', function(e) {
-      e.preventDefault();
-      var btn = e.target.closest('[data-tab]');
-      if (!btn || btn === dragSrcTab) return;
-      bar.querySelectorAll('[data-tab]').forEach(function(b) { b.classList.remove('tab-drag-over'); });
-      btn.classList.add('tab-drag-over');
-    });
-
-    bar.addEventListener('dragleave', function(e) {
-      var btn = e.target.closest('[data-tab]');
-      if (btn) btn.classList.remove('tab-drag-over');
-    });
-
-    bar.addEventListener('drop', function(e) {
-      e.preventDefault();
-      var target = e.target.closest('[data-tab]');
-      if (!target || !dragSrcTab || target === dragSrcTab) return;
-      target.classList.remove('tab-drag-over');
-
-      // Reorder DOM
-      var allBtns = Array.from(bar.querySelectorAll('[data-tab]'));
-      var srcIdx = allBtns.indexOf(dragSrcTab);
-      var tgtIdx = allBtns.indexOf(target);
-
-      if (srcIdx < tgtIdx) {
-        bar.insertBefore(dragSrcTab, target.nextSibling);
-      } else {
-        bar.insertBefore(dragSrcTab, target);
+    bar.addEventListener('pointermove', function(e) {
+      if (!dragActive) {
+        // Drag hali boshlanmagan — agar barmoq/kursor sezilarli siljisa
+        // (oddiy skroll/bosish bo'lsa), rejalashtirilgan drag bekor qilinadi.
+        if (pressTimer) {
+          var dx = Math.abs(e.clientX - startX), dy = Math.abs(e.clientY - startY);
+          if (dx > MOVE_CANCEL_PX || dy > MOVE_CANCEL_PX) {
+            clearTimeout(pressTimer);
+            pressTimer = null;
+          }
+        }
+        return;
       }
+      e.preventDefault();
+      var el = document.elementFromPoint(e.clientX, e.clientY);
+      var target = el && el.closest('[data-tab]');
+      clearDragOverStyles(bar);
+      if (target && target !== dragSrcTab) target.classList.add('tab-drag-over');
+    }, { passive: false });
 
-      // Save new order
-      var newOrder = Array.from(bar.querySelectorAll('[data-tab]')).map(function(b) { return b.dataset.tab; });
-      saveTabOrder(newOrder);
-    });
+    function finishDrag(e) {
+      if (!dragActive || !dragSrcTab) { resetDragState(bar); return; }
+      var el = document.elementFromPoint(e.clientX, e.clientY);
+      var target = el && el.closest('[data-tab]');
+      if (target && target !== dragSrcTab) {
+        var allBtns = Array.from(bar.querySelectorAll('[data-tab]'));
+        var srcIdx = allBtns.indexOf(dragSrcTab);
+        var tgtIdx = allBtns.indexOf(target);
+        if (srcIdx < tgtIdx) {
+          bar.insertBefore(dragSrcTab, target.nextSibling);
+        } else {
+          bar.insertBefore(dragSrcTab, target);
+        }
+        var newOrder = Array.from(bar.querySelectorAll('[data-tab]')).map(function(b) { return b.dataset.tab; });
+        saveTabOrder(newOrder);
+        if (navigator.vibrate) navigator.vibrate(20);
+      }
+      resetDragState(bar);
+    }
+
+    bar.addEventListener('pointerup', finishDrag);
+    bar.addEventListener('pointercancel', function() { resetDragState(bar); });
   }
 
   document.addEventListener('DOMContentLoaded', initTabDrag);
@@ -19792,77 +19833,12 @@ function renderBadges() {
 
 
 // ============================================================
-(function setupTabTouchDrag() {
-  var dragSrcTab = null;
-  var TAB_ORDER_KEY = 'tab_order_v1';
-  var ghost = null;
-  var startX = 0, startY = 0;
-
-  function saveTabOrder(order) {
-    // Tab tartibi saqlanmaydi — har doim fixed tartib
-  }
-
-  document.addEventListener('DOMContentLoaded', function() {
-    var bar = document.getElementById('tabs-bar');
-    if (!bar) return;
-
-    bar.addEventListener('touchstart', function(e) {
-      var btn = e.target.closest('[data-tab]');
-      if (!btn) return;
-      // Long press to drag (400ms)
-      var timer = setTimeout(function() {
-        dragSrcTab = btn;
-        btn.classList.add('tab-dragging');
-        // haptic if available
-        if (navigator.vibrate) navigator.vibrate(30);
-      }, 400);
-      btn._touchTimer = timer;
-      startX = e.touches[0].clientX;
-      startY = e.touches[0].clientY;
-    }, {passive: true});
-
-    bar.addEventListener('touchmove', function(e) {
-      var btn = e.target.closest('[data-tab]');
-      if (btn && btn._touchTimer) {
-        var dx = Math.abs(e.touches[0].clientX - startX);
-        var dy = Math.abs(e.touches[0].clientY - startY);
-        if (dx > 8 || dy > 8) { clearTimeout(btn._touchTimer); btn._touchTimer = null; }
-      }
-      if (!dragSrcTab) return;
-      e.preventDefault();
-      var touch = e.touches[0];
-      // Find element under finger
-      var el = document.elementFromPoint(touch.clientX, touch.clientY);
-      var target = el && el.closest('[data-tab]');
-      bar.querySelectorAll('[data-tab]').forEach(function(b) { b.classList.remove('tab-drag-over'); });
-      if (target && target !== dragSrcTab) target.classList.add('tab-drag-over');
-    }, {passive: false});
-
-    bar.addEventListener('touchend', function(e) {
-      var btn = e.target.closest('[data-tab]');
-      if (btn && btn._touchTimer) { clearTimeout(btn._touchTimer); btn._touchTimer = null; }
-      if (!dragSrcTab) return;
-      var touch = e.changedTouches[0];
-      var el = document.elementFromPoint(touch.clientX, touch.clientY);
-      var target = el && el.closest('[data-tab]');
-      bar.querySelectorAll('[data-tab]').forEach(function(b) { b.classList.remove('tab-drag-over'); });
-      dragSrcTab.classList.remove('tab-dragging');
-      if (target && target !== dragSrcTab) {
-        var allBtns = Array.from(bar.querySelectorAll('[data-tab]'));
-        var srcIdx = allBtns.indexOf(dragSrcTab);
-        var tgtIdx = allBtns.indexOf(target);
-        if (srcIdx < tgtIdx) bar.insertBefore(dragSrcTab, target.nextSibling);
-        else bar.insertBefore(dragSrcTab, target);
-        var newOrder = Array.from(bar.querySelectorAll('[data-tab]')).map(function(b) { return b.dataset.tab; });
-        saveTabOrder(newOrder);
-        if (navigator.vibrate) navigator.vibrate(20);
-      }
-      dragSrcTab = null;
-    }, {passive: true});
-  });
-})();
-
-
+// (Eski, alohida touch-drag tizimi shu yerda edi — endi u yuqoridagi
+// bitta birlashtirilgan Pointer Events tizimiga qo'shildi, shuning
+// uchun bu yerdan olib tashlandi. Ikkita tizim bir tugmaga ulanib,
+// bir-biriga zid ishlagani "tablar o'zidan-o'zi aylanishi" xatosining
+// aynan sababi edi.)
+// ============================================================
 
 
 // ============================================================
