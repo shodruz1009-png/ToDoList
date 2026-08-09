@@ -1,8 +1,8 @@
 // ============================================================
-// ToDoList PWA — Service Worker (v12 Optimallashtirilgan)
+// ToDoList PWA — Service Worker (v13 Optimallashtirilgan)
 // ============================================================
 
-const CACHE_VERSION = 'v12';
+const CACHE_VERSION = 'v13';
 const CACHE_NAME = `todolist-cache-${CACHE_VERSION}`;
 
 // Pre-cache qilinadigan asosiy fayllar
