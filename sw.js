@@ -1,11 +1,12 @@
 // ============================================================
-// ToDoList PWA — Service Worker (v14 — kesh muammosi tuzatildi)
+// ToDoList PWA — Service Worker (v15 — guruh challenge/admin panel
+// o'zgarishlaridan keyin kesh versiyasi oshirildi)
 // ============================================================
 
 // MUHIM: har safar index.html (yoki boshqa kod)ni yangilab qayta
-// joylashtirganingizda, bu raqamni oshiring (v14 -> v15 -> ...).
+// joylashtirganingizda, bu raqamni oshiring (v15 -> v16 -> ...).
 // Shunda eski kesh butunlay o'chiriladi va yangi fayllar qayta yuklanadi.
-const CACHE_VERSION = 'v14';
+const CACHE_VERSION = 'v15';
 const CACHE_NAME = `todolist-cache-${CACHE_VERSION}`;
 
 // Pre-cache qilinadigan asosiy fayllar
@@ -18,6 +19,13 @@ const PRECACHE_URLS = [
   '/ToDoList/icon-512.png',
   'https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js'
 ];
+
+// Eslatma: admin.html ATAYLAB shu ro'yxatga QO'SHILMAGAN — u faqat
+// to'g'ridan-to'g'ri havola orqali ochiladigan alohida (asosiy ilova
+// navigatsiyasiga ulanmagan) sahifa, shu sababli har bir oddiy
+// foydalanuvchi uchun keraksiz oldindan yuklashning hojati yo'q.
+// Baribir ochilganda pastdagi network-first/cache-first oqimi orqali
+// avtomatik keshlanadi (agar admin uni ochsa).
 
 // ---------------- INSTALL ----------------
 self.addEventListener('install', (event) => {
