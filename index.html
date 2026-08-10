@@ -19708,10 +19708,7 @@ function _dsMove(el, target) {
 function renderDsShortcuts() {
   var shortcuts = document.getElementById('ds-shortcuts');
   if (!shortcuts) return;
-  var html =
-    '<button type="button" class="ds-shortcut-btn" onclick="showTab(\'rewards\')">🎁 Mukofotlar</button>' +
-    '<button type="button" class="ds-shortcut-btn" onclick="showTab(\'chest\')">🎲 Chest</button>' +
-    '<button type="button" class="ds-shortcut-btn" onclick="showTab(\'goals\')">🎯 Maqsadlar</button>';
+  var html = '';
   if (S.personalCheckEnabled && !S.pcHiddenFromQuickAccess) {
     html += '<button type="button" class="ds-shortcut-btn" onclick="showTab(\'secret\')">🕵️ Focus</button>';
   }
@@ -24544,7 +24541,7 @@ function wsFinish(method, toastKey) {
           osc.type = n.type || 'sine';
           osc.frequency.value = n.freq;
           gain.gain.setValueAtTime(0, now + n.start);
-          gain.gain.linearRampToValueAtTime(vol * (n.peak || 0.2), now + n.start + 0.02);
+          gain.gain.linearRampToValueAtTime(vol * (n.peak || 0.2) * 4, now + n.start + 0.02);
           gain.gain.linearRampToValueAtTime(0, now + n.start + n.dur);
           osc.connect(gain);
           gain.connect(ctx.destination);
