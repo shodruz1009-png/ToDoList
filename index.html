@@ -26480,20 +26480,29 @@ function fcSetupAuthListener() {
 // ogohlantirish ko'rsatadi — soxta "ulandi" taassurotini oldini olish uchun.
 async function fcOnAuthMethod(method) {
   if (!fcOnline()) return { ok: false, reason: 'offline' }; // internet/Supabase yo'q — jimgina local rejimda qolamiz
+  // MUHIM: redirectTo ko'rsatilmasa, Supabase avtomatik ravishda
+  // window.location.origin'ni ishlatadi — bu esa GitHub Pages loyiha
+  // sahifalarida "/ToDoList" kabi repo-yo'lni TASHLAB KETADI (chunki
+  // origin faqat "https://user.github.io" bo'ladi, "https://user.github.io/ToDoList"
+  // emas), natijada Google login'dan keyin foydalanuvchi mavjud bo'lmagan
+  // domen ildiziga tushib, GitHub'ning "There isn't a GitHub Pages site
+  // here" 404 sahifasiga chiqib qoladi. Shu sabab har doim joriy sahifaning
+  // to'liq (path bilan birga) manzilini aniq ko'rsatamiz.
+  const fcRedirectUrl = window.location.origin + window.location.pathname;
   try {
     if (method === 'google') {
       const { data: sessData } = await supabase.auth.getSession();
       const isAnon = !!(sessData && sessData.session && sessData.session.user && sessData.session.user.is_anonymous);
       if (isAnon) {
-        const { error } = await supabase.auth.linkIdentity({ provider: 'google' });
+        const { error } = await supabase.auth.linkIdentity({ provider: 'google', options: { redirectTo: fcRedirectUrl } });
         // "Allow manual linking" o'chirilgan bo'lsa yoki xato bo'lsa — oddiy
         // signInWithOAuth'ga qaytamiz (bu holda yangi user ID yaratiladi).
         if (error) {
-          const { error: error2 } = await supabase.auth.signInWithOAuth({ provider: 'google' });
+          const { error: error2 } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: fcRedirectUrl } });
           if (error2) return { ok: false, reason: 'error', error: error2 };
         }
       } else {
-        const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
+        const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: fcRedirectUrl } });
         if (error) return { ok: false, reason: 'error', error: error };
       }
       // Eslatma: muvaffaqiyatli bo'lsa, brauzer shu paytda allaqachon Google
