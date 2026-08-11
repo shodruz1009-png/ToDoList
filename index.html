@@ -486,7 +486,23 @@
 
   .section-title { font-size:var(--fs-2xs); letter-spacing:0.08em; text-transform:uppercase; color:var(--text-dim); margin:20px 0 10px; font-weight:500; }
   .task-list { display:flex; flex-direction:column; gap:8px; }
-  .task-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:14px 16px; display:flex; align-items:center; gap:10px; transition:all 0.2s; animation:slideIn 0.25s ease; cursor:grab; touch-action:pan-y; }
+  .task-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:14px 16px; display:flex; flex-direction:column; transition:all 0.2s; animation:slideIn 0.25s ease; cursor:grab; touch-action:pan-y; }
+  /* Karta yuqori qatori: checkbox, nom, belgilar va tugmalar bir qatorda,
+     TASK NOMI bilan bir tekisda (yuqorida) turadi. Sub-tasklar esa endi shu
+     qatordan TASHQARIDA, alohida to'liq kenglikdagi qator sifatida chiqadi —
+     shu sababli sub-tasklar ko'p bo'lgan kartalarda o'ng tomondagi
+     belgilar/tugmalar ostida katta bo'sh joy qolmaydi. */
+  .task-card-top { display:flex; align-items:flex-start; gap:10px; }
+  .task-card-top > .check-btn,
+  .task-card-top > .task-label-dot,
+  .task-card-top > .task-badges,
+  .task-card-top > .subtask-add-quick-btn,
+  .task-card-top > .task-quick-btn,
+  .task-card-top > .task-dots-wrap,
+  .task-card-top > .task-menu-btn { margin-top:2px; }
+  .task-card-bottom { display:flex; gap:10px; }
+  .task-card-bottom-spacer { width:28px; flex-shrink:0; }
+  .task-card-bottom .subtask-wrap { flex:1; min-width:0; }
   .task-card.dragging, .task-card:active { cursor:grabbing; }
   @keyframes slideIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
   .task-card:hover { border-color:var(--border-hover); }
@@ -537,6 +553,13 @@
   html.layout-desktop .task-dropdown-item.dd-item-skip,
   html.layout-desktop .task-dropdown-item.dd-item-unskip { display:none; }
   html.layout-desktop .task-quick-btn.qb-edit { display:none !important; }
+  /* MUHIM TUZATISH: avvalgi "10+ sub-task" UX yaxshilanishida bu yerga
+     `max-height` + `overflow-y:auto` qo'shilgan edi. Ammo har bir
+     sub-task qatoridagi "⋮" dropdown menyusi (task-dropdown-menu)
+     shu konteyner ICHIDA position:absolute bilan pastga ochiladi —
+     overflow:auto esa uni kesib, "🗑 O'chirish" kabi pastki tugmalarni
+     butunlay ko'rinmas qilib qo'yardi. Shu sabab overflow-clip
+     yechimidan voz kechildi (dropdown funksionalligi ustunroq). */
   .subtask-list { margin-top:8px; display:flex; flex-direction:column; gap:5px; }
   .subtask-item { display:flex; align-items:center; gap:8px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:6px 8px; }
   .subtask-label-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
@@ -551,8 +574,11 @@
   .subtask-edit:hover, .subtask-extract:hover { color:var(--accent); }
   .subtask-item.skipped { opacity:0.45; border-style:dashed; }
   .subtask-dots-wrap .task-dots-btn { padding:4px 7px; font-size:var(--fs-sm); }
-  .subtask-progress { font-size:var(--fs-3xs); color:var(--text-dim); margin-top:6px; }
-  .subtask-done-toggle { background:none; border:none; cursor:pointer; color:var(--accent); font-size:var(--fs-2xs); padding:4px 0; font-family:'DM Sans',sans-serif; display:block; margin-top:6px; }
+  /* UX YAXSHILANISH: progress ko'rsatkichi (X/Y) avval juda xira/kichik
+     bo'lib, ko'zga tashlanmasdi — endi biroz kattaroq, qalinroq va
+     nozik fon-bilan ajratib ko'rsatiladi. */
+  .subtask-progress { font-size:var(--fs-2xs); font-weight:600; color:var(--text-muted); margin-top:8px; padding:3px 8px; background:rgba(255,255,255,0.04); border-radius:20px; display:inline-block; }
+  .subtask-done-toggle { background:none; border:none; cursor:pointer; color:var(--accent); font-size:var(--fs-2xs); font-weight:600; padding:4px 0; font-family:'DM Sans',sans-serif; display:block; margin-top:6px; }
   .subtask-done-toggle:hover { text-decoration:underline; }
   .subtask-list-done { margin-top:5px; opacity:0.75; }
   #subtask-modal-overlay .modal-field { margin-bottom:14px; }
@@ -993,7 +1019,10 @@
     #profile-subtabs::-webkit-scrollbar { display: none; }
     .tab { padding: 8px 14px; font-size:var(--fs-xs); white-space: nowrap; flex-shrink: 0; }
     /* Compact mobile task card */
-    .task-card { padding: 11px 12px; gap: 8px; border-radius:var(--radius-md); flex-wrap: nowrap; align-items: center; }
+    .task-card { padding: 11px 12px; border-radius:var(--radius-md); }
+    .task-card-top { gap: 8px; flex-wrap: nowrap; align-items: flex-start; }
+    .task-card-bottom { gap: 8px; }
+    .task-card-bottom-spacer { width: 26px; }
     .task-info { min-width: 0; flex: 1; }
     .task-name { font-size:var(--fs-base); }
     .check-btn { width: 26px; height: 26px; flex-shrink: 0; }
@@ -1036,7 +1065,9 @@
   @media (max-width: 420px) {
     .wrapper { padding: 16px 10px 100px; }
     .tab { padding: 7px 11px; font-size:var(--fs-2xs); }
-    .task-card { gap: 6px; padding: 9px 8px; }
+    .task-card { padding: 9px 8px; }
+    .task-card-top { gap: 6px; }
+    .task-card-bottom { gap: 6px; }
     .task-name { font-size:var(--fs-sm); }
     .stat-val { font-size:var(--fs-lg); }
   }
@@ -1046,25 +1077,77 @@
      ============================================================ */
   #tab-pomo.running { border-color:var(--accent); background:var(--accent-glow); color:var(--accent); }
 
-  #pomo-activity-list { display:flex; flex-direction:column; gap:10px; margin-bottom:16px; max-height:44vh; overflow-y:auto; }
-  .pomo-act-card { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-md); padding:12px 14px; cursor:pointer; transition:all 0.2s; }
-  .pomo-act-card:hover { border-color:var(--border-hover); }
-  .pomo-act-card.active { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent); }
+  #pomo-activity-list { display:flex; flex-direction:column; gap:12px; margin-bottom:18px; max-height:44vh; overflow-y:auto; padding:2px; }
+  .pomo-act-card {
+    position:relative; overflow:hidden;
+    background:linear-gradient(155deg, var(--surface2), color-mix(in srgb, var(--surface2) 82%, var(--accent-card, var(--accent)) 18%));
+    border:1px solid var(--border); border-radius:var(--radius-lg); padding:14px 16px 16px;
+    cursor:pointer; transition:transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+    box-shadow:0 1px 2px rgba(0,0,0,0.12);
+  }
+  .pomo-act-card::before {
+    content:''; position:absolute; left:0; top:0; bottom:0; width:4px;
+    background:linear-gradient(180deg, var(--accent-card, var(--accent)), color-mix(in srgb, var(--accent-card, var(--accent)) 40%, transparent));
+    opacity:0.9;
+  }
+  .pomo-act-card:hover { border-color:var(--border-hover); transform:translateY(-1px); box-shadow:0 6px 18px rgba(0,0,0,0.18); }
+  .pomo-act-card.active { border-color:var(--accent-card, var(--accent)); box-shadow:0 0 0 1px var(--accent-card, var(--accent)), 0 8px 22px color-mix(in srgb, var(--accent-card, var(--accent)) 25%, transparent); }
+  /* Status badge — endi faqat border/chegaraga suyanmasdan, tepada aniq yorliq bilan holatni bildiradi */
+  .pomo-act-status-badge { display:inline-flex; align-items:center; gap:5px; font-size:var(--fs-3xs); font-weight:800; letter-spacing:0.04em; padding:3px 9px 3px 7px; border-radius:var(--radius-full); margin-bottom:9px; font-family:'DM Sans',sans-serif,'Apple Color Emoji','Segoe UI Emoji','Segoe UI Symbol','Noto Color Emoji'; }
+  /* MUHIM TUZATISH: badge ichidagi ⏱️/⏸️ emoji "To'xtagan"/"Ishlamoqda"
+     matni bilan bir qatorda, qattiq `font-family:'DM Sans'` ostida
+     chizilardi. DM Sans shriftida bu belgilar yo'q, brauzer esa oddiy
+     `sans-serif` fallback'ga o'tganda ham tizimning rangli emoji shriftiga
+     avtomatik almashtirmay, DM Sans'ning o'zidagi bo'sh/placeholder
+     (tofu) belgini chizib qo'yardi — natijada badge'da chalkash, buzuq
+     ikonka ko'rinardi (skrinshotga qarang). Endi shrift zanjiriga
+     tizim emoji-shriftlari qo'shildi — brauzer ⏱️/⏸️ uchun ularga
+     to'g'ri o'tadi, xuddi boshqa joylardagi (▶️/✏️/🗑️) emoji kabi. */
+  .pomo-act-status-badge::before { content:''; width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+  .pomo-act-status-badge.running { background:color-mix(in srgb, var(--green) 18%, transparent); color:var(--green); box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--green) 35%, transparent); }
+  .pomo-act-status-badge.running::before { background:var(--green); box-shadow:0 0 0 3px color-mix(in srgb, var(--green) 25%, transparent); animation:pomoLivePulse 1.4s ease-in-out infinite; }
+  .pomo-act-status-badge.paused { background:color-mix(in srgb, var(--text-muted) 14%, transparent); color:var(--text-muted); box-shadow:inset 0 0 0 1px var(--border); }
+  .pomo-act-status-badge.paused::before { background:var(--text-muted); }
   .pomo-act-top { display:flex; align-items:center; justify-content:space-between; gap:8px; }
-  .pomo-act-name { font-size:var(--fs-base); font-weight:600; color:var(--text); display:flex; align-items:center; gap:8px; min-width:0; }
-  .pomo-act-name span.emj { font-size:var(--fs-md); flex-shrink:0; }
-  .pomo-act-limit { font-size:var(--fs-2xs); color:var(--text-muted); margin-top:2px; }
-  .pomo-act-del { background:none; border:none; color:var(--text-dim); font-size:var(--fs-base); cursor:pointer; padding:4px 6px; border-radius:var(--radius-sm); flex-shrink:0; }
-  .pomo-act-del:hover { color:var(--red); background:rgba(248,113,113,0.1); }
-  .pomo-act-edit { background:none; border:none; color:var(--text-dim); font-size:var(--fs-base); cursor:pointer; padding:4px 6px; border-radius:var(--radius-sm); flex-shrink:0; }
-  .pomo-act-edit:hover { color:var(--accent); background:var(--accent-glow); }
-  .pomo-act-controls { display:flex; gap:8px; margin-top:10px; }
-  .pomo-ctrl-btn { flex:1; padding:9px; border-radius:var(--radius-sm); border:none; font-size:var(--fs-sm); font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; transition:opacity 0.2s; }
-  .pomo-ctrl-btn:hover { opacity:0.85; }
-  .pomo-ctrl-start { background:var(--accent); color:#fff; }
-  .pomo-ctrl-stop { background:var(--red); color:#fff; }
-  .pomo-ctrl-resume { background:var(--green); color:#fff; }
-  .pomo-act-elapsed { font-family:'Syne',sans-serif; font-size:var(--fs-sm); font-weight:700; color:var(--accent); margin-top:8px; text-align:center; letter-spacing:0.03em; }
+  .pomo-act-name { font-size:var(--fs-base); font-weight:700; color:var(--text); display:flex; align-items:center; gap:10px; min-width:0; font-family:'Syne',sans-serif; }
+  .pomo-act-name span.emj {
+    font-size:var(--fs-md); flex-shrink:0; width:34px; height:34px; border-radius:var(--radius-md);
+    display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(155deg, color-mix(in srgb, var(--accent-card, var(--accent)) 30%, transparent), color-mix(in srgb, var(--accent-card, var(--accent)) 12%, transparent));
+    box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--accent-card, var(--accent)) 35%, transparent);
+  }
+  .pomo-act-name .txt { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  @keyframes pomoLivePulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(0.8); } }
+  .pomo-act-limit { font-size:var(--fs-2xs); color:var(--text-muted); margin-top:6px; margin-left:44px; letter-spacing:0.02em; }
+  /* Har doim ko'rinadigan mini play/pause — kartani ochmasdan turib boshqarish uchun */
+  .pomo-act-mini-toggle { background:color-mix(in srgb, var(--accent-card, var(--accent)) 14%, transparent); border:1px solid color-mix(in srgb, var(--accent-card, var(--accent)) 30%, transparent); color:var(--accent-card, var(--accent)); font-size:var(--fs-sm); cursor:pointer; padding:0; width:28px; height:28px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:background 0.15s,transform 0.15s; }
+  .pomo-act-mini-toggle:hover { transform:scale(1.08); }
+  .pomo-act-mini-toggle:active { transform:scale(0.94); }
+  .pomo-act-mini-toggle.is-running { background:color-mix(in srgb, var(--red) 16%, transparent); border-color:color-mix(in srgb, var(--red) 35%, transparent); color:var(--red); }
+  .pomo-act-del { background:none; border:none; color:var(--text-dim); font-size:var(--fs-base); cursor:pointer; padding:5px 7px; border-radius:var(--radius-sm); flex-shrink:0; transition:background 0.15s,color 0.15s; }
+  .pomo-act-del:hover { color:var(--red); background:rgba(248,113,113,0.12); }
+  .pomo-act-edit { background:none; border:none; color:var(--text-dim); font-size:var(--fs-base); cursor:pointer; padding:5px 7px; border-radius:var(--radius-sm); flex-shrink:0; transition:background 0.15s,color 0.15s; }
+  .pomo-act-edit:hover { color:var(--accent-card, var(--accent)); background:var(--accent-glow); }
+  .pomo-act-progress-track { height:6px; border-radius:var(--radius-full); background:rgba(255,255,255,0.06); margin:12px 0 0; margin-left:0; overflow:hidden; box-shadow:inset 0 0 0 1px transparent; transition:box-shadow 0.15s; }
+  body.light .pomo-act-progress-track { background:rgba(0,0,0,0.06); }
+  /* 0% holat — "hali boshlanmagan"ni darhol vizual bildirish uchun ichki chegara chizig'i */
+  .pomo-act-progress-track.empty { box-shadow:inset 0 0 0 1px var(--border-hover); background:transparent; }
+  .pomo-act-progress-fill { height:100%; border-radius:var(--radius-full); background:linear-gradient(90deg, var(--accent-card, var(--accent)), color-mix(in srgb, var(--accent-card, var(--accent)) 60%, var(--green))); transition:width 0.4s ease; }
+  .pomo-act-progress-fill.over { background:linear-gradient(90deg, var(--red), color-mix(in srgb, var(--red) 70%, #7a0d0d)); }
+  /* Chegaradan oshib ketganda foiz o'rniga alohida qizil ogohlantirish matni */
+  .pomo-act-overflow-text { font-size:var(--fs-xs); font-weight:800; color:var(--red); margin-top:7px; margin-left:0; letter-spacing:0.01em; display:flex; align-items:center; gap:5px; }
+  .pomo-act-controls { display:flex; gap:8px; margin-top:12px; }
+  .pomo-ctrl-btn { flex:1; padding:11px; border-radius:var(--radius-md); border:none; font-size:var(--fs-sm); font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; transition:filter 0.2s, transform 0.15s; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 3px 10px rgba(0,0,0,0.18); }
+  .pomo-ctrl-btn:hover { filter:brightness(1.08); }
+  .pomo-ctrl-btn:active { transform:scale(0.97); }
+  .pomo-ctrl-start { background:linear-gradient(135deg, var(--accent-card, var(--accent)), color-mix(in srgb, var(--accent-card, var(--accent)) 70%, #fff)); color:#fff; }
+  .pomo-ctrl-stop { background:linear-gradient(135deg, var(--red), color-mix(in srgb, var(--red) 70%, #fff)); color:#fff; }
+  .pomo-ctrl-resume { background:linear-gradient(135deg, var(--green), color-mix(in srgb, var(--green) 70%, #fff)); color:#fff; }
+  /* Vaqt/chegara qatori — endi har doim (nafaqat active holatda) ko'rinadi va chegara bilan solishtiriladi */
+  .pomo-act-elapsed-row { display:flex; align-items:baseline; justify-content:center; gap:6px; margin-top:10px; flex-wrap:wrap; }
+  .pomo-act-elapsed { font-family:'Syne',sans-serif; font-size:var(--fs-lg); font-weight:800; color:var(--accent-card, var(--accent)); text-align:center; letter-spacing:0.03em; }
+  .pomo-act-elapsed-row.over .pomo-act-elapsed { color:var(--red); }
+  .pomo-act-elapsed-cmp { font-family:'Syne',sans-serif; font-size:var(--fs-xs); font-weight:700; color:var(--text-muted); letter-spacing:0.02em; }
 
   #pomo-new-form { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-md); padding:14px; margin-bottom:14px; display:none; }
   #pomo-new-form.open { display:block; }
@@ -1075,6 +1158,18 @@
   .pomo-limit-hm-field label { display:block; font-size:var(--fs-2xs); color:var(--text-muted); letter-spacing:0.05em; text-transform:uppercase; margin-bottom:6px; }
   .pomo-limit-hm-field input { width:100%; padding:11px 12px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:var(--fs-md); font-family:'Syne',sans-serif; font-weight:700; text-align:center; outline:none; margin-bottom:0; }
   .pomo-limit-hm-field input:focus { border-color:var(--accent); }
+  /* Icon/rang tanlash — har bir amaliylikni ro'yxatda oson farqlash uchun */
+  .pomo-picker-label { font-size:var(--fs-2xs); color:var(--text-muted); letter-spacing:0.05em; text-transform:uppercase; margin-bottom:6px; }
+  .pomo-emoji-picker { display:flex; flex-wrap:wrap; gap:7px; margin-bottom:12px; }
+  .pomo-emoji-opt { width:36px; height:36px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--surface); font-size:var(--fs-md); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s; padding:0; }
+  .pomo-emoji-opt:hover { border-color:var(--accent); transform:scale(1.08); }
+  .pomo-emoji-opt.sel { border-color:var(--accent); background:var(--accent-glow); transform:scale(1.06); }
+  .pomo-color-picker { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:4px; align-items:center; }
+  .pomo-color-opt { width:26px; height:26px; border-radius:50%; border:2px solid transparent; cursor:pointer; padding:0; box-shadow:inset 0 0 0 1px rgba(0,0,0,0.15); transition:transform 0.15s,border-color 0.15s; }
+  .pomo-color-opt:hover { transform:scale(1.15); }
+  .pomo-color-opt.sel { border-color:var(--text); transform:scale(1.15); }
+  .pomo-color-opt.auto { width:auto; height:26px; border-radius:var(--radius-full); background:var(--surface); border:1px solid var(--border); color:var(--text-muted); font-size:var(--fs-3xs); font-weight:700; padding:0 10px; box-shadow:none; }
+  .pomo-color-opt.auto.sel { border-color:var(--accent); color:var(--accent); background:var(--accent-glow); }
 
   /* Floating draggable mini widget */
   #pomo-float { position:fixed; top:120px; right:16px; z-index:500; background:#1C1C25; border:1px solid var(--border-hover); border-radius:var(--radius-lg); padding:10px 12px; box-shadow:0 8px 28px rgba(0,0,0,0.4); display:none; align-items:center; gap:10px; cursor:grab; user-select:none; touch-action:none; min-width:168px; }
@@ -1089,6 +1184,16 @@
   #pomo-float.pip-mode #pomo-float-time { font-size:15px; }
   #pomo-float.pip-mode .pomo-float-btn { width:24px; height:24px; font-size:12px; }
   #pomo-float.pip-mode #pomo-float-row { gap:8px; }
+  /* 🔊 PiP oynasida asosiy Stop/Resume tugmasi — bosish qulay bo'lishi uchun kattaroq */
+  #pomo-float.pip-mode #pomo-float-toggle { width:40px; height:40px; font-size:19px; }
+  /* 🎵 PiP oynasida, agar fon musiqasi yoqilgan bo'lsa, uni ham shu yerdan
+     stop/resume qilish uchun qo'shimcha qator — vaqt pastida ko'rinadi va
+     faqat musiqa faol (yuklangan) bo'lsa chiqadi. */
+  #pomo-float-music-row { display:none; align-items:center; gap:8px; width:100%; margin-top:8px; padding-top:8px; border-top:1px solid var(--border); }
+  #pomo-float.pip-mode #pomo-float-music-row.show { display:flex; }
+  #pomo-float-music-icon { font-size:14px; flex-shrink:0; line-height:1; }
+  #pomo-float-music-label { flex:1; min-width:0; font-size:11px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer; }
+  #pomo-float-music-row .pomo-float-btn { width:26px; height:26px; font-size:12px; }
   #pomo-float.dragging { cursor:grabbing; transition:none; box-shadow:0 12px 36px rgba(0,0,0,0.5); }
   #pomo-float-info { flex:1; min-width:0; cursor:pointer; }
   #pomo-float-label { font-size:var(--fs-3xs); color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px; }
@@ -1104,36 +1209,49 @@
   #pomo-float-row { display:flex; align-items:center; gap:10px; width:100%; }
 
   /* 🍅 Pomodoro — Tarix (History) */
-  .pomo-history-section { margin-top:16px; padding-top:14px; border-top:1px solid var(--border); }
-  .pomo-history-toggle { width:100%; display:flex; align-items:center; justify-content:space-between; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-md); padding:11px 14px; color:var(--text); font-size:var(--fs-base); font-weight:700; cursor:pointer; font-family:'Syne',sans-serif; transition:border-color 0.2s; }
-  .pomo-history-toggle:hover { border-color:var(--border-hover); }
+  .pomo-history-section { margin-top:18px; padding-top:16px; border-top:1px solid var(--border); }
+  .pomo-history-toggle {
+    width:100%; display:flex; align-items:center; justify-content:space-between; gap:8px;
+    background:linear-gradient(155deg, var(--surface2), color-mix(in srgb, var(--surface2) 85%, var(--accent) 15%));
+    border:1px solid var(--border); border-radius:var(--radius-lg); padding:13px 16px; color:var(--text);
+    font-size:var(--fs-base); font-weight:700; cursor:pointer; font-family:'Syne',sans-serif;
+    transition:border-color 0.2s, box-shadow 0.2s;
+  }
+  .pomo-history-toggle:hover { border-color:var(--border-hover); box-shadow:0 4px 14px rgba(0,0,0,0.15); }
   .pomo-history-arrow { transition:transform 0.2s; color:var(--text-muted); font-size:var(--fs-sm); }
   .pomo-history-section.open .pomo-history-arrow { transform:rotate(180deg); }
-  .pomo-history-body { display:none; margin-top:12px; }
+  .pomo-history-body { display:none; margin-top:14px; }
   .pomo-history-section.open .pomo-history-body { display:block; }
-  .pomo-history-filters { display:flex; gap:8px; margin-bottom:12px; }
-  .pomo-history-date-input { flex:1; padding:9px 10px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:var(--fs-sm); font-family:'DM Sans',sans-serif; outline:none; }
+  .pomo-history-filters { display:flex; gap:8px; margin-bottom:14px; }
+  .pomo-history-date-input { flex:1; padding:10px 12px; border-radius:var(--radius-md); border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:var(--fs-sm); font-family:'DM Sans',sans-serif; outline:none; transition:border-color 0.15s; }
   .pomo-history-date-input:focus { border-color:var(--accent); }
-  .pomo-history-all-btn { padding:9px 16px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--surface2); color:var(--text-muted); font-size:var(--fs-sm); font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; white-space:nowrap; transition:all 0.2s; }
-  .pomo-history-all-btn.sel { border-color:var(--accent); background:var(--accent-glow); color:var(--accent); }
-  .pomo-history-empty { padding:20px 10px; text-align:center; font-size:var(--fs-sm); color:var(--text-muted); }
-  .pomo-history-item { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-md); padding:11px 13px; margin-bottom:8px; cursor:pointer; transition:border-color 0.2s; }
-  .pomo-history-item:hover { border-color:var(--border-hover); }
+  .pomo-history-all-btn { padding:10px 18px; border-radius:var(--radius-md); border:1px solid var(--border); background:var(--surface2); color:var(--text-muted); font-size:var(--fs-sm); font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; white-space:nowrap; transition:all 0.2s; }
+  .pomo-history-all-btn.sel { border-color:var(--accent); background:linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 70%, #fff)); color:#fff; box-shadow:0 3px 10px var(--accent-glow); }
+  .pomo-history-empty { padding:28px 10px; text-align:center; font-size:var(--fs-sm); color:var(--text-muted); }
+  .pomo-history-item {
+    position:relative; overflow:hidden;
+    background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-md);
+    padding:13px 14px 13px 16px; margin-bottom:9px; cursor:pointer; transition:border-color 0.2s, transform 0.15s;
+  }
+  .pomo-history-item::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--accent); opacity:0.7; }
+  .pomo-history-item:hover { border-color:var(--border-hover); transform:translateX(2px); }
   .pomo-history-item-row { display:flex; align-items:center; justify-content:space-between; gap:8px; }
-  .pomo-history-item-name { font-size:var(--fs-sm); font-weight:600; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .pomo-history-item-time { font-family:'Syne',sans-serif; font-size:var(--fs-sm); font-weight:700; color:var(--accent); flex-shrink:0; }
+  .pomo-history-item-name { font-size:var(--fs-sm); font-weight:700; color:var(--text); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .pomo-history-item-time { font-family:'Syne',sans-serif; font-size:var(--fs-sm); font-weight:700; color:var(--accent); flex-shrink:0; background:var(--accent-glow); padding:4px 10px; border-radius:var(--radius-full); }
   .pomo-history-item-sub { font-size:var(--fs-2xs); color:var(--text-dim); margin-top:3px; }
-  .pomo-history-detail-head { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
-  .pomo-history-back-btn { background:none; border:none; color:var(--accent); font-size:var(--fs-sm); font-weight:600; cursor:pointer; padding:4px 0; font-family:'DM Sans',sans-serif; }
+  .pomo-history-detail-head { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+  .pomo-history-back-btn { background:var(--surface2); border:1px solid var(--border); color:var(--accent); font-size:var(--fs-sm); font-weight:700; cursor:pointer; padding:7px 12px; border-radius:var(--radius-full); font-family:'DM Sans',sans-serif; transition:border-color 0.15s; }
+  .pomo-history-back-btn:hover { border-color:var(--accent); }
   .pomo-history-detail-title { font-size:var(--fs-base); font-weight:700; color:var(--text); font-family:'Syne',sans-serif; }
-  .pomo-history-detail-stats { display:flex; gap:10px; margin-bottom:14px; }
-  .pomo-history-detail-stat { flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:9px; text-align:center; }
-  .pomo-history-detail-stat-val { font-family:'Syne',sans-serif; font-size:var(--fs-md); font-weight:700; color:var(--accent); }
-  .pomo-history-detail-stat-label { font-size:var(--fs-3xs); color:var(--text-muted); margin-top:2px; text-transform:uppercase; letter-spacing:0.03em; }
-  .pomo-history-sessions-title { font-size:var(--fs-2xs); color:var(--text-dim); letter-spacing:0.05em; text-transform:uppercase; margin-bottom:8px; }
-  .pomo-history-session-row { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:9px 12px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:6px; font-size:var(--fs-xs); }
+  .pomo-history-detail-stats { display:flex; gap:10px; margin-bottom:16px; }
+  .pomo-history-detail-stat { flex:1; background:linear-gradient(155deg, var(--surface2), color-mix(in srgb, var(--surface2) 85%, var(--accent) 15%)); border:1px solid var(--border); border-radius:var(--radius-md); padding:12px 9px; text-align:center; }
+  .pomo-history-detail-stat-val { font-family:'Syne',sans-serif; font-size:var(--fs-lg); font-weight:800; color:var(--accent); }
+  .pomo-history-detail-stat-label { font-size:var(--fs-3xs); color:var(--text-muted); margin-top:3px; text-transform:uppercase; letter-spacing:0.03em; }
+  .pomo-history-sessions-title { font-size:var(--fs-2xs); color:var(--text-dim); letter-spacing:0.05em; text-transform:uppercase; margin-bottom:9px; font-weight:700; }
+  .pomo-history-session-row { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:11px 14px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-md); margin-bottom:7px; font-size:var(--fs-xs); transition:border-color 0.15s; }
+  .pomo-history-session-row:hover { border-color:var(--border-hover); }
   .pomo-history-session-time { color:var(--text); font-weight:600; }
-  .pomo-history-session-dur { color:var(--accent); font-weight:700; font-family:'Syne',sans-serif; flex-shrink:0; }
+  .pomo-history-session-dur { color:var(--accent); font-weight:700; font-family:'Syne',sans-serif; flex-shrink:0; background:var(--accent-glow); padding:3px 9px; border-radius:var(--radius-full); font-size:var(--fs-2xs); }
 
   /* 📊 Pomodoro statistikasi — Profile > Statistika bo'limi */
   .pomo-stats-filter-btn { padding:6px 14px; border-radius:var(--radius-full); border:1px solid var(--border); background:var(--surface2); color:var(--text-muted); font-size:var(--fs-xs); font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.2s; }
@@ -1396,7 +1514,9 @@
   /* -- Tasks maydoni: aniq matn, input balandligi 44px atrofida -- */
   html.layout-desktop .search-bar { padding: 13px 16px 13px 40px; font-size:var(--fs-base); border-radius:var(--radius-md); min-height: 44px; }
   html.layout-desktop .add-task-btn { padding: 13px 16px; font-size:var(--fs-base); border-radius:var(--radius-md); min-height: 44px; }
-  html.layout-desktop .task-card { padding: 14px 18px; border-radius:var(--radius-md); gap: 12px; }
+  html.layout-desktop .task-card { padding: 14px 18px; border-radius:var(--radius-md); }
+  html.layout-desktop .task-card-top { gap: 12px; }
+  html.layout-desktop .task-card-bottom { gap: 12px; }
   html.layout-desktop .task-name { font-size:var(--fs-base); font-weight: 450; }
   html.layout-desktop .task-sub { font-size:var(--fs-xs); }
   html.layout-desktop .section-title { font-size:var(--fs-xs); margin: 16px 0 8px; }
@@ -1444,15 +1564,23 @@ if ('serviceWorker' in navigator) {
       </div>
       <p id="date-label"></p>
     </div>
-    <div id="header-actions-right" style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-      <button id="header-spin-btn" onclick="showTab('spin')" title="Spin o'ynash" data-i18n-title="spin_title"
-        style="height:36px;padding:0 12px;border-radius:var(--radius-lg);border:1px solid var(--border);background:var(--theme-toggle-bg);cursor:pointer;display:flex;align-items:center;gap:5px;font-size:var(--fs-sm);font-weight:600;color:var(--text);transition:all 0.2s;flex-shrink:0;font-family:'DM Sans',sans-serif">
-        🎰 <span id="header-spin-label" data-i18n="spin_label">Spin</span>
-      </button>
-      <div class="coins-pill" id="header-coins-pill" onclick="showTab('tarix')" style="cursor:pointer">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M9 9h4.5a1.5 1.5 0 010 3H9m0 3h4.5"/></svg>
-        <span id="coins-display">0</span><span class="coins-text" id="coins-suffix" data-i18n="coins_suffix"> tanga</span>
+    <div id="header-right-wrap" style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+      <div id="header-actions-right" style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <button id="header-spin-btn" onclick="showTab('spin')" title="Spin o'ynash" data-i18n-title="spin_title"
+          style="height:36px;padding:0 12px;border-radius:var(--radius-lg);border:1px solid var(--border);background:var(--theme-toggle-bg);cursor:pointer;display:flex;align-items:center;gap:5px;font-size:var(--fs-sm);font-weight:600;color:var(--text);transition:all 0.2s;flex-shrink:0;font-family:'DM Sans',sans-serif">
+          🎰 <span id="header-spin-label" data-i18n="spin_label">Spin</span>
+        </button>
+        <div class="coins-pill" id="header-coins-pill" onclick="showTab('tarix')" style="cursor:pointer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M9 9h4.5a1.5 1.5 0 010 3H9m0 3h4.5"/></svg>
+          <span id="coins-display">0</span><span class="coins-text" id="coins-suffix" data-i18n="coins_suffix"> tanga</span>
+        </div>
       </div>
+      <!-- 🤝 Do'stlar — mobil/kompakt dizaynda bosh headerda dumaloq tugma
+           sifatida ko'rinadi. Desktop rejimida esa .header butunlay
+           yashiriladi (html.layout-desktop .header{display:none}) va
+           tugma o'rniga "Tezkor kirish" panelidagi (#ds-shortcuts) tugma
+           ko'rinadi — qarang: renderDsShortcuts(). -->
+      <button id="fc-nav-badge-anchor" onclick="try{SFX.click();}catch(e){}; if(typeof showFriendsModal==='function') showFriendsModal();" title="Do'stlar" style="width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:var(--fs-base);transition:all 0.2s;flex-shrink:0;position:relative" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">🤝</button>
     </div>
   </div>
 
@@ -3035,6 +3163,10 @@ if ('serviceWorker' in navigator) {
 
       <div id="pomo-new-form">
         <input type="text" id="pomo-new-name" placeholder="Masalan: O'yin o'ynash, Dars qilish..." maxlength="40" />
+        <div class="pomo-picker-label">Belgi (ixtiyoriy)</div>
+        <div class="pomo-emoji-picker" id="pomo-new-emoji-picker"></div>
+        <div class="pomo-picker-label">Rang (ixtiyoriy)</div>
+        <div class="pomo-color-picker" id="pomo-new-color-picker"></div>
         <div class="pomo-limit-hm">
           <div class="pomo-limit-hm-field">
             <label data-i18n="pomo_limit_hours_label">Soat</label>
@@ -3079,6 +3211,10 @@ if ('serviceWorker' in navigator) {
   <div class="modal" style="max-width:360px">
     <h2>✏️ Vaqtni tahrirlash</h2>
     <div id="pomo-edit-time-name" style="font-size:var(--fs-sm);color:var(--text-muted);margin-top:-10px;margin-bottom:16px">—</div>
+    <div class="pomo-picker-label">Belgi</div>
+    <div class="pomo-emoji-picker" id="pomo-edit-emoji-picker"></div>
+    <div class="pomo-picker-label">Rang</div>
+    <div class="pomo-color-picker" id="pomo-edit-color-picker" style="margin-bottom:14px"></div>
     <div style="display:flex;gap:10px;margin-bottom:8px">
       <div style="flex:1">
         <label style="display:block;font-size:var(--fs-xs);color:var(--text-muted);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:6px">Soat</label>
@@ -3226,6 +3362,11 @@ if ('serviceWorker' in navigator) {
         <button class="pomo-float-btn" id="pomo-float-pip" onclick="pomoEnterPiP()" title="Alohida oynada tepada ushlab turish (boshqa ilovalar ustida ham ko'rinadi)">🗗</button>
         <button class="pomo-float-btn close" onclick="pomoFloatRemove()" title="Yashirish (taymer davom etadi)">✕</button>
       </div>
+    </div>
+    <div id="pomo-float-music-row" title="Fon musiqasini to'xtatish/davom ettirish">
+      <span id="pomo-float-music-icon">🎵</span>
+      <span id="pomo-float-music-label" onclick="event.stopPropagation();toggleFocusPlayback()">Fon musiqasi</span>
+      <button type="button" class="pomo-float-btn" id="pomo-float-music-toggle" onclick="event.stopPropagation();toggleFocusPlayback()" title="Musiqani to'xtatish/davom ettirish">⏸️</button>
     </div>
     <button id="pomo-float-skip" onclick="pomoSkipBreak()">Tanaffusni o'tkazib yuborish ⏭️</button>
   </div>
@@ -8052,6 +8193,7 @@ function updateFocusPlayUI() {
   if (miniBtn) miniBtn.textContent = playing ? '⏸️' : '▶️';
   setFocusIconsSpin(playing);
   syncPomoAmbientBubbleUI();
+  if (typeof window.pomoSyncPipMusicUI === 'function') window.pomoSyncPipMusicUI();
 }
 
 // 🎧 Pomodoro ekranidagi pastki-chap "Ambient Focus" pufakchasini joriy
@@ -10245,14 +10387,29 @@ function stToggleDay(d) {
   });
 }
 
+// Uch panel (Bajarilgan tasklar / Rang bo'yicha taqsimot / Streak mukofotlari)
+// bir vaqtning o'zida faqat BITTASI ochiq turishi kerak — biri ochiq bo'lganda
+// ikkinchisi bosilsa, avvalgisi avtomatik yopiladi.
+function _closeStatPanelsExcept(exceptId) {
+  ['done-panel', 'label-breakdown-panel', 'streak-milestones'].forEach(function (id) {
+    if (id === exceptId) return;
+    var el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+}
+
 function toggleDonePanel() {
   const el = document.getElementById('done-panel');
-  el.style.display = el.style.display === 'none' ? '' : 'none';
+  const willOpen = el.style.display === 'none';
+  if (willOpen) _closeStatPanelsExcept('done-panel');
+  el.style.display = willOpen ? '' : 'none';
 }
 
 function toggleLabelBreakdown() {
   const el = document.getElementById('label-breakdown-panel');
-  el.style.display = el.style.display === 'none' ? '' : 'none';
+  const willOpen = el.style.display === 'none';
+  if (willOpen) _closeStatPanelsExcept('label-breakdown-panel');
+  el.style.display = willOpen ? '' : 'none';
 }
 
 function toggleNote(id, btn) {
@@ -10264,7 +10421,9 @@ function toggleNote(id, btn) {
 
 function toggleMilestones() {
   const el = document.getElementById('streak-milestones');
-  el.style.display = el.style.display === 'none' ? '' : 'none';
+  const willOpen = el.style.display === 'none';
+  if (willOpen) _closeStatPanelsExcept('streak-milestones');
+  el.style.display = willOpen ? '' : 'none';
 }
 function toggleDay(d) {
   const idx = mDays.indexOf(d);
@@ -10360,7 +10519,14 @@ function extractPendingSubtasksOnParentDone(tsk) {
   subs.forEach(function(s) {
     if (s.done) { remaining.push(s); return; }
     var newTask = {
-      id: S.nextId++, name: s.name, diff: s.diff||0, coins: s.coins||0,
+      // MUHIM TUZATISH: avval bu yerda har doim yangi `id: S.nextId++`
+      // berilardi — sub-taskning o'z (asl) id'si butunlay tashlab
+      // yuborilardi. addTaskAsSubtask() da xuddi shu muammo allaqachon
+      // tuzatilgan (eski ID saqlanadi), ammo bu yerda unutilgan edi.
+      // Sub-task id'lari Date.now() orqali (katta son) generatsiya
+      // qilinadi, S.nextId esa kichik ketma-ket sanoq — shu sabab
+      // to'qnashuv ehtimoli yo'q, xavfsiz saqlab qolish mumkin.
+      id: s.id, name: s.name, diff: s.diff||0, coins: s.coins||0,
       repeat: s.repeat || 'daily',
       days: s.repeat==='custom-days' ? (s.days||[]) : null,
       interval: s.repeat==='interval' ? (s.interval||4) : null,
@@ -10478,6 +10644,34 @@ function toggleTask(id) {
     // aks holda foydalanuvchi Done/Undone ni cheksiz bosib XP yig'ib olishi mumkin edi.
     var xpLoss = taskXPValue(tsk);
     addXP(-xpLoss, tsk.name + ' (bekor qilindi)');
+    // MUHIM TUZATISH: Done bosilganda extractPendingSubtasksOnParentDone()
+    // ushbu taskning tugallanmagan sub-tasklarini alohida mustaqil
+    // vazifalarga aylantirib chiqaradi (fromParentId bilan belgilanadi).
+    // Ammo foydalanuvchi Done'ni bekor qilsa (Undone), avval bu sub-tasklar
+    // hech qachon qaytarilmasdi — ular abadiy mustaqil task bo'lib qolib
+    // ketardi va ota-task ro'yxatida "yo'qolgandek" ko'rinardi. Endi hali
+    // bajarilmagan (fromParentId shu taskka tegishli) mustaqil tasklarni
+    // qidirib, ularni yana shu ota-taskning sub-tasklar ro'yxatiga qaytaramiz.
+    var _pulledBack = S.tasks.filter(function(x){ return x.fromParentId === tsk.id && !x.done; });
+    if (_pulledBack.length) {
+      var _subsArr = ensureSubtasks(tsk);
+      _pulledBack.forEach(function(pt) {
+        var meta = pt.fromSubtaskMeta || {};
+        _subsArr.push({
+          id: pt.id, name: pt.name, done: false,
+          diff: meta.diff||pt.diff||0, coins: meta.coins||pt.coins||0,
+          repeat: meta.repeat || pt.repeat || 'once',
+          days: meta.days || pt.days || null,
+          interval: meta.interval || pt.interval || null,
+          startDate: meta.startDate || null,
+          nextDate: pt.nextDate || null,
+          label: meta.label || pt.label || null,
+          subtasks: Array.isArray(pt.subtasks) ? pt.subtasks : []
+        });
+      });
+      S.tasks = S.tasks.filter(function(x){ return !(x.fromParentId === tsk.id && !x.done); });
+      ensureFullTaskOrder();
+    }
   }
   save(); render();
   // Statistika sahifasi va nishonlar (badges) darhol yangilanishi/tekshirilishi
@@ -10939,7 +11133,15 @@ function initTaskSortable() {
       // check/edit/delete/menu tugmalari filter orqali chetlab o'tiladi,
       // shu sababli ularni oddiy bosish hamon bir zumda ishlaydi.
       draggable: '.task-card',
-      filter: '.check-btn, .act-btn, .task-menu-btn, .task-note-toggle, .task-label-dot, .task-dots-btn, .task-dropdown-menu, .task-dropdown-item, .task-note, .emoji-removable, .subtask-add-quick-btn, .task-quick-btn',
+      // MUHIM TUZATISH: "Hide completed" (subtask-done-toggle) va sub-task
+      // checkboxi (subtask-check) filter ro'yxatida yo'q edi. Natijada bu
+      // tugmalar bosilganda brauzer buni oddiy klik emas, balki BUTUN
+      // task-kartani SUDRASH (drag) urinishi deb qabul qilardi — shu
+      // sabab "Hide completed" bosilganda sahifa o'zidan-o'zi pastga
+      // siljib ketardi va oddiy scroll bilan orqaga qaytmasdi (SortableJS
+      // "drag" holatida "osilib" qolardi). Endi bu ikkalasi ham filter'ga
+      // qo'shildi — ular endi faqat oddiy tugma sifatida ishlaydi.
+      filter: '.check-btn, .act-btn, .task-menu-btn, .task-note-toggle, .task-label-dot, .task-dots-btn, .task-dropdown-menu, .task-dropdown-item, .task-note, .emoji-removable, .subtask-add-quick-btn, .task-quick-btn, .subtask-done-toggle, .subtask-check',
       preventOnFilter: false,
       delay: 160,             // bosib turish kerak bo'lgan vaqt (ms)
       delayOnTouchOnly: true, // sichqonchada (desktop) darhol, mobil ekranda ushlab turish talab qilinadi
@@ -12163,6 +12365,13 @@ function addTaskAsSubtask(childId, parentId) {
     id: child.id,
     name: child.name,
     done: !!child.done,
+    // MUHIM TUZATISH: avval doneDate/skipped/skippedDate ko'chirilmasdi —
+    // natijada sudralib sub-taskka aylantirilgan vazifa "bajarilgan" (done:true)
+    // bo'lsa ham doneDate yo'qolib, yoki "skip qilingan" holati sukut bo'yicha
+    // tashlab yuborilardi (checkReset/renderSubtasksHtml bunga tayanadi).
+    doneDate: child.doneDate || null,
+    skipped: !!child.skipped,
+    skippedDate: child.skippedDate || null,
     diff: taskDiffOrDefault(child),
     coins: child.coins,
     repeat: child.repeat || 'daily',
@@ -12170,7 +12379,8 @@ function addTaskAsSubtask(childId, parentId) {
     interval: child.interval || null,
     startDate: child.nextDate || null,
     nextDate: child.nextDate || null,
-    label: child.label || null
+    label: child.label || null,
+    subtasks: [] // nested sub-tasklar quyida alohida "flatten" qilinadi
   });
   // MUHIM TUZATISH: agar sudralayotgan task o'zining sub-tasklariga ega
   // bo'lsa, avval ular hech qayerga ko'chirilmasdan shunchaki yo'qolib
@@ -12359,41 +12569,43 @@ function makeTaskEl(t) {
   const subtaskDoneCount = subs.filter(function(s){ return s.done; }).length;
 
   d.innerHTML=`
-    ${t.label ? `<span class="task-label-dot" style="background:${t.label}"></span>` : ''}
-    <button class="check-btn ${t.done?'checked':''}" onclick="toggleTask(${t.id})">
-      ${t.done?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':''}
-    </button>
-    <div class="task-info">
-      <div class="task-name">${t.fromParentName ? `<span class="task-parent-badge">${esc(t.fromParentName)}</span> ` : ''}${t.emoji ? `<span class="emoji-removable" style="margin-right:5px;font-size:var(--fs-md)" title="Bosib o'chirish" onclick="event.stopPropagation();removeTaskEmoji(${t.id})">${t.emoji}</span>` : ''}${esc(t.name)}</div>
-      ${t.note ? `<div class="task-note task-note-collapsed" id="note-${t.id}">📝 ${esc(t.note)}</div><button class="task-note-toggle" onclick="event.stopPropagation();toggleNote(${t.id},this)">${tr('note_more_btn')}</button>` : ''}
-      ${subText?`<div class="task-sub${subOverdue?' overdue':''}">${subText}</div>`:''}
-      <div class="task-info-badges" style="display:none">
+    <div class="task-card-top">
+      ${t.label ? `<span class="task-label-dot" style="background:${t.label}"></span>` : ''}
+      <button class="check-btn ${t.done?'checked':''}" onclick="toggleTask(${t.id})">
+        ${t.done?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':''}
+      </button>
+      <div class="task-info">
+        <div class="task-name">${t.fromParentName ? `<span class="task-parent-badge">${esc(t.fromParentName)}</span> ` : ''}${t.emoji ? `<span class="emoji-removable" style="margin-right:5px;font-size:var(--fs-md)" title="Bosib o'chirish" onclick="event.stopPropagation();removeTaskEmoji(${t.id})">${t.emoji}</span>` : ''}${esc(t.name)}</div>
+        ${t.note ? `<div class="task-note task-note-collapsed" id="note-${t.id}">📝 ${esc(t.note)}</div><button class="task-note-toggle" onclick="event.stopPropagation();toggleNote(${t.id},this)">${tr('note_more_btn')}</button>` : ''}
+        ${subText?`<div class="task-sub${subOverdue?' overdue':''}">${subText}</div>`:''}
+        <div class="task-info-badges" style="display:none">
+          <span class="badge ${rl.cls}">${rl.text}</span>
+          ${diffBadge(taskDiffOrDefault(t))}
+          <span class="badge badge-coins">+${t.coins}🪙</span>
+        </div>
+      </div>
+      <div class="task-badges">
         <span class="badge ${rl.cls}">${rl.text}</span>
         ${diffBadge(taskDiffOrDefault(t))}
         <span class="badge badge-coins">+${t.coins}🪙</span>
       </div>
-      ${hasSubtasks?`<div class="subtask-wrap" id="subtask-wrap-${t.id}">${renderSubtasksHtml(t)}</div>`:''}
-    </div>
-    <div class="task-badges">
-      <span class="badge ${rl.cls}">${rl.text}</span>
-      ${diffBadge(taskDiffOrDefault(t))}
-      <span class="badge badge-coins">+${t.coins}🪙</span>
-    </div>
-    <button class="subtask-add-quick-btn" onclick="openSubtaskModal(${t.id})" title="${tr('subtask_add_quick_title')}">➕</button>
-    ${!t.done&&!t.skipped?`<button class="task-quick-btn" onclick="skipTask(${t.id})" title="${tr('skip_dd_item')}">⏩</button>`:''}
-    ${t.skipped&&!t.done?`<button class="task-quick-btn skipped-active" onclick="unskipTask(${t.id})" title="${tr('unskip_dd_item')}">↩️</button>`:''}
-    <button class="task-quick-btn qb-edit" onclick="editTask(${t.id})" title="${tr('edit_dd_item')}">✏️</button>
-    <div class="task-dots-wrap">
-      <button class="task-dots-btn" onclick="toggleTaskDropdown(${t.id}, this, event)" title="${tr('task_actions_title')}">⋮</button>
-      <div class="task-dropdown-menu" id="task-dd-${t.id}">
-        ${!t.done&&!t.skipped?`<button class="task-dropdown-item dd-item-skip" onclick="closeAllTaskDropdowns();skipTask(${t.id})"><span class="tdi-icon">⏩</span>${tr('skip_dd_item')}</button>`:''}
-        ${t.skipped&&!t.done?`<button class="task-dropdown-item dd-item-unskip" onclick="closeAllTaskDropdowns();unskipTask(${t.id})"><span class="tdi-icon">↩️</span>${tr('unskip_dd_item')}</button>`:''}
-        <button class="task-dropdown-item" onclick="closeAllTaskDropdowns();freezeTask(${t.id})"><span class="tdi-icon">🧊</span>${tr('freeze_dd_item')}</button>
-        <button class="task-dropdown-item dd-item-edit" onclick="closeAllTaskDropdowns();editTask(${t.id})"><span class="tdi-icon">✏️</span>${tr('edit_dd_item')}</button>
-        <button class="task-dropdown-item danger" onclick="closeAllTaskDropdowns();deleteTask(${t.id})"><span class="tdi-icon">🗑</span>${tr('delete_dd_item')}</button>
+      <button class="subtask-add-quick-btn" onclick="openSubtaskModal(${t.id})" title="${tr('subtask_add_quick_title')}">➕</button>
+      ${!t.done&&!t.skipped?`<button class="task-quick-btn" onclick="skipTask(${t.id})" title="${tr('skip_dd_item')}">⏩</button>`:''}
+      ${t.skipped&&!t.done?`<button class="task-quick-btn skipped-active" onclick="unskipTask(${t.id})" title="${tr('unskip_dd_item')}">↩️</button>`:''}
+      <button class="task-quick-btn qb-edit" onclick="editTask(${t.id})" title="${tr('edit_dd_item')}">✏️</button>
+      <div class="task-dots-wrap">
+        <button class="task-dots-btn" onclick="toggleTaskDropdown(${t.id}, this, event)" title="${tr('task_actions_title')}">⋮</button>
+        <div class="task-dropdown-menu" id="task-dd-${t.id}">
+          ${!t.done&&!t.skipped?`<button class="task-dropdown-item dd-item-skip" onclick="closeAllTaskDropdowns();skipTask(${t.id})"><span class="tdi-icon">⏩</span>${tr('skip_dd_item')}</button>`:''}
+          ${t.skipped&&!t.done?`<button class="task-dropdown-item dd-item-unskip" onclick="closeAllTaskDropdowns();unskipTask(${t.id})"><span class="tdi-icon">↩️</span>${tr('unskip_dd_item')}</button>`:''}
+          <button class="task-dropdown-item" onclick="closeAllTaskDropdowns();freezeTask(${t.id})"><span class="tdi-icon">🧊</span>${tr('freeze_dd_item')}</button>
+          <button class="task-dropdown-item dd-item-edit" onclick="closeAllTaskDropdowns();editTask(${t.id})"><span class="tdi-icon">✏️</span>${tr('edit_dd_item')}</button>
+          <button class="task-dropdown-item danger" onclick="closeAllTaskDropdowns();deleteTask(${t.id})"><span class="tdi-icon">🗑</span>${tr('delete_dd_item')}</button>
+        </div>
       </div>
+      <button class="task-menu-btn" onclick="openTaskSheet(${t.id})" title="Amallar">⋯</button>
     </div>
-    <button class="task-menu-btn" onclick="openTaskSheet(${t.id})" title="Amallar">⋯</button>
+    ${hasSubtasks?`<div class="task-card-bottom"><div class="task-card-bottom-spacer"></div><div class="subtask-wrap" id="subtask-wrap-${t.id}">${renderSubtasksHtml(t)}</div></div>`:''}
   `;
 
   // Diqqat: sudrab-tashlash (drag & drop) endi konteyner darajasida
@@ -13639,6 +13851,10 @@ function refreshAllModulesFromState() {
     setTimeout(function() {
       ensureFreezeGrants();
       checkReset(); // jazo va reset
+      if (typeof pomoRolloverStaleActivities === 'function') {
+        pomoRolloverStaleActivities(); // 🍅 to'xtatilgan amaliyliklarning kunlik hisoblagichini ham shu yerda tozalaymiz
+        if (typeof pomoRenderActivityList === 'function') pomoRenderActivityList();
+      }
       render();
       if(S.pendingMissedMsg){ toast(S.pendingMissedMsg); S.pendingMissedMsg=null; save(); }
       if(S.pendingStreakMsg){ setTimeout(function(){ toast(S.pendingStreakMsg); confetti(); SFX.firework(); S.pendingStreakMsg=null; save(); }, 800); }
@@ -16237,6 +16453,15 @@ function _rstResetStats() {
   S.ieltsResults = [];
   S.satResults = [];
   if (S.secretHabit) S.secretHabit.log = {}; // PIN o'zgarmaydi
+
+  // 🎁 Rewards (Mukofotlar) bo'limidagi "Statistika" — bular S obyekti
+  // ichida emas, ATAYLAB alohida localStorage kalitlarida (USAGE_HISTORY_KEY,
+  // PURCHASE_HISTORY_KEY) saqlanadi va odatiy holatda hech qachon
+  // tozalanmaydi (qarang yuqoridagi izoh). Lekin foydalanuvchi aynan
+  // "Statistika"ni (yoki "Hammasi"ni) restart qilganda bu tarix ham
+  // tozalanishini so'ragani uchun, shu yerda ham tozalab qo'yamiz.
+  if (typeof saveUsageHistory === 'function') saveUsageHistory([]);
+  if (typeof savePurchaseHistory === 'function') savePurchaseHistory([]);
 
   // Mavjud vazifalarning davriylik/bajarilish holati bugundan qayta boshlanadi
   var todayStr = today();
@@ -19709,10 +19934,15 @@ function renderDsShortcuts() {
   var shortcuts = document.getElementById('ds-shortcuts');
   if (!shortcuts) return;
   var html = '';
+  // 🤝 Do'stlar — desktop dizaynda "Tezkor kirish" panelida ko'rinadi
+  // (mobil/kompakt dizaynda esa bosh headerdagi dumaloq tugma orqali,
+  // qarang: #fc-nav-badge-anchor).
+  html += '<button type="button" class="ds-shortcut-btn" id="fc-open-friends-btn" onclick="try{SFX.click();}catch(e){}; if(typeof showFriendsModal===\'function\') showFriendsModal();" style="position:relative">🤝 Do\'stlar' + (typeof sbReady !== 'undefined' && !sbReady ? ' <span style="font-size:var(--fs-3xs);color:var(--text-dim)">(sozlanmagan)</span>' : '') + '</button>';
   if (S.personalCheckEnabled && !S.pcHiddenFromQuickAccess) {
     html += '<button type="button" class="ds-shortcut-btn" onclick="showTab(\'secret\')">🕵️ Focus</button>';
   }
   shortcuts.innerHTML = html;
+  try { fcUpdateNotifBadge(); } catch (e) {}
 }
 function buildDesktopShell() {
   if (document.getElementById('ds-sidebar')) { document.body.classList.add('layout-shell-ready'); return; }
@@ -24590,6 +24820,11 @@ function wsFinish(method, toastKey) {
   var POMO_BREAK_ALARM_MS = 30000;
   var POMO_BREAK_ALARM_STEP_MS = 1500;
   var pomoBreakAlarmHandle = null;
+  var pomoBreakAlarmHardStopHandle = null; // 🆕 zaxira (backup) to'xtatuvchi — interval ichki Date.now()
+                                            // tekshiruvi biror sababdan (masalan tab fonda uzoq turib,
+                                            // brauzer timerlarni to'xtatib/kechiktirib qo'ysa) ishlamay
+                                            // qolsa ham, signal 30 soniyadan ORTIQ CHALINMASLIGINI
+                                            // kafolatlaydi — mustaqil setTimeout orqali.
   var pomoBreakAlarmStopAt = 0;
   function pomoStartBreakAlarm() {
     pomoStopBreakAlarm();
@@ -24599,9 +24834,13 @@ function wsFinish(method, toastKey) {
       if (Date.now() >= pomoBreakAlarmStopAt) { pomoStopBreakAlarm(); return; }
       pomoPlaySound();
     }, POMO_BREAK_ALARM_STEP_MS);
+    // Zaxira to'xtatuvchi: yuqoridagi intervaldan mustaqil ravishda,
+    // aynan 30 soniyadan so'ng signalni majburan o'chiradi.
+    pomoBreakAlarmHardStopHandle = setTimeout(function () { pomoStopBreakAlarm(); }, POMO_BREAK_ALARM_MS);
   }
   function pomoStopBreakAlarm() {
     if (pomoBreakAlarmHandle) { clearInterval(pomoBreakAlarmHandle); pomoBreakAlarmHandle = null; }
+    if (pomoBreakAlarmHardStopHandle) { clearTimeout(pomoBreakAlarmHardStopHandle); pomoBreakAlarmHardStopHandle = null; }
   }
 
   // ---------------- Ilova ustida "boshqa dasturlar oldida" suzib turadigan oyna (PiP) ----------------
@@ -24622,7 +24861,8 @@ function wsFinish(method, toastKey) {
     var floatEl = document.getElementById('pomo-float');
     if (!floatEl) return;
     try {
-      var pipWindow = await documentPictureInPicture.requestWindow({ width: 150, height: 54 });
+      var pipHasMusic = (typeof FocusAudio !== 'undefined') && FocusAudio.getType();
+      var pipWindow = await documentPictureInPicture.requestWindow({ width: 190, height: pipHasMusic ? 100 : 58 });
       pomoPipWindow = pipWindow;
 
       // Sahifadagi barcha CSS'ni (link va <style> teglarini) yangi PiP oynasiga ko'chiramiz,
@@ -24670,6 +24910,8 @@ function wsFinish(method, toastKey) {
         pomoPipWindow = null;
         pomoUpdateFloatUI();
       });
+
+      pomoSyncPipMusicUI();
 
       if (typeof toast === 'function') toast('🗗 Taymer endi alohida oynada — uni boshqa ilovalar ustida ushlab turishingiz mumkin');
     } catch (e) {
@@ -24734,11 +24976,42 @@ function wsFinish(method, toastKey) {
   }
   function pomoTodayKey() { return pomoDateKey(Date.now()); }
 
+  // 🆕 TO'XTATILGAN (running=false) amaliyliklar uchun kunlik reset.
+  // Muammo: yarim tun (00:00) rolloveri avval faqat HOZIR ISHLAB TURGAN
+  // (running=true) bitta amaliylik uchun ishlardi (pomoTick/pomoInit
+  // ichida). Stop qilib qo'yilgan boshqa amaliyliklarning umumiy vaqt
+  // hisoblagichi (elapsedMs) esa hech qachon 0'ga tushmasdi — shu sabab
+  // ular kundan-kunga to'planib, umumiy (bir necha kunlik) vaqtni
+  // ko'rsatib turardi. Bu funksiya har bir to'xtatilgan amaliylikning
+  // elapsedMs'i qaysi kunga tegishli ekanini (`elapsedDay`) hozirgi
+  // sana bilan solishtiradi va farq qilsa — sessiyalar allaqachon
+  // pomoFinalizeSession orqali Tarixga yozib bo'lingani uchun (haqiqiy
+  // ish vaqti yo'qolmaydi) — hisoblagichni yangi kun uchun 0'ga tushiradi.
+  function pomoRolloverStaleActivities() {
+    if (!pomoActivities || !pomoActivities.length) return false;
+    var today = pomoTodayKey();
+    var changed = false;
+    pomoActivities.forEach(function (act) {
+      if (act.running) return; // faol taymer o'z tick-asosidagi mexanizmi orqali alohida boshqariladi
+      if (!act.elapsedDay) { act.elapsedDay = today; return; } // eski (maydon hali yo'q) ma'lumot uchun bir martalik "bugun" deb belgilash
+      if (act.elapsedDay === today) return;
+      if ((act.elapsedMs || 0) > 0 || (act.cycleMs || 0) > 0 || act.phase === 'break') {
+        act.elapsedMs = 0; act.cycleMs = 0; act.phase = 'work';
+        act.breakRemainingMs = 0; act.pomoCount = 0;
+        changed = true;
+      }
+      act.elapsedDay = today;
+    });
+    if (changed) pomoSaveActivities();
+    return changed;
+  }
+
   /* Faol seansni "boshlash" — Start/Resume bosilganda chaqiriladi */
   function pomoBeginSession(act) {
     act.sessionStartAt = Date.now();
     act.sessionBaseElapsed = act.elapsedMs || 0;
     act.sessionCatchUpMs = 0; // yangi seans — oldingi fon/oflayn hisoblagichini nolga qaytaramiz
+    act.elapsedDay = pomoTodayKey(); // hozirgi umumiy vaqt hisoblagichi qaysi kunga tegishli ekanini belgilaymiz
   }
   /* Faol seansni yakunlab, pomoLogs ro'yxatiga yozib qo'yish — Stop bosilganda yoki
      faollik almashtirilganda/o'chirilganda chaqiriladi */
@@ -24789,6 +25062,62 @@ function wsFinish(method, toastKey) {
     function p(n) { return (n < 10 ? '0' : '') + n; }
     return p(h) + ':' + p(m) + ':' + p(s);
   }
+  // Chegaradan qancha oshib ketganini "+7 soat 44 daq oshib ketdi" ko'rinishida chiqaradi
+  function pomoFormatOverText(ms) {
+    var totalMin = Math.max(1, Math.round(ms / 60000));
+    var h = Math.floor(totalMin / 60), m = totalMin % 60;
+    var parts = [];
+    if (h > 0) parts.push(h + ' soat');
+    if (m > 0 || h === 0) parts.push(m + ' daq');
+    return '+' + parts.join(' ') + " oshib ketdi";
+  }
+  // Chegara vaqtini "18:44" (SS:DD) qisqa ko'rinishda beradi — solishtirish qatori uchun
+  function pomoFormatLimitShort(min) {
+    var h = Math.floor(min / 60), m = min % 60;
+    function p(n) { return (n < 10 ? '0' : '') + n; }
+    return p(h) + ':' + p(m);
+  }
+
+  /* ---------------- Amaliylik uchun belgi (emoji) va rang tanlash ---------------- */
+  var POMO_EMOJI_LIST = ['🎯', '📚', '💻', '🎮', '🏃', '🧘', '🎨', '🎵', '🍳', '💼', '📖', '⚽'];
+  var POMO_COLOR_LIST = ['#7C5CFC', '#F5A623', '#34D399', '#60A5FA', '#F87171', '#EC4899', '#A78BFA', '#FB923C', '#22D3EE', '#84CC16'];
+  var pomoNewEmoji = POMO_EMOJI_LIST[0];
+  var pomoNewColor = null; // null = avtomatik (palitra bo'yicha aylanma)
+  var pomoEditEmojiVal = POMO_EMOJI_LIST[0];
+  var pomoEditColorVal = null;
+
+  function pomoRenderEmojiPicker(containerId, selected, pickFnName) {
+    var el = document.getElementById(containerId);
+    if (!el) return;
+    el.innerHTML = POMO_EMOJI_LIST.map(function (e) {
+      return '<button type="button" class="pomo-emoji-opt' + (e === selected ? ' sel' : '') + '" onclick="' + pickFnName + "('" + e + "')" + '">' + e + '</button>';
+    }).join('');
+  }
+  function pomoRenderColorPicker(containerId, selected, pickFnName) {
+    var el = document.getElementById(containerId);
+    if (!el) return;
+    var html = '<button type="button" class="pomo-color-opt auto' + (!selected ? ' sel' : '') + '" title="Avtomatik" onclick="' + pickFnName + '(null)">auto</button>';
+    html += POMO_COLOR_LIST.map(function (c) {
+      return '<button type="button" class="pomo-color-opt' + (c === selected ? ' sel' : '') + '" style="background:' + c + '" title="' + c + '" onclick="' + pickFnName + "('" + c + "')" + '"></button>';
+    }).join('');
+    el.innerHTML = html;
+  }
+  window.pomoPickNewEmoji = function (e) {
+    pomoNewEmoji = e;
+    pomoRenderEmojiPicker('pomo-new-emoji-picker', pomoNewEmoji, 'pomoPickNewEmoji');
+  };
+  window.pomoPickNewColor = function (c) {
+    pomoNewColor = c;
+    pomoRenderColorPicker('pomo-new-color-picker', pomoNewColor, 'pomoPickNewColor');
+  };
+  window.pomoPickEditEmoji = function (e) {
+    pomoEditEmojiVal = e;
+    pomoRenderEmojiPicker('pomo-edit-emoji-picker', pomoEditEmojiVal, 'pomoPickEditEmoji');
+  };
+  window.pomoPickEditColor = function (c) {
+    pomoEditColorVal = c;
+    pomoRenderColorPicker('pomo-edit-color-picker', pomoEditColorVal, 'pomoPickEditColor');
+  };
 
   /* ---------------- "Raqamli" (digital) ovozli signal — Web Audio API ---------------- */
   function pomoPlayDigitalBeep() {
@@ -24904,6 +25233,10 @@ function wsFinish(method, toastKey) {
       var minutesInput = document.getElementById('pomo-new-limit-minutes');
       if (hoursInput) hoursInput.value = 12;
       if (minutesInput) minutesInput.value = 0;
+      pomoNewEmoji = POMO_EMOJI_LIST[0];
+      pomoNewColor = null;
+      pomoRenderEmojiPicker('pomo-new-emoji-picker', pomoNewEmoji, 'pomoPickNewEmoji');
+      pomoRenderColorPicker('pomo-new-color-picker', pomoNewColor, 'pomoPickNewColor');
       setTimeout(function () { nameInput.focus(); }, 50);
     }
   };
@@ -24929,7 +25262,9 @@ function wsFinish(method, toastKey) {
       breakRemainingMs: 0,
       phase: 'work',
       running: false,
-      lastTickAt: null
+      lastTickAt: null,
+      emoji: pomoNewEmoji,
+      color: pomoNewColor
     };
     pomoActivities.push(act);
     pomoSaveActivities();
@@ -24945,6 +25280,24 @@ function wsFinish(method, toastKey) {
     if (idx === -1) return;
     var removedAct = pomoActivities[idx];
     if (pomoActiveId === id) {
+      // MUHIM TUZATISH: ilgari bu yerda `removedAct.running = false` hech
+      // qachon o'rnatilmasdi (pomoFinalizeSession() esa `running` bayrog'iga
+      // umuman tegmaydi — u faqat sessionStartAt/sessionBaseElapsed'ni
+      // tozalab, Tarixga yozadi). Boshqa barcha joylarda (pomoStopActivity,
+      // pomoStartOrResume) chaqiruvchi HAR DOIM avval `act.running = false`
+      // qilib, KEYIN pomoFinalizeSession()ni chaqiradi — shu naqsh shu
+      // yerda buzilgan edi. Natijada: (1) pastdagi pomoMaybeStopTicking()
+      // hali splice() bo'lmagan removedAct'ni "running=true" deb hisoblab,
+      // interval kerakli vaqtida to'xtamas edi (keyingi tick'da o'z-o'zidan
+      // tuzalsa-da, keraksiz kutish edi); (2) eng jiddiyi — agar 5 soniya
+      // ichida "Bekor qilish" bosilsa, faoliyat ro'yxatga `running: true`,
+      // lekin `sessionStartAt: null` degan ICHKI ZIDDIYATLI holatda qaytib
+      // qo'shilardi (pomoActiveId esa endi null bo'lgani uchun uni hech kim
+      // "boshqarmas" edi) — bu "arvoh" faoliyat hech qachon kunlik
+      // rollover orqali tozalanmasdi (pomoRolloverStaleActivities faol
+      // taymerlarni ataylab o'tkazib yuboradi). Endi running bayrog'i ham
+      // finalize'dan OLDIN izchil o'rnatiladi.
+      removedAct.running = false;
       pomoFinalizeSession(removedAct);
       var floatEl = pomoFloatDoc().getElementById('pomo-float');
       if (floatEl) floatEl.classList.remove('show');
@@ -25001,11 +25354,15 @@ function wsFinish(method, toastKey) {
     var h = Math.floor(totalSec / 3600);
     var m = Math.floor((totalSec % 3600) / 60);
     var nameEl = document.getElementById('pomo-edit-time-name');
-    if (nameEl) nameEl.textContent = '🎯 ' + act.name;
+    if (nameEl) nameEl.textContent = (act.emoji || '🎯') + ' ' + act.name;
     var hEl = document.getElementById('pomo-edit-time-hours');
     var mEl = document.getElementById('pomo-edit-time-minutes');
     if (hEl) hEl.value = h;
     if (mEl) mEl.value = m;
+    pomoEditEmojiVal = act.emoji || POMO_EMOJI_LIST[0];
+    pomoEditColorVal = act.color || null;
+    pomoRenderEmojiPicker('pomo-edit-emoji-picker', pomoEditEmojiVal, 'pomoPickEditEmoji');
+    pomoRenderColorPicker('pomo-edit-color-picker', pomoEditColorVal, 'pomoPickEditColor');
     var overlay = document.getElementById('pomo-edit-time-modal-overlay');
     if (overlay) overlay.classList.add('open');
     setTimeout(function () { if (hEl) hEl.focus(); }, 50);
@@ -25031,18 +25388,56 @@ function wsFinish(method, toastKey) {
     if (act.phase !== 'break') {
       act.cycleMs = ((newMs % pomoWorkMs()) + pomoWorkMs()) % pomoWorkMs();
     }
-    // Agar hozir ishga tushirilgan bo'lsa, joriy seansning bazaviy nuqtasini
-    // ham shu farqga siljitamiz — shunda Stop bosilganda Tarixga bu qo'lda
-    // kiritilgan vaqt USTIGA yana bir bor (ikki marta) yozilib qolmaydi.
+    // MUHIM TUZATISH: ilgari — taymer HOZIR ISHLAB TURGAN holatda vaqt
+    // KAMAYTIRILGANDA (delta manfiy) — DUBLIKAT kamaytirish xatosi bor edi.
+    // Eski kod har doim `sessionBaseElapsed`ni to'liq `delta`ga siljitardi
+    // (bu joriy, hali Tarixga yozilmagan seansning kelajakdagi
+    // pomoFinalizeSession() natijasidagi durationMs'ini kamaytiradi) VA shu
+    // bilan bir vaqtda pastdagi umumiy blok pomoReduceManualTime()ni HAM
+    // to'liq |delta| miqdorida chaqirardi — bu esa bugun ALLAQACHON
+    // Tarixga yozilgan (avvalgi, tugagan seanslardagi) daqiqalarni HAM
+    // ayirib yuborardi. Natijada, masalan foydalanuvchi 8 daqiqa
+    // kamaytirsa, umumiy hisobdan aslida 16 daqiqa (ikki marta) yo'qolib
+    // qolardi. TUZATISH: endi kamaytirish miqdori AVVAL joriy (hali
+    // yakunlanmagan) seansning o'zi bugun to'plagan vaqtidan (sessionSoFar)
+    // qoplanadi — bu qism hali Tarixga yozilmagani uchun eski logларга
+    // tegmasdan xavfsiz kamaytirilishi mumkin (buning uchun
+    // sessionBaseElapsed'ga umuman tegilmaydi — elapsedMs'ning
+    // to'g'ridan-to'g'ri kamaytirilishi finalize paytida tabiiy ravishda
+    // durationMs'ni ham kamaytiradi). Faqat shu miqdordan ORTIQCHA qolgan
+    // qism (agar bo'lsa, ya'ni bugun avvalroq tugagan seanslar hisobidan
+    // ham kamaytirish kerak bo'lsa) — sessionBaseElapsed'ni joriy
+    // elapsedMs qiymatiga tenglashtirib (seansni "nol"dan qayta
+    // boshlab) va faqat o'sha ortiqcha qismni pomoReduceManualTime()
+    // orqali eski (allaqachon yozilgan) Tarix yozuvlaridan olib
+    // tashlanadi. Vaqt OSHIRILGANDA (delta musbat) ilgarigi mantiq
+    // o'zgarishsiz qoladi — u allaqachon to'g'ri edi (pastdagi yangi
+    // "qo'lda kiritilgan" log yozuvi bilan muvozanatlangan).
+    var pomoReduceFromLogsAmt = 0;
     if (act.running && act.sessionStartAt) {
-      act.sessionBaseElapsed = (act.sessionBaseElapsed || 0) + delta;
+      if (delta >= 0) {
+        act.sessionBaseElapsed = (act.sessionBaseElapsed || 0) + delta;
+      } else {
+        var pomoReduceReq = -delta;
+        var pomoSessionSoFar = Math.max(0, oldMs - (act.sessionBaseElapsed || 0));
+        if (pomoReduceReq > pomoSessionSoFar) {
+          act.sessionBaseElapsed = newMs; // joriy seans shu nuqtadan "nol"dan qayta boshlanadi
+          pomoReduceFromLogsAmt = pomoReduceReq - pomoSessionSoFar;
+        }
+        // aks holda (pomoReduceReq <= pomoSessionSoFar): sessionBaseElapsed'ga
+        // tegilmaydi — kamaytirish to'liq joriy seansning o'zidan tabiiy
+        // ravishda (elapsedMs kamayishi orqali) qoplanadi.
+      }
+    } else if (delta < 0) {
+      pomoReduceFromLogsAmt = -delta;
     }
     // 🆕 Qo'lda kiritilgan farq Tarixda ham hisoblansin — vaqt oshirilgan
     // bo'lsa (delta musbat), o'sha qo'shimcha daqiqalar uchun alohida
     // "qo'lda kiritilgan" log yozuvi qo'shamiz (bugungi sana bilan).
-    // Kamaytirilgan bo'lsa (delta manfiy) — bugungi mavjud yozuvlardan
-    // (oxirgisidan boshlab) mos miqdorni ayiramiz, aks holda Tarix haqiqiy
-    // ishlangan vaqtdan ko'proq ko'rsatib qolaveradi.
+    // Kamaytirilgan bo'lsa — yuqorida hisoblangan (dublikatsiz)
+    // pomoReduceFromLogsAmt miqdorini bugungi mavjud yozuvlardan
+    // (oxirgisidan boshlab) ayiramiz, aks holda Tarix haqiqiy ishlangan
+    // vaqtdan ko'proq ko'rsatib qolaveradi.
     if (delta > 1000) {
       var now = Date.now();
       pomoLogs.push({
@@ -25057,9 +25452,11 @@ function wsFinish(method, toastKey) {
         date: pomoTodayKey()
       });
       pomoSaveLogs();
-    } else if (delta < -1000) {
-      pomoReduceManualTime(act.id, -delta);
+    } else if (pomoReduceFromLogsAmt > 1000) {
+      pomoReduceManualTime(act.id, pomoReduceFromLogsAmt);
     }
+    act.emoji = pomoEditEmojiVal;
+    act.color = pomoEditColorVal;
     pomoSaveActivities();
     pomoRenderActivityList();
     pomoUpdateFloatUI();
@@ -25102,32 +25499,60 @@ function wsFinish(method, toastKey) {
   function pomoRenderActivityList() {
     var list = document.getElementById('pomo-activity-list');
     if (!list) return;
+    pomoRolloverStaleActivities(); // ilova ochiq turib yarim tundan o'tib ketgan bo'lsa ham har render'da tekshiriladi
     if (!pomoActivities.length) {
       list.innerHTML = '<div style="padding:24px 10px;font-size:var(--fs-sm);color:var(--text-muted);text-align:center">Hali amaliylik qo\'shilmagan. Pastdagi tugma orqali qo\'shing 👇</div>';
       return;
     }
     var html = '';
-    pomoActivities.forEach(function (act) {
+    var pomoCardPalette = ['var(--accent)', 'var(--gold)', 'var(--green)', 'var(--info)'];
+    pomoActivities.forEach(function (act, actIdx) {
       if (typeof act.elapsedMs !== 'number') act.elapsedMs = 0;
       var phase = act.phase || 'work';
       var isActive = pomoActiveId === act.id;
       var showCtrl = (pomoSelectedId === act.id) || isActive;
-      var timeLabel = (phase === 'break')
-        ? ('☕ ' + pomoFormatHMS(act.breakRemainingMs || 0) + ' (tanaffus)')
-        : pomoFormatHMS(act.elapsedMs);
+      var isRunning = !!act.running;
+      var cardColor = act.color || pomoCardPalette[actIdx % pomoCardPalette.length];
+      var emj = act.emoji || '🎯';
+      var limitMs = (act.limit || 0) * 60000;
+      var pct = limitMs > 0 ? Math.min(100, Math.round((act.elapsedMs / limitMs) * 100)) : 0;
+      var isOver = limitMs > 0 && act.elapsedMs >= limitMs;
 
-      html += '<div class="pomo-act-card' + (isActive ? ' active' : '') + '" onclick="pomoCardClick(event,\'' + act.id + '\')">';
+      html += '<div class="pomo-act-card' + (isActive ? ' active' : '') + '" style="--accent-card:' + cardColor + '" onclick="pomoCardClick(event,\'' + act.id + '\')">';
+
+      // Status badge — ishlayapti/to'xtagan holatini tepada aniq bildiradi (faqat borderga suyanmaydi)
+      html += '  <div class="pomo-act-status-badge ' + (isRunning ? 'running">⏱️ Ishlamoqda' : 'paused">⏸️ To\'xtagan') + '</div>';
+
       html += '  <div class="pomo-act-top">';
-      html += '    <div class="pomo-act-name"><span class="emj">🎯</span><span>' + pomoEsc(act.name) + '</span></div>';
+      html += '    <div class="pomo-act-name"><span class="emj">' + emj + '</span><span class="txt">' + pomoEsc(act.name) + '</span></div>';
       html += '    <div style="display:flex;align-items:center;gap:2px;flex-shrink:0">';
+      // Har doim ko'rinadigan mini play/pause — kartani ochmasdan boshqarish uchun
+      html += '      <button class="pomo-act-mini-toggle' + (isRunning ? ' is-running' : '') + '" onclick="event.stopPropagation();pomoMiniToggle(\'' + act.id + '\',event)" title="' + (isRunning ? "To'xtatish" : 'Boshlash') + '">' + (isRunning ? '⏸️' : '▶️') + '</button>';
       html += '      <button class="pomo-act-edit" onclick="pomoOpenEditTime(\'' + act.id + '\', event)" title="Vaqtni tahrirlash">✏️</button>';
       html += '      <button class="pomo-act-del" onclick="pomoDeleteActivity(\'' + act.id + '\', event)" title="O\'chirish">🗑️</button>';
       html += '    </div>';
       html += '  </div>';
-      html += '  <div class="pomo-act-limit">Chegara: ' + pomoFormatLimit(act.limit) + '</div>';
-      if (act.elapsedMs > 0 || isActive) {
-        html += '  <div class="pomo-act-elapsed">' + timeLabel + '</div>';
+
+      if (limitMs > 0) {
+        if (isOver) {
+          html += '  <div class="pomo-act-limit">Chegara: ' + pomoFormatLimit(act.limit) + '</div>';
+          html += '  <div class="pomo-act-progress-track"><div class="pomo-act-progress-fill over" style="width:100%"></div></div>';
+          html += '  <div class="pomo-act-overflow-text">🚨 ' + pomoFormatOverText(act.elapsedMs - limitMs) + '</div>';
+        } else {
+          html += '  <div class="pomo-act-limit">Chegara: ' + pomoFormatLimit(act.limit) + ' · ' + pct + '%</div>';
+          html += '  <div class="pomo-act-progress-track' + (pct === 0 ? ' empty' : '') + '"><div class="pomo-act-progress-fill" style="width:' + pct + '%"></div></div>';
+        }
+      } else {
+        html += '  <div class="pomo-act-limit">Chegara belgilanmagan</div>';
       }
+
+      // Vaqt/chegara — har doim (nafaqat active holatda) ko'rinadi, chegara bilan solishtirilgan holda
+      if (phase === 'break') {
+        html += '  <div class="pomo-act-elapsed-row"><span class="pomo-act-elapsed">☕ ' + pomoFormatHMS(act.breakRemainingMs || 0) + '</span><span class="pomo-act-elapsed-cmp">tanaffus</span></div>';
+      } else {
+        html += '  <div class="pomo-act-elapsed-row' + (isOver ? ' over' : '') + '"><span class="pomo-act-elapsed">' + pomoFormatHMS(act.elapsedMs) + '</span>' + (limitMs > 0 ? '<span class="pomo-act-elapsed-cmp">/ ' + pomoFormatLimitShort(act.limit) + ' soat</span>' : '') + '</div>';
+      }
+
       if (showCtrl) {
         html += '  <div class="pomo-act-controls">';
         if (act.running) {
@@ -25144,6 +25569,15 @@ function wsFinish(method, toastKey) {
     list.innerHTML = html;
     pomoRenderHero();
   }
+
+  // Kartani ochmasdan turib play/pause — mini boshqaruv tugmasi
+  window.pomoMiniToggle = function (id, ev) {
+    if (ev) ev.stopPropagation();
+    var act = pomoFindAct(id);
+    if (!act) return;
+    if (act.running) { window.pomoStopActivity(ev); }
+    else { window.pomoStartOrResume(id, ev); }
+  };
 
   /* ---------------- 🌆 PomoTimer — hero (katta soat) UI ---------------- */
   function pomoHeroActId() {
@@ -25556,6 +25990,37 @@ function wsFinish(method, toastKey) {
     return pomoPipWindow ? pomoPipWindow.document : document;
   }
 
+  // 🎵 PiP oynasi ichidagi fon-musiqa qatorini (mavjud bo'lsa) joriy holatga
+  // moslab yangilab turadi — shunda bitta kichik oynada ham taymer, ham
+  // musiqa stop/resume qilinadi. Musiqa hali umuman yoqilmagan bo'lsa,
+  // bu qator butunlay yashirin turadi.
+  function pomoSyncPipMusicUI() {
+    if (!pomoPipWindow) return;
+    var fdoc = pomoPipWindow.document;
+    var row = fdoc.getElementById('pomo-float-music-row');
+    if (!row) return;
+    var hasSound = (typeof FocusAudio !== 'undefined') && !!FocusAudio.getType();
+    var playing = hasSound && FocusAudio.isPlaying();
+    var wasShown = row.classList.contains('show');
+    row.classList.toggle('show', hasSound);
+    if (hasSound) {
+      var iconEl = fdoc.getElementById('pomo-float-music-icon');
+      var labelEl = fdoc.getElementById('pomo-float-music-label');
+      var toggleBtn = fdoc.getElementById('pomo-float-music-toggle');
+      var info = (typeof FOCUS_SOUNDS !== 'undefined') ? FOCUS_SOUNDS[S.ambientFocusSound] : null;
+      if (iconEl && info) iconEl.textContent = info.icon;
+      if (labelEl && info) labelEl.textContent = (typeof t === 'function') ? t(info.labelKey) : '';
+      if (toggleBtn) {
+        toggleBtn.textContent = playing ? '⏸️' : '▶️';
+        toggleBtn.title = playing ? "Musiqani to'xtatish" : 'Musiqani davom ettirish';
+      }
+    }
+    if (hasSound !== wasShown) {
+      try { pomoPipWindow.resizeTo(190, hasSound ? 100 : 58); } catch (e) {}
+    }
+  }
+  window.pomoSyncPipMusicUI = pomoSyncPipMusicUI;
+
   /* ---------------- Floating (suzuvchi) mini-widget ---------------- */
   function pomoShowFloat() {
     pomoFloatDismissed = false;
@@ -25601,6 +26066,7 @@ function wsFinish(method, toastKey) {
     fdoc.getElementById('pomo-float-toggle').textContent = act.running ? '⏸️' : '▶️';
     fdoc.getElementById('pomo-float-toggle').title = act.running ? 'Stop' : 'Resume';
     if (headerBtn) headerBtn.classList.toggle('running', !!act.running);
+    pomoSyncPipMusicUI();
   }
   window.pomoFloatToggle = function () {
     var act = pomoFindAct(pomoActiveId);
@@ -25891,7 +26357,22 @@ function wsFinish(method, toastKey) {
     while (deltaMs > 0 && guard < 3000) {
       guard++;
       if (act.phase === 'work') {
-        var remain = pomoWorkMs() - act.cycleMs;
+        // MUHIM TUZATISH: agar foydalanuvchi Sozlamalarda "Ish (work)"
+        // davomiyligini QISQARTIRSA (masalan 50 daqiqadan 30 daqiqaga),
+        // hozir davom etayotgan seansning cycleMs'i (masalan 40 daqiqa)
+        // YANGI (kichikroq) pomoWorkMs()dan katta bo'lib qolishi mumkin —
+        // bu holda `remain` MANFIY chiqardi. Manfiy `remain` bilan pastdagi
+        // else shoxobchasi ishga tushganda `act.elapsedMs += remain` orqali
+        // umumiy ishlangan vaqt ORQAGA (manfiy tomonga) siljib, HAQIQIY
+        // ishlangan daqiqalar yo'qolib qolardi, shu bilan birga
+        // `deltaMs -= remain` esa deltaMs'ni SUN'IY ravishda OSHIRIB, keyingi
+        // fazalar navbatma-navbat "sakrab" (kutilmagan tezlikda) tugab
+        // ketishiga olib kelardi. Endi `remain` hech qachon 0'dan kichik
+        // bo'lmaydi — agar cycleMs allaqachon yangi (qisqartirilgan) limitdan
+        // oshib ketgan bo'lsa, ish fazasi darhol (elapsedMs'ga hech narsa
+        // qo'shmasdan/ayirmasdan) tugagan deb hisoblanadi va butun qolgan
+        // deltaMs to'liq holicha keyingi (tanaffus) fazaga o'tkaziladi.
+        var remain = Math.max(0, pomoWorkMs() - act.cycleMs);
         if (deltaMs < remain) { act.elapsedMs += deltaMs; act.cycleMs += deltaMs; deltaMs = 0; }
         else {
           act.elapsedMs += remain; act.cycleMs = 0; deltaMs -= remain; act.phase = 'break';
@@ -25947,6 +26428,7 @@ function wsFinish(method, toastKey) {
       var wasRunning = act.running;
       act.elapsedMs = 0; act.cycleMs = 0; act.phase = 'work';
       act.breakRemainingMs = 0; act.pomoCount = 0;
+      act.elapsedDay = pomoDateKey(midnight);
       if (wasRunning) {
         act.sessionStartAt = midnight;
         act.sessionBaseElapsed = 0;
@@ -25965,6 +26447,7 @@ function wsFinish(method, toastKey) {
     pomoLoadSettings();
     pomoLoadActivities();
     pomoLoadLogs();
+    pomoRolloverStaleActivities(); // to'xtatilgan amaliyliklarning eski kunlik hisoblagichini tozalash
     pomoHistoryState.date = pomoTodayKey();
     try { pomoActiveId = localStorage.getItem(POMO_ACTIVE_KEY) || null; } catch (e) { pomoActiveId = null; }
 
@@ -28856,12 +29339,15 @@ function fcInstallHooks() {
     window.addXP._fcWrapped = true;
   }
 
-  // 4) UI: Profilni tahrirlash oynasiga "🤝 Do'stlar" tugmasini qo'shish
+  // 4) UI: "🤝 Do'stlar" tugmasi endi Profilni tahrirlash oynasida emas —
+  //    "Tezkor kirish" (desktop, #ds-shortcuts — renderDsShortcuts()) yoki
+  //    bosh headerdagi dumaloq tugma (mobil/kompakt, #fc-nav-badge-anchor)
+  //    orqali ochiladi. Profil oynasi ochilganda faqat sinxronlash holati
+  //    va taklif statistikasi qatorlari qo'shiladi.
   if (typeof window.showProfileEdit === 'function' && !window.showProfileEdit._fcWrapped) {
     var _origShowProfileEdit = window.showProfileEdit;
     window.showProfileEdit = function () {
       _origShowProfileEdit.apply(this, arguments);
-      fcInjectFriendsButton();
       // 3) va 5): sinxronlash holati qatori + "Hozir sinxronlash" va
       // "Zaxira tarixi" tugmalari.
       fcInjectSyncStatusUI();
@@ -28872,27 +29358,6 @@ function fcInstallHooks() {
   }
 }
 
-function fcInjectFriendsButton() {
-  var modal = document.getElementById('profile-edit-modal');
-  if (!modal) return;
-  if (document.getElementById('fc-open-friends-btn')) return;
-  var acctBtn = document.getElementById('pe-account-btn');
-  var acctRow = acctBtn ? acctBtn.closest('div[style*="justify-content:space-between"]') : null;
-  var btn = document.createElement('button');
-  btn.type = 'button';
-  btn.id = 'fc-open-friends-btn';
-  btn.style.cssText = 'width:100%;margin-bottom:12px;padding:10px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:var(--fs-sm);font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px';
-  btn.innerHTML = '🤝 Do\'stlar' + (sbReady ? '' : ' <span style="font-size:var(--fs-3xs);color:var(--text-dim)">(sozlanmagan)</span>');
-  btn.onclick = function () { try { SFX.click(); } catch (e) {} showFriendsModal(); };
-  if (acctRow && acctRow.parentNode) {
-    acctRow.parentNode.insertBefore(btn, acctRow);
-  } else {
-    var box = modal.querySelector('div'); // fallback
-    if (box) box.insertBefore(btn, box.firstChild);
-  }
-  try { fcUpdateNotifBadge(); } catch (e) {}
-}
-
 // ======================================================================
 // 6) TAKLIF MUKOFOTI STATISTIKASI — "🎁 Taklif qilingan do'stlar: N" qatori,
 //    "Do'stlar" tugmasi ostiga joylashtiriladi (Profilni tahrirlash oynasi).
@@ -28901,7 +29366,7 @@ function fcInjectReferralUI() {
   var modal = document.getElementById('profile-edit-modal');
   if (!modal) return;
   if (document.getElementById('fc-referral-row')) { fcRenderReferralUI(); return; }
-  var anchor = document.getElementById('fc-sync-status-row') || document.getElementById('fc-open-friends-btn');
+  var anchor = document.getElementById('fc-sync-status-row');
   var wrap = document.createElement('div');
   wrap.id = 'fc-referral-row';
   wrap.style.cssText = 'margin-bottom:12px;padding:9px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-md);font-size:var(--fs-2xs);color:var(--text-muted)';
@@ -28909,8 +29374,14 @@ function fcInjectReferralUI() {
   if (anchor && anchor.parentNode) {
     anchor.parentNode.insertBefore(wrap, anchor.nextSibling);
   } else {
-    var box = modal.querySelector('div');
-    if (box) box.insertBefore(wrap, box.firstChild);
+    var acctBtn = document.getElementById('pe-account-btn');
+    var acctRow = acctBtn ? acctBtn.closest('div[style*="justify-content:space-between"]') : null;
+    if (acctRow && acctRow.parentNode) {
+      acctRow.parentNode.insertBefore(wrap, acctRow);
+    } else {
+      var box = modal.querySelector('div');
+      if (box) box.insertBefore(wrap, box.firstChild);
+    }
   }
   fcRenderReferralUI();
   try { fcRefreshMyProfileStats(); } catch (e) {}
@@ -28952,7 +29423,8 @@ function fcInjectSyncStatusUI() {
     _fcSyncStatusTimer = setInterval(fcRenderSyncStatusUI, 30000);
     return;
   }
-  var anchor = document.getElementById('fc-open-friends-btn');
+  var acctBtn = document.getElementById('pe-account-btn');
+  var acctRow = acctBtn ? acctBtn.closest('div[style*="justify-content:space-between"]') : null;
   var wrap = document.createElement('div');
   wrap.id = 'fc-sync-status-row';
   wrap.style.cssText = 'margin-bottom:12px;padding:9px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:space-between;gap:8px';
@@ -28962,8 +29434,8 @@ function fcInjectSyncStatusUI() {
       '<button type="button" id="fc-sync-now-btn" title="Hozir sinxronlash" style="padding:6px 9px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface3,transparent);color:var(--text);font-size:var(--fs-xs);cursor:pointer">\uD83D\uDD04</button>' +
       '<button type="button" id="fc-sync-history-btn" title="Zaxira tarixi" style="padding:6px 9px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface3,transparent);color:var(--text);font-size:var(--fs-xs);cursor:pointer">\uD83D\uDCDC</button>' +
     '</div>';
-  if (anchor && anchor.parentNode) {
-    anchor.parentNode.insertBefore(wrap, anchor.nextSibling);
+  if (acctRow && acctRow.parentNode) {
+    acctRow.parentNode.insertBefore(wrap, acctRow);
   } else {
     var box = modal.querySelector('div');
     if (box) box.insertBefore(wrap, box.firstChild);
