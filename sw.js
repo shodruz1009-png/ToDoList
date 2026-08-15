@@ -7,7 +7,7 @@
 // MUHIM: har safar index.html (yoki boshqa kod)ni yangilab qayta
 // joylashtirganingizda, bu raqamni oshiring (v16 -> v17 -> ...).
 // Shunda eski kesh butunlay o'chiriladi va yangi fayllar qayta yuklanadi.
-const CACHE_VERSION = 'v16';
+const CACHE_VERSION = 'v17';
 const CACHE_NAME = `todolist-cache-${CACHE_VERSION}`;
 
 // Pre-cache qilinadigan asosiy fayllar
@@ -166,11 +166,22 @@ async function cacheFirstWithNetworkFallbackAndCache(request) {
   // Keshda bo'lsa darhol beriladi
   if (cached) {
     // Fonda yangilab qo'yish (Stale-while-revalidate)
+    //
+    // MUHIM TUZATISH: ilgari cache.put()ning natijasi (Promise) .then()
+    // ichida qaytarilmagan (return qilinmagan) edi. Shu sababli, agar
+    // tarmoq javobi tugallanmasdan uzilib qolsa (masalan foydalanuvchi
+    // sahifani yopib yuborsa yoki ulanish beqaror bo'lsa), cache.put()
+    // ichkarida bosh (floating) Promise sifatida qolib ketardi va uning
+    // xatoligi HECH QANDAY .catch() bilan ushlanmay, konsolda
+    // "Uncaught (in promise) NetworkError" ko'rinishida chiqib turardi
+    // — garchi funksionallikka ta'siri bo'lmasa ham. Endi cache.put()
+    // ham .then() ichidan qaytariladi, shu bilan u asosiy zanjirga
+    // qo'shiladi va pastdagi .catch() uni ham qamrab oladi.
     fetch(request).then((networkResponse) => {
       if (networkResponse && (networkResponse.ok || networkResponse.type === 'opaque')) {
-        cache.put(request, networkResponse);
+        return cache.put(request, networkResponse);
       }
-    }).catch(() => {/* Offline bo'lsa e'tiborsiz qoldiriladi */});
+    }).catch(() => {/* Offline yoki tarmoq uzilishi — e'tiborsiz qoldiriladi */});
 
     return cached;
   }
