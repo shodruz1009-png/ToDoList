@@ -1,12 +1,13 @@
 // ============================================================
-// ToDoList PWA — Service Worker (v15 — guruh challenge/admin panel
-// o'zgarishlaridan keyin kesh versiyasi oshirildi)
+// ToDoList PWA — Service Worker (v16 — Supabase auth: email+parol va
+// Google OAuth bilan ro'yxatdan o'tish/kirish qo'shildi, eski mahalliy
+// nik/parol tizimi olib tashlandi)
 // ============================================================
 
 // MUHIM: har safar index.html (yoki boshqa kod)ni yangilab qayta
-// joylashtirganingizda, bu raqamni oshiring (v15 -> v16 -> ...).
+// joylashtirganingizda, bu raqamni oshiring (v16 -> v17 -> ...).
 // Shunda eski kesh butunlay o'chiriladi va yangi fayllar qayta yuklanadi.
-const CACHE_VERSION = 'v15';
+const CACHE_VERSION = 'v16';
 const CACHE_NAME = `todolist-cache-${CACHE_VERSION}`;
 
 // Pre-cache qilinadigan asosiy fayllar
@@ -26,6 +27,13 @@ const PRECACHE_URLS = [
 // foydalanuvchi uchun keraksiz oldindan yuklashning hojati yo'q.
 // Baribir ochilganda pastdagi network-first/cache-first oqimi orqali
 // avtomatik keshlanadi (agar admin uni ochsa).
+
+// Eslatma 2: Supabase JS SDK (https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2)
+// ATAYLAB PRECACHE_URLS ro'yxatiga QO'SHILMAGAN — bu tashqi CDN skripti
+// pastdagi "cache-first + fon-yangilash" oqimi orqali birinchi so'rovda
+// o'zi avtomatik keshlanadi, shuning uchun oldindan sanab o'tirishning
+// hojati yo'q (va CDN vaqtincha ishlamay qolsa ham install bosqichi
+// buzilib qolmaydi).
 
 // ---------------- INSTALL ----------------
 self.addEventListener('install', (event) => {
@@ -82,6 +90,15 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
+
+  // 0. Supabase so'rovlari (auth, REST/PostgREST, realtime): Service
+  // Worker BUTUNLAY chetlab o'tadi — bular har doim jonli tarmoqdan
+  // ketishi shart (login holati, ma'lumotlar bazasi javoblari va h.k.
+  // hech qachon eski keshdan qaytarilmasligi kerak, aks holda
+  // autentifikatsiya yoki ma'lumotlar eskirib qolishi mumkin).
+  if (url.hostname.endsWith('.supabase.co')) {
+    return;
+  }
 
   // 1. HTML sahifa so'rovlari (Navigatsiya): Network-First
   const isNavigation =
