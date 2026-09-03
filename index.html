@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="uz">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1888,6 +1888,7 @@ if ('serviceWorker' in navigator) {
     <button class="tab"        id="tab-chest"   data-tab="chest"   onclick="showTab('chest')" data-i18n="tab_chest">🎲 Chest</button>
     <button class="tab"        id="tab-ielts"   data-tab="ielts"   onclick="showTab('ielts')" data-i18n="tab_ielts">📊 IELTS</button>
     <button class="tab"        id="tab-sat"     data-tab="sat"     onclick="showTab('sat')" data-i18n="tab_sat">📐 SAT</button>
+    <button class="tab"        id="tab-cefr"    data-tab="cefr"    onclick="showTab('cefr')" style="display:none">📘 CEFR</button>
     <button class="tab"        id="tab-pomo"    data-tab="pomo"    onclick="pomoOpenModal()" data-i18n-title="pomo_nav_tab_title">⏱️ <span id="pomo-header-label">Pomodoro</span></button>
     <button class="tab" id="tab-profile" data-tab="profile" onclick="showTab('profile')" data-i18n="guide_step_profile_title">👤 Profil</button>
   </div>
@@ -2152,6 +2153,39 @@ if ('serviceWorker' in navigator) {
       </div>
     </div>
 
+    <!-- Exam Deadline Countdown (CEFR) — IELTS/SAT kartalarining nusxasi,
+         "-cefr" ID suffiksi bilan. Faqat foydalanuvchi "Nimaga
+         tayyorlanyapsiz?" ro'yxatida CEFR'ni tanlagan bo'lsa ko'rinadi
+         (qarang: renderIeltsCountdown). Maqsad — bu yerda ball emas,
+         CEFR DARAJA (A1-C2) sifatida saqlanadi. -->
+    <div id="ielts-countdown-card-cefr" style="display:none;background:linear-gradient(135deg,rgba(124,92,252,0.15),rgba(180,142,255,0.08));border:1px solid rgba(124,92,252,0.35);border-radius:var(--radius-lg);padding:16px 18px;margin-bottom:12px;position:relative;overflow:hidden">
+      <div style="position:absolute;top:-30px;right:-20px;font-size:var(--fs-8xl);opacity:0.06;pointer-events:none" id="exam-bg-emoji-cefr">📘</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:var(--fs-2xs);color:#B48EFF;letter-spacing:0.06em;text-transform:uppercase;font-weight:600" id="exam-card-title-cefr">📘 CEFR Imtihon</div>
+        <button onclick="openIeltsModal('cefr')" id="exam-edit-date-btn-cefr" style="display:none;padding:5px 12px;border-radius:var(--radius-full);border:1px solid rgba(124,92,252,0.4);background:rgba(124,92,252,0.12);color:#B48EFF;font-size:var(--fs-xs);cursor:pointer;font-family:'DM Sans',sans-serif" data-i18n="ielts_edit_date_btn">✏️ Sana</button>
+      </div>
+
+      <div id="ielts-no-date-cefr" style="font-size:var(--fs-sm);color:var(--text-muted);text-align:center;padding:8px 0;display:none" data-i18n="ielts_no_date">
+        Imtihon sanasini kiriting ➜
+      </div>
+      <div id="ielts-has-date-cefr" style="display:none">
+        <div style="display:flex;align-items:flex-end;gap:6px;margin-bottom:10px">
+          <div id="ielts-days-num-cefr" style="font-family:'Syne',sans-serif;font-size:var(--fs-6xl);font-weight:700;color:#B48EFF;line-height:1">—</div>
+          <div style="font-size:var(--fs-md);color:var(--text-muted);margin-bottom:10px" data-i18n="ielts_days_left">kun qoldi</div>
+        </div>
+        <div id="ielts-date-label-cefr" style="font-size:var(--fs-sm);color:var(--text-muted);margin-bottom:10px">—</div>
+        <div style="height:5px;background:rgba(124,92,252,0.15);border-radius:var(--radius-full);overflow:hidden;margin-bottom:8px">
+          <div id="ielts-progress-fill-cefr" style="height:100%;background:linear-gradient(90deg,#7C5CFC,#B48EFF);border-radius:var(--radius-full);transition:width 0.6s ease;width:0%"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <div id="ielts-start-label-cefr" style="font-size:var(--fs-2xs);color:var(--text-dim)" data-i18n="ielts_today">Bugun</div>
+          <div id="ielts-pct-label-cefr" style="font-size:var(--fs-2xs);color:#B48EFF;font-weight:600">0%</div>
+          <div id="ielts-end-label-cefr" style="font-size:var(--fs-2xs);color:var(--text-dim)" data-i18n="ielts_exam_label">Imtihon</div>
+        </div>
+        <div id="ielts-motivation-cefr" style="margin-top:10px;padding:8px 12px;background:rgba(124,92,252,0.1);border-radius:var(--radius-sm);font-size:var(--fs-xs);color:#B48EFF;text-align:center;line-height:1.4"></div>
+      </div>
+    </div>
+
     <!-- IELTS/SAT Modal — ikkalasiga ham bitta modal xizmat qiladi;
          qaysi turni tahrirlayotgani openIeltsModal(examType) orqali
          uzatiladi va _ieltsModalEditingType ichida saqlanadi (qarang JS). -->
@@ -2162,9 +2196,14 @@ if ('serviceWorker' in navigator) {
           <label style="display:block;font-size:var(--fs-xs);color:var(--text-muted);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:6px" data-i18n="ielts_exam_date_label">Imtihon sanasi</label>
           <input type="date" id="ielts-date-input" style="width:100%;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:var(--fs-base);font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box" />
         </div>
-        <div style="margin-bottom:20px">
+        <div id="ielts-target-numeric-row" style="margin-bottom:20px">
           <label id="ielts-target-label" style="display:block;font-size:var(--fs-xs);color:var(--text-muted);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:6px">Maqsad ball (ixtiyoriy)</label>
           <input type="text" id="ielts-target-input" placeholder="masalan: 7.0" style="width:100%;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:var(--fs-base);font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box" />
+        </div>
+        <!-- CEFR uchun maqsad — ball emas, DARAJA (A1-C2) tanlanadi -->
+        <div id="ielts-target-cefr-row" style="display:none;margin-bottom:20px">
+          <label style="display:block;font-size:var(--fs-xs);color:var(--text-muted);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:6px">Maqsad daraja (ixtiyoriy)</label>
+          <div id="ielts-target-cefr-btns" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px"></div>
         </div>
         <div style="display:flex;gap:10px">
           <button onclick="closeIeltsModal()" style="flex:1;padding:12px;border-radius:var(--radius-md);border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:var(--fs-base);font-family:'DM Sans',sans-serif;cursor:pointer" data-i18n="btn_cancel">Bekor</button>
@@ -2176,6 +2215,7 @@ if ('serviceWorker' in navigator) {
 
     <!-- ============ /TAB 1 UMUMIY ============ -->
     </div>
+
 
     <!-- ============ TAB 2: STATISTIKA ============ -->
     <div id="profile-subtab-stats" class="profile-subtab-panel" style="display:none">
@@ -2556,19 +2596,6 @@ if ('serviceWorker' in navigator) {
             </div>
           </div>
 
-          <div class="settings-sub-divider"></div>
-
-          <!-- 3) Ota-task Done qilinganda, tugallanmagan sub-tasklarni alohida vazifaga ajratib chiqarish -->
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 0">
-            <div style="min-width:0">
-              <div style="font-size:var(--fs-base);font-weight:600;color:var(--text)" data-i18n="subtask_extract_setting_title">🔀 Tugallanmagan sub-tasklarni ajratib chiqarish</div>
-              <div style="font-size:var(--fs-xs);color:var(--text-muted);margin-top:2px;line-height:1.5" data-i18n="subtask_extract_setting_desc">Yoqilsa: asosiy vazifa "✅ Bajarildi" qilinganda, ichidagi hali tugallanmagan sub-tasklar alohida mustaqil vazifaga aylanadi. O'chirilgan bo'lsa (default) — sub-tasklar ota-vazifa ichida qoladi.</div>
-            </div>
-            <div id="subtask-extract-switch" onclick="toggleSubtaskExtractOnParentDone()" role="switch" style="flex-shrink:0;width:46px;height:26px;border-radius:var(--radius-full);background:var(--surface2);border:1px solid var(--border);position:relative;cursor:pointer;transition:background 0.2s,border-color 0.2s">
-              <div id="subtask-extract-knob" style="position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--text-dim);transition:left 0.2s ease,background 0.2s"></div>
-            </div>
-          </div>
-
         </div>
       </div>
       <div id="sound-audio-settings-card" class="settings-sub-card">
@@ -2661,8 +2688,10 @@ if ('serviceWorker' in navigator) {
                 <div class="strict-rule-block-title"><span>🔒</span><span data-i18n="strict_b2_title">Tanga balansi manfiy (qarzdorlik) bo'lib qolsa</span></div>
                 <ul class="strict-rule-list">
                   <li data-i18n-html="strict_b2_li1">Jarimalar tufayli umumiy tanga balansingiz manfiy (masalan, <b>-10 🪙</b>) bo'lib qolsa, tizim so'nggi 30 kunda eng ko'p ishlatilgan mukofotingizni AVTOMATIK aniqlaydi va uni vaqtincha <b>🔒 bloklaydi</b>.</li>
-                  <li data-i18n-html="strict_b2_li2">Bloklangan mukofotni balans musbat (0 yoki undan yuqori) bo'lmaguncha na sotib olib, na "Ishlatdim" deb belgilab bo'lmaydi — bu qarzni yopish uchun rag'batlantiradi.</li>
+                  <li data-i18n-html="strict_b2_li2">Bloklangan mukofotni balans musbat (0 yoki undan yuqori) bo'lmaguncha na sotib olib, na "Ishlatdim" deb belgilab, na tahrirlab bo'lmaydi — bu qarzni yopish uchun rag'batlantiradi.</li>
                   <li data-i18n-html="strict_b2_li3">Cheklov faqat o'sha bitta (eng ko'p ishlatilgan) mukofotga tegishli — qolgan barcha mukofotlar, agar yetarli tanga bo'lsa, odatdagidek ishlayveradi.</li>
+                  <li data-i18n-html="strict_b2_li4">Balans <b>-30 🪙</b> dan pastga tushib ketsa — BARCHA mukofotlar bloklanadi va yangi mukofot ham qo'sha olmaysiz, balans musbatga chiqmaguncha.</li>
+                  <li data-i18n-html="strict_b2_li5">Qarzda ekaningizda (balans manfiy bo'lgan har qanday paytda) yangi topiladigan tanga <b>1.5x kamaytirib</b> beriladi — masalan odatda 10 🪙 berilishi kerak bo'lsa, 7 🪙 beriladi. Balans 0 ga chiqishi bilan darhol normal (1x) stavkaga qaytadi.</li>
                 </ul>
               </div>
 
@@ -2865,6 +2894,37 @@ if ('serviceWorker' in navigator) {
     <div id="sat-history-list" style="display:flex;flex-direction:column;gap:14px"></div>
     <div id="sat-history-empty" style="text-align:center;padding:40px 20px;color:var(--text-dim);font-size:var(--fs-base)">
       <div style="font-size:var(--fs-5xl);margin-bottom:12px;opacity:0.5">📊</div>
+      <span data-i18n="ielts_history_empty">Hali natija kiritilmagan</span>
+    </div>
+  </div>
+
+  <!-- CEFR RESULTS VIEW (IELTS panel bilan bir xil tuzilma: Overall kartochka -> Add+Filter -> Result History) -->
+  <div id="view-cefr" style="display:none;padding:4px 0">
+
+    <!-- Overall average card -->
+    <div id="cefr-overall-card" onclick="onCefrOverallCardClick()" style="background:linear-gradient(135deg,rgba(124,92,252,0.18),rgba(180,142,255,0.08));border:1px solid rgba(124,92,252,0.4);border-radius:var(--radius-lg);padding:16px 20px;margin-bottom:14px;text-align:center;display:none;transition:transform 0.15s,border-color 0.15s;cursor:pointer" onmouseover="this.style.borderColor='rgba(124,92,252,0.7)'" onmouseout="this.style.borderColor='rgba(124,92,252,0.4)'">
+      <div id="cefr-overall-label" style="font-size:var(--fs-2xs);color:#B48EFF;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px" data-i18n="cefr_overall_avg">🇪🇺 O'rtacha CEFR Overall</div>
+      <div id="cefr-overall-val" style="font-family:Syne,sans-serif;font-size:var(--fs-6xl);font-weight:700;color:#B48EFF;line-height:1">—</div>
+      <div id="cefr-overall-sub" style="font-size:var(--fs-xs);color:var(--text-muted);margin-top:4px;display:none"></div>
+      <div id="cefr-overall-tap-hint" style="font-size:var(--fs-2xs);color:rgba(180,142,255,0.65);margin-top:8px;display:none" data-i18n="ielts_detail_tap_hint">👆 Batafsil tahlil uchun bosing</div>
+    </div>
+
+    <!-- Add result + Filter buttons -->
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <button onclick="openCefrResultModal()" style="flex:1;padding:13px;border-radius:var(--radius-md);border:2px dashed rgba(124,92,252,0.4);background:rgba(124,92,252,0.06);color:#B48EFF;font-size:var(--fs-base);font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s" onmouseover="this.style.borderColor='rgba(124,92,252,0.8)'" onmouseout="this.style.borderColor='rgba(124,92,252,0.4)'" data-i18n="ielts_add_result_btn">
+        + Yangi natija qo'shish
+      </button>
+      <button onclick="openCefrFilterModal()" style="position:relative;padding:13px 16px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:var(--fs-base);font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;white-space:nowrap" onmouseover="this.style.borderColor='var(--border-hover)'" onmouseout="this.style.borderColor='var(--border)'">
+        🔎 <span data-i18n="ielts_filter_btn">Filtr</span>
+        <span id="cefr-filter-dot" style="display:none;position:absolute;top:7px;right:7px;width:8px;height:8px;border-radius:50%;background:var(--accent)"></span>
+      </button>
+    </div>
+
+    <!-- History -->
+    <div style="font-size:var(--fs-2xs);color:var(--text-dim);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:10px" data-i18n="ielts_history_title">📋 Natijalar tarixi</div>
+    <div id="cefr-history-list" style="display:flex;flex-direction:column;gap:14px"></div>
+    <div id="cefr-history-empty" style="text-align:center;padding:40px 20px;color:var(--text-dim);font-size:var(--fs-base)">
+      <div style="font-size:var(--fs-5xl);margin-bottom:12px;opacity:0.5">📘</div>
       <span data-i18n="ielts_history_empty">Hali natija kiritilmagan</span>
     </div>
   </div>
@@ -3758,22 +3818,29 @@ if ('serviceWorker' in navigator) {
       <div id="pomo-stats-week-chart" class="pomo-stats-chart-box"></div>
     </div>
 
-    <!-- 🏆 Asosiy ko'rsatkichlar: jami vaqt, kunlik o'rtacha, eng uzun seriya -->
+    <!-- 🏆 Asosiy ko'rsatkichlar: jami vaqt, kunlik o'rtacha, seriya, sessiyalar
+         va (🆕) tanaffuslar — nechi marta olingani / o'tkazib yuborilgani -->
     <div id="pomo-stats-metrics" class="pomo-stats-metrics"></div>
 
-    <!-- 🔥 Produktivlik tahlili: qaysi kunlari va soatlarda eng ko'p ishlangan -->
+    <!-- 🔥 Produktivlik tahlili — kun / soat / kun qismi bitta joyda, tab bilan
+         (ilgari 3 ta alohida bo'lim edi — endi joy tejash uchun birlashtirilgan) -->
     <div class="pomo-stats-section">
-      <div class="pomo-stats-section-title">🔥 Haftaning qaysi kunida eng faolsiz</div>
-      <div id="pomo-stats-weekday-dist" class="pomo-stats-chart-box"></div>
-    </div>
-    <div class="pomo-stats-section">
-      <div class="pomo-stats-section-title">⏰ Kunning qaysi soatida eng faolsiz</div>
-      <div id="pomo-stats-hour-chart" class="pomo-stats-chart-box"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+        <div class="pomo-stats-section-title" style="margin-bottom:0">🔥 Produktivlik tahlili</div>
+        <div style="display:flex;gap:6px">
+          <button type="button" class="pomo-stats-filter-btn pomo-prod-tab-btn" data-prod-tab="weekday" onclick="pomoStatsSetProdTab('weekday')">Kun</button>
+          <button type="button" class="pomo-stats-filter-btn pomo-prod-tab-btn" data-prod-tab="hour" onclick="pomoStatsSetProdTab('hour')">Soat</button>
+          <button type="button" class="pomo-stats-filter-btn pomo-prod-tab-btn" data-prod-tab="daypart" onclick="pomoStatsSetProdTab('daypart')">Qism</button>
+        </div>
+      </div>
+      <div id="pomo-stats-prod-box" class="pomo-stats-chart-box"></div>
     </div>
 
-    <!-- 🗂️ Kategoriyalar bo'yicha taqsimot (necha foiz, necha soat) -->
+    <!-- 🗂️ Vazifalar bo'yicha taqsimot — donut + reyting (medal, foiz, marta)
+         bitta joyda (ilgari donut/reyting/ustunli grafik 3 xil bo'limda
+         bir xil ma'lumotni takrorlardi) -->
     <div class="pomo-stats-section">
-      <div class="pomo-stats-section-title">🗂️ Kategoriyalar bo'yicha taqsimot</div>
+      <div class="pomo-stats-section-title">🗂️ Vazifalar bo'yicha taqsimot</div>
       <div id="pomo-stats-category-box" class="pomo-stats-chart-box"></div>
     </div>
 
@@ -3781,24 +3848,6 @@ if ('serviceWorker' in navigator) {
     <div class="pomo-stats-section">
       <div class="pomo-stats-section-title">📊 Haftalik va oylik solishtirish</div>
       <div id="pomo-stats-compare-box"></div>
-    </div>
-
-    <!-- ☀️ Kunning qaysi qismida eng unumli ishlangan -->
-    <div class="pomo-stats-section">
-      <div class="pomo-stats-section-title">☀️ Kunning qaysi qismida eng unumli</div>
-      <div id="pomo-stats-daypart-box" class="pomo-stats-chart-box"></div>
-    </div>
-
-    <!-- 🏅 Vazifalar reytingi — eng ko'p vaqt ketgan vazifalar, foizli ulush bilan -->
-    <div class="pomo-stats-section">
-      <div class="pomo-stats-section-title">🏅 Vazifalar reytingi</div>
-      <div id="pomo-stats-task-rank-box" class="pomo-stats-chart-box"></div>
-    </div>
-
-    <!-- 📶 Vazifalarni taqqoslash grafigi (ustunli diagramma) -->
-    <div class="pomo-stats-section">
-      <div class="pomo-stats-section-title">📶 Vazifalarni taqqoslash grafigi</div>
-      <div id="pomo-stats-task-bar-box" class="pomo-stats-chart-box"></div>
     </div>
   </div>
 </div>
@@ -3866,7 +3915,8 @@ if ('serviceWorker' in navigator) {
     </div>
     <div class="modal-field">
       <label data-i18n="gm_coin_label">Kunlik tanga mukofoti</label>
-      <div style="display:flex;gap:8px" id="gm-coin-opts">
+      <div style="display:flex;gap:8px;flex-wrap:wrap" id="gm-coin-opts">
+        <button class="diff-opt"     id="gm-coin-0" onclick="setGoalCoins(0)"><span data-i18n="gm_coin_free">🆓 Bepul</span><br><span style="font-size:var(--fs-xs);color:var(--text-muted)">+0 🪙</span></button>
         <button class="diff-opt sel" id="gm-coin-1" onclick="setGoalCoins(1)"><span data-i18n="gm_coin_easy">🥉 Oddiy</span><br><span style="font-size:var(--fs-xs);color:var(--gold)">+1 🪙</span></button>
         <button class="diff-opt"     id="gm-coin-3" onclick="setGoalCoins(3)"><span data-i18n="gm_coin_medium">🥈 O'rta</span><br><span style="font-size:var(--fs-xs);color:var(--gold)">+3 🪙</span></button>
         <button class="diff-opt"     id="gm-coin-5" onclick="setGoalCoins(5)"><span data-i18n="gm_coin_hard">🥇 Qiyin</span><br><span style="font-size:var(--fs-xs);color:var(--gold)">+5 🪙</span></button>
@@ -4336,6 +4386,24 @@ const I18N = {
     btn_save_check: '✓ Saqlash',
     // IELTS
     ielts_overall_avg: "📊 O'rtacha Overall",
+    cefr_overall_avg: "🇪🇺 O'rtacha CEFR Overall",
+    cefr_score_label: "CEFR ball (0-35)",
+    cefr_score_ph: "masalan: 22",
+    cefr_input_mode_label: "Natijani qanday kiritmoqchisiz?",
+    cefr_mode_raw_btn: "🔢 Ball orqali",
+    cefr_mode_level_btn: "🔤 Daraja orqali",
+    cefr_level_select_label: "Darajani tanlang",
+    cefr_modal_title: "🇪🇺 CEFR Natija",
+    cefr_modal_sub: "Bitta bo'lim natijasini kiriting",
+    cefr_select_section: "Bo'lim tanlang",
+    cefr_conv_hint: "Bu taxminiy konversiya — real test markazi natijasidan farq qilishi mumkin.",
+    cefr_target_modal_title: "🎯 Maqsad daraja",
+    cefr_title: "📘 CEFR",
+    cefr_sec_listening: "🎧 Listening",
+    cefr_sec_reading: "📖 Reading",
+    cefr_sec_writing: "✍️ Writing",
+    cefr_sec_speaking: "🗣️ Speaking",
+    cefr_sec_full: "🧩 Full Mock",
     ielts_add_result_btn: "+ Yangi natija qo'shish",
     ielts_history_title: '📋 Natijalar tarixi',
     ielts_history_empty: 'Hali natija kiritilmagan',
@@ -4538,6 +4606,7 @@ const I18N = {
     data_import_confirm_date: 'Sana',
     data_import_confirm_tasks: 'Vazifalar soni',
     data_import_confirm_coins: 'Tangalar',
+    data_import_confirm_exams: 'IELTS/SAT natijalari',
     data_import_confirm_warn: "Diqqat: joriy qurilmadagi barcha ma'lumotlar shu fayldagi ma'lumot bilan almashtiriladi. Bu amalni qaytarib bo'lmaydi!",
     data_import_confirm_btn: '✅ Tiklash va yangilash',
     danger_zone_title: '⚠️ Xavfli zona',
@@ -4622,6 +4691,7 @@ const I18N = {
     ws_step_goal_desc: "Bu bizga sizga mos bo'limlarni ko'rsatishga yordam beradi.",
     ws_goal_sat: "🎯 SAT",
     ws_goal_ielts: "🗣️ IELTS",
+    ws_goal_cefr: "📘 CEFR",
     ws_goal_other: "✨ Boshqa",
     ws_goal_other_ph: "Nima uchun ekanini yozing...",
     ws_step_ref_title: "Bu ilovani sizga kim tavsiya qildi?",
@@ -4743,6 +4813,7 @@ const I18N = {
     gm_duration_ph: 'Yoki kunlar sonini kiriting...',
     gm_emoji_label: 'Emoji (ixtiyoriy)',
     gm_coin_label: 'Kunlik tanga mukofoti',
+    gm_coin_free: '🆓 Bepul',
     gm_coin_easy: '🥉 Oddiy',
     gm_coin_medium: "🥈 O'rta",
     gm_coin_hard: '🥇 Qiyin',
@@ -4889,8 +4960,8 @@ const I18N = {
     reward_delete_blocked_debt_toast: "Bloklangan mukofotni o'chira olmaysiz! Avval qarzni yoping yoki boshqa mukofotni o'chiring.",
     debt_started_toast: 'Balansingiz manfiyga tushdi! Eng ko\u2018p ishlatgan mukofotingiz vaqtincha bloklandi.',
     debt_cleared_toast: 'Qarzni yopdingiz! Barcha mukofotlar qayta ochildi.',
-    debt_tier2_toast: "Qarzingiz -10 🪙 dan oshdi! Endi BARCHA mukofotlar bloklangan va yangi reward qo'sha olmaysiz.",
-    debt_tier2_add_blocked_toast: "Og'ir qarzdasiz (-10 🪙 dan past)! Avval qarzni qisman bo'lsa ham yoping, keyin yangi mukofot qo'shing.",
+    debt_tier2_toast: "Qarzingiz -30 🪙 dan oshdi! Endi BARCHA mukofotlar bloklangan va yangi reward qo'sha olmaysiz.",
+    debt_tier2_add_blocked_toast: "Og'ir qarzdasiz (-30 🪙 dan past)! Avval qarzni qisman bo'lsa ham yoping, keyin yangi mukofot qo'shing.",
     debt_started_log: '⚠️ Balans manfiyga tushdi — jazo boshlandi',
     debt_cleared_log: '✅ Qarz yopildi — jazo bekor qilindi',
     debt_tier2_log: '🚫 Og\u2018ir qarz bosqichi — barcha mukofotlar bloklandi',
@@ -5192,8 +5263,10 @@ const I18N = {
     strict_b1_li3: 'Bir kunda bir nechta task o\'tkazib yuborilsa, jarimalar <b>qo\'shilib boradi</b>.',
     strict_b2_title: 'Tanga balansi manfiy (qarzdorlik) bo\'lib qolsa',
     strict_b2_li1: 'Jarimalar tufayli umumiy tanga balansingiz manfiy (masalan, <b>-10 🪙</b>) bo\'lib qolsa, tizim so\'nggi 30 kunda eng ko\'p ishlatilgan mukofotingizni AVTOMATIK aniqlaydi va uni vaqtincha <b>🔒 bloklaydi</b>.',
-    strict_b2_li2: 'Bloklangan mukofotni balans musbat (0 yoki undan yuqori) bo\'lmaguncha na sotib olib, na "Ishlatdim" deb belgilab bo\'lmaydi — bu qarzni yopish uchun rag\'batlantiradi.',
+    strict_b2_li2: 'Bloklangan mukofotni balans musbat (0 yoki undan yuqori) bo\'lmaguncha na sotib olib, na "Ishlatdim" deb belgilab, na tahrirlab bo\'lmaydi — bu qarzni yopish uchun rag\'batlantiradi.',
     strict_b2_li3: 'Cheklov faqat o\'sha bitta (eng ko\'p ishlatilgan) mukofotga tegishli — qolgan barcha mukofotlar, agar yetarli tanga bo\'lsa, odatdagidek ishlayveradi.',
+    strict_b2_li4: 'Balans <b>-30 🪙</b> dan pastga tushib ketsa — BARCHA mukofotlar bloklanadi va yangi mukofot ham qo\'sha olmaysiz, balans musbatga chiqmaguncha.',
+    strict_b2_li5: 'Qarzda ekaningizda (balans manfiy bo\'lgan har qanday paytda) yangi topiladigan tanga <b>1.5x kamaytirib</b> beriladi — masalan odatda 10 🪙 berilishi kerak bo\'lsa, 7 🪙 beriladi. Balans 0 ga chiqishi bilan darhol normal (1x) stavkaga qaytadi.',
     strict_b4_title: 'Qiyinchilik darajasi bo\'yicha qattiq rejimlar',
     strict_b4_li1: '<b>Easy:</b> Coin/XP mukofoti eng yuqori (×1.5).',
     strict_b4_li2: '<b>Normal:</b> Standart rejim — Coin/XP ×1.0.',
@@ -5670,6 +5743,24 @@ const I18N = {
     btn_save_check: '✓ Save',
     // IELTS
     ielts_overall_avg: '📊 Average Overall',
+    cefr_overall_avg: '🇪🇺 Average CEFR Overall',
+    cefr_score_label: 'CEFR score (0-35)',
+    cefr_score_ph: 'e.g. 22',
+    cefr_input_mode_label: 'How would you like to enter your result?',
+    cefr_mode_raw_btn: '🔢 By score',
+    cefr_mode_level_btn: '🔤 By level',
+    cefr_level_select_label: 'Select a level',
+    cefr_modal_title: '🇪🇺 CEFR Result',
+    cefr_modal_sub: 'Enter a result for one section',
+    cefr_select_section: 'Select a section',
+    cefr_conv_hint: 'This is an approximate conversion — your real test center result may differ.',
+    cefr_target_modal_title: '🎯 Target level',
+    cefr_title: '📘 CEFR',
+    cefr_sec_listening: '🎧 Listening',
+    cefr_sec_reading: '📖 Reading',
+    cefr_sec_writing: '✍️ Writing',
+    cefr_sec_speaking: '🗣️ Speaking',
+    cefr_sec_full: '🧩 Full Mock',
     ielts_add_result_btn: '+ Add new result',
     ielts_history_title: '📋 Result history',
     ielts_history_empty: 'No results yet',
@@ -5877,6 +5968,7 @@ const I18N = {
     data_import_confirm_date: 'Date',
     data_import_confirm_tasks: 'Tasks',
     data_import_confirm_coins: 'Coins',
+    data_import_confirm_exams: 'IELTS/SAT results',
     data_import_confirm_warn: 'Warning: all current data on this device will be replaced with the data from this file. This cannot be undone!',
     data_import_confirm_btn: '✅ Restore & reload',
     danger_zone_title: '⚠️ Danger zone',
@@ -5961,6 +6053,7 @@ const I18N = {
     ws_step_goal_desc: "This helps us show you the sections that fit you best.",
     ws_goal_sat: "🎯 SAT",
     ws_goal_ielts: "🗣️ IELTS",
+    ws_goal_cefr: "📘 CEFR",
     ws_goal_other: "✨ Other",
     ws_goal_other_ph: "Tell us why...",
     ws_step_ref_title: "Who recommended this app to you?",
@@ -6082,6 +6175,7 @@ const I18N = {
     gm_duration_ph: 'Or enter number of days...',
     gm_emoji_label: 'Emoji (optional)',
     gm_coin_label: 'Daily coin reward',
+    gm_coin_free: '🆓 Free',
     gm_coin_easy: '🥉 Easy',
     gm_coin_medium: '🥈 Medium',
     gm_coin_hard: '🥇 Hard',
@@ -6228,8 +6322,8 @@ const I18N = {
     reward_delete_blocked_debt_toast: "You can't delete a blocked reward! Pay off your debt first, or delete a different reward.",
     debt_started_toast: 'Your balance went negative! Your most-used reward has been temporarily blocked.',
     debt_cleared_toast: "Debt cleared! All rewards are unlocked again.",
-    debt_tier2_toast: "Your debt passed -10 🪙! ALL rewards are now blocked and you can't add new ones.",
-    debt_tier2_add_blocked_toast: "You're deep in debt (below -10 🪙)! Pay it down first before adding a new reward.",
+    debt_tier2_toast: "Your debt passed -30 🪙! ALL rewards are now blocked and you can't add new ones.",
+    debt_tier2_add_blocked_toast: "You're deep in debt (below -30 🪙)! Pay it down first before adding a new reward.",
     debt_started_log: '⚠️ Balance went negative — penalty started',
     debt_cleared_log: '✅ Debt cleared — penalty lifted',
     debt_tier2_log: '🚫 Severe debt tier — all rewards blocked',
@@ -7010,6 +7104,24 @@ const I18N = {
     btn_save_check: '✓ Сохранить',
     // IELTS
     ielts_overall_avg: '📊 Средний Overall',
+    cefr_overall_avg: '🇪🇺 Средний CEFR Overall',
+    cefr_score_label: 'Балл CEFR (0-35)',
+    cefr_score_ph: 'напр.: 22',
+    cefr_input_mode_label: 'Как вы хотите ввести результат?',
+    cefr_mode_raw_btn: '🔢 По баллу',
+    cefr_mode_level_btn: '🔤 По уровню',
+    cefr_level_select_label: 'Выберите уровень',
+    cefr_modal_title: '🇪🇺 Результат CEFR',
+    cefr_modal_sub: 'Введите результат по одному разделу',
+    cefr_select_section: 'Выберите раздел',
+    cefr_conv_hint: 'Это приблизительная конвертация — результат в реальном тестовом центре может отличаться.',
+    cefr_target_modal_title: '🎯 Целевой уровень',
+    cefr_title: '📘 CEFR',
+    cefr_sec_listening: '🎧 Listening',
+    cefr_sec_reading: '📖 Reading',
+    cefr_sec_writing: '✍️ Writing',
+    cefr_sec_speaking: '🗣️ Speaking',
+    cefr_sec_full: '🧩 Full Mock',
     ielts_add_result_btn: '+ Добавить результат',
     ielts_history_title: '📋 История результатов',
     ielts_history_empty: 'Результатов пока нет',
@@ -7216,6 +7328,7 @@ const I18N = {
     data_import_confirm_date: 'Дата',
     data_import_confirm_tasks: 'Задачи',
     data_import_confirm_coins: 'Монеты',
+    data_import_confirm_exams: 'Результаты IELTS/SAT',
     data_import_confirm_warn: 'Внимание: все текущие данные на этом устройстве будут заменены данными из этого файла. Это действие необратимо!',
     data_import_confirm_btn: '✅ Восстановить и обновить',
     danger_zone_title: '⚠️ Опасная зона',
@@ -7300,6 +7413,7 @@ const I18N = {
     ws_step_goal_desc: 'Это поможет нам показать подходящие вам разделы.',
     ws_goal_sat: '🎯 SAT',
     ws_goal_ielts: '🗣️ IELTS',
+    ws_goal_cefr: '📘 CEFR',
     ws_goal_other: '✨ Другое',
     ws_goal_other_ph: 'Расскажите почему...',
     ws_step_ref_title: 'Кто порекомендовал вам это приложение?',
@@ -7421,6 +7535,7 @@ const I18N = {
     gm_duration_ph: 'Или введите количество дней...',
     gm_emoji_label: 'Emoji (необязательно)',
     gm_coin_label: 'Ежедневная награда монетами',
+    gm_coin_free: '🆓 Бесплатно',
     gm_coin_easy: '🥉 Лёгкая',
     gm_coin_medium: '🥈 Средняя',
     gm_coin_hard: '🥇 Сложная',
@@ -7566,8 +7681,8 @@ const I18N = {
     reward_delete_blocked_debt_toast: 'Нельзя удалить заблокированную награду! Сначала погасите долг или удалите другую награду.',
     debt_started_toast: 'Ваш баланс стал отрицательным! Самая используемая награда временно заблокирована.',
     debt_cleared_toast: 'Долг погашен! Все награды снова разблокированы.',
-    debt_tier2_toast: 'Ваш долг превысил -10 🪙! Теперь ВСЕ награды заблокированы, и новые добавлять нельзя.',
-    debt_tier2_add_blocked_toast: 'У вас большой долг (ниже -10 🪙)! Сначала погасите его, потом добавляйте новую награду.',
+    debt_tier2_toast: 'Ваш долг превысил -30 🪙! Теперь ВСЕ награды заблокированы, и новые добавлять нельзя.',
+    debt_tier2_add_blocked_toast: 'У вас большой долг (ниже -30 🪙)! Сначала погасите его, потом добавляйте новую награду.',
     debt_started_log: '⚠️ Баланс стал отрицательным — начато наказание',
     debt_cleared_log: '✅ Долг погашен — наказание снято',
     debt_tier2_log: '🚫 Тяжёлая стадия долга — все награды заблокированы',
@@ -8361,6 +8476,7 @@ function targetSubjectMeta(code, otherLabel) {
   var map = {
     ielts: { icon: '📊', label: 'IELTS' },
     sat:   { icon: '📐', label: 'SAT' },
+    cefr:  { icon: '📘', label: 'CEFR' },
     other: { icon: '📚', label: (otherLabel && otherLabel.trim()) ? otherLabel.trim() : t('pe_prep_none') }
   };
   return map[code] || map.other;
@@ -9606,7 +9722,7 @@ function getLang() {
   try {
     if (typeof S !== 'undefined' && S && S.profile && S.profile.language) return S.profile.language;
   } catch(e) {}
-  return 'uz';
+  return 'en';
 }
 
 function t(key) {
@@ -9789,6 +9905,22 @@ let S = {
   ambientFocusEnabled:false, // 🎶 Ambient Focus Sound — fon tovushlari pleyeri ON/OFF
   ambientFocusSound:'rain',  // Tanlangan tovush: rain | wind | cafe | ocean | white
   ambientFocusVolume:45,     // Fon tovushi balandligi (0..100)
+
+  // ============================================================
+  // 🇪🇺 CEFR (Common European Framework of Reference) — 3-IMTIHON MODULI
+  // ------------------------------------------------------------
+  // IELTS/SAT'dan farqli, CEFR uchun state boshida ALOHIDA, o'z ichiga
+  // olingan (self-contained) obyekt sifatida saqlanadi — targetLevel,
+  // examDate va history bitta joyda. Bu 1-bosqich: faqat State + UI
+  // qobig'i (modallar va statistikasiz). Keyingi bosqichlarda
+  // openCefrResultModal()/openCefrDateModal() haqiqiy modallar bilan
+  // to'ldiriladi.
+  cefr: {
+    targetLevel: null,   // Maqsad daraja: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2' (hali tanlanmagan bo'lsa — null)
+    examDate: null,      // Imtihon sanasi 'YYYY-MM-DD' (hali belgilanmagan bo'lsa — null)
+    examDateSavedAt: null, // Sana qachon saqlanganini bildiradi (ISO timestamp) — keyingi bosqichda forecast uchun kerak bo'ladi
+    history: []           // Natijalar tarixi: { id, section:'listening'|'reading'|'writing'|'speaking', level:'A1'..'C2', date:'YYYY-MM-DD' }
+  },
 };
 
 // Modal state
@@ -9871,24 +10003,42 @@ function computeNextIntervalDate(tsk) {
 // ular faqat joriy balans S.coins dan ayiradi. Shu sababli barcha yangi
 // kod shu ikkita yordamchi funksiya orqali ishlaydi (to'g'ridan-to'g'ri
 // S.coins-=/S.totalCoins-= yozishdan saqlanamiz).
+// ============================================================
+// 🔻 QARZDAGI PAYTDA TOPILADIGAN TANGANI QISQARTIRISH (1.5x)
+// ------------------------------------------------------------
+// Balans manfiy (S.coins < 0) bo'lib turgan har qanday vaqtda, YANGI
+// topiladigan (musbat) tanga miqdori 1.5x ga kamaytirib beriladi —
+// masalan odatda 10 🪙 berilishi kerak bo'lsa, qarzda ekan payt 7 🪙
+// beriladi (10/1.5=6.67 → yuqoriga yaxlitlanadi, foydalanuvchi foydasiga).
+// Balans 0 yoki undan yuqori bo'lsa (qarz yo'q) — normal 1x qaytadi.
+function applyDebtEarningPenalty(amount) {
+  var amt = Number(amount) || 0;
+  if (amt <= 0) return amt;
+  if ((S.coins || 0) >= 0) return amt;
+  return Math.ceil(amt / 1.5);
+}
 function addLifetimeCoins(amount) {
   // Faqat musbat qiymatlar S.totalCoins ga qo'shiladi — manfiy/nol qiymat
   // umuman ta'sir qilmaydi (bu funksiya faqat "ishlab topish" uchun).
   var amt = Number(amount) || 0;
   if (amt <= 0) return 0;
+  amt = applyDebtEarningPenalty(amt); // qarzda ekan payt 1.5x kamaytiriladi
   S.coins = (S.coins || 0) + amt;
   S.totalCoins = Math.max(0, (S.totalCoins || 0)) + amt;
   return amt;
 }
 // Joriy balansdan (S.coins) xarajat/jarima yechish — S.totalCoins ga
-// ASLO tegilmaydi. Natija hech qachon 0 dan pastga tushib ketmaydi.
+// ASLO tegilmaydi. 🐛 TUZATILDI: ilgari Math.max(0, before-amt) balansni
+// 0 dan pastga tushirmas edi — natijada jarima qancha katta bo'lmasin,
+// tanga hech qachon manfiyga chiqmas, shu sabab butun QARZ (debt) tizimi
+// (getDebtTier/isRewardBlockedByDebt/applyDebtEarningPenalty) amalda hech
+// qachon ishga tushmas edi. Endi balans erkin manfiyga tushishi mumkin.
 function spendCoins(amount) {
   var amt = Number(amount) || 0;
   if (amt <= 0) return 0;
   var before = S.coins || 0;
-  var actual = Math.min(amt, Math.max(0, before));
-  S.coins = Math.max(0, before - amt);
-  return actual;
+  S.coins = before - amt;
+  return amt;
 }
 
 // ============================================================
@@ -10376,6 +10526,10 @@ async function saveToLocalStorage(state) {
   try {
     const clone = Object.assign({}, state);
     delete clone.tasks;      // tasks alohida 'todolist_tasks' kalitida saqlanadi
+    // MUHIM (CEFR): clone = Object.assign({}, state) butun holatni (jumladan
+    // state.cefr — targetLevel/examDate/history) o'zgarishsiz nusxalaydi,
+    // shuning uchun CEFR ma'lumotlari boshqa IELTS/SAT maydonlari kabi
+    // avtomatik ravishda LOCAL_STATE_KEY ichida saqlanadi — alohida kod shart emas.
     // MUHIM (BUG TUZATILDI): taskOrder ilgari shu yerda o'chirib tashlanardi,
     // shuning uchun drag-and-drop orqali o'zgartirilgan tartib hech qachon
     // localStorage'ga yozilmasdi. Endi taskOrder ham clone ichida qoldirilib,
@@ -10400,6 +10554,13 @@ async function loadFromLocalStorage() {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && parsed.data) {
+        // MUHIM (CEFR): parsed.data.cefr shu yerda o'z holicha qaytariladi —
+        // loadUserDataAndInit() ichida S = Object.assign({}, S, remoteState)
+        // orqali asosiy S obyektiga qo'shiladi. Agar bu eski (CEFR
+        // qo'shilishidan oldingi) foydalanuvchining ma'lumoti bo'lsa va
+        // parsed.data.cefr umuman yo'q bo'lsa, S dagi standart bo'sh
+        // S.cefr qiymati o'zgarishsiz qoladi (ensureCefrDefaults() orqali
+        // yana bir bor tekshirib qo'yiladi).
         return { data: parsed.data, updatedAt: parsed.updated_at };
       }
     }
@@ -10605,7 +10766,16 @@ async function performExport(exportTypes, pin) {
     if (exportTypes.length === 0) exportTypes = ['all'];
 
     var isAll = exportTypes.indexOf('all') !== -1;
-    var needState = isAll || exportTypes.indexOf('ielts') !== -1 || exportTypes.indexOf('stats') !== -1;
+    // 🔴 TUZATILDI: ilgari 'ielts' tanlansa ham needState true bo'lardi —
+    // bu esa "IELTS/SAT" eksportida ham BUTUN ilova holati (tanga, streak,
+    // vazifalar tartibi, "Focus" va h.k.) chiqarilishiga, import qilinganda
+    // esa boshqa qurilmadagi shu ma'lumotlarning BUTUNLAY ustidan
+    // yozilishiga sabab bo'lardi — foydalanuvchi kutmagan yon ta'sir edi.
+    // Endi 'ielts' alohida, faqat imtihon ma'lumotlarini o'z ichiga oladi
+    // (pastda "examsPayload"), 'stats' esa hamon to'liq holatni eksport
+    // qiladi (chunki XP/streak/kalendar ko'p maydonlarga tarqalgan).
+    var needState = isAll || exportTypes.indexOf('stats') !== -1;
+    var needExams = isAll || exportTypes.indexOf('ielts') !== -1;
     var needTasks = isAll || exportTypes.indexOf('tasks') !== -1;
 
     var backup = {
@@ -10673,6 +10843,33 @@ async function performExport(exportTypes, pin) {
       coinCount = (stParsed && stParsed.data) ? (stParsed.data.coins || 0) : 0;
     } catch(e) {}
 
+    // 🆕 IELTS/SAT natijalarini ALOHIDA, faqat kerakli maydonlar bilan
+    // ajratib olamiz (butun holatni emas) — shunda bu turdagi eksport
+    // faqat imtihon natijalariga tegishli bo'ladi, boshqa hech narsani
+    // (tanga, streak, vazifalar va h.k.) o'zi bilan olib yurmaydi, import
+    // qilinganda esa faqat shu maydonlar MAVJUD holatga QO'SHILADI (merge),
+    // qolgan hamma narsa qurilmada o'zgarishsiz qoladi.
+    var examsPayload = null, examCount = 0;
+    if (needExams && !isAll) {
+      try {
+        var stateForExams = JSON.parse(allKeys[LOCAL_STATE_KEY] || 'null');
+        var dExams = stateForExams && stateForExams.data;
+        if (dExams) {
+          examsPayload = {
+            ieltsResults: dExams.ieltsResults || [],
+            satResults: dExams.satResults || [],
+            examDates: dExams.examDates || {},
+            ieltsData: dExams.ieltsData || null, // eski (migratsiyadan oldingi) format uchun
+            targetSubjects: (dExams.profile && dExams.profile.targetSubjects) || [],
+            prep: (dExams.profile && dExams.profile.prep) || null
+          };
+          examCount = examsPayload.ieltsResults.length + examsPayload.satResults.length;
+        }
+      } catch (exErr) {
+        console.warn('Imtihon ma\u2019lumotlarini ajratib olishda xatolik:', exErr);
+      }
+    }
+
     if (isAll) {
       // Barchasi — 'todolist_' bilan boshlanuvchi HAMMA kalitlar (sozlamalar,
       // streaklar, kalendar loglari va h.k. ham kiradi).
@@ -10681,13 +10878,15 @@ async function performExport(exportTypes, pin) {
       // Tanlangan qismlar bo'yicha faqat kerakli kalitlarni qo'shamiz.
       if (needState && allKeys[LOCAL_STATE_KEY]) backup.data.state = allKeys[LOCAL_STATE_KEY];
       if (needTasks && allKeys[LOCAL_TASKS_KEY]) backup.data.tasks = allKeys[LOCAL_TASKS_KEY];
+      if (examsPayload) backup.data.exams = JSON.stringify(examsPayload);
     }
 
     var labels = exportTypes.map(function(tId){ return EXPORT_TYPE_LABELS[tId] || tId; });
     backup.meta = {
       type: labels.join(' + '),
       taskCount: needTasks ? taskCount : undefined,
-      coins: needState ? (coinCount || 0) : undefined
+      coins: needState ? (coinCount || 0) : undefined,
+      examCount: examsPayload ? examCount : undefined
     };
 
     // JSON faylga yozish
@@ -10748,6 +10947,13 @@ function normalizeImportedBackup(backup) {
     // birga kelgan aralash holatlarni ham to'g'ri ishlaydi.
     if (typeof backup.data.state === 'string' && !keys[LOCAL_STATE_KEY]) keys[LOCAL_STATE_KEY] = backup.data.state;
     if (typeof backup.data.tasks === 'string' && !keys[LOCAL_TASKS_KEY]) keys[LOCAL_TASKS_KEY] = backup.data.tasks;
+    // 🆕 IELTS/SAT natijalari — bular haqiqiy localStorage kaliti EMAS
+    // (maxsus "__exams__" psevdo-kalit), shu sababli quyidagi umumiy
+    // "hamma kalitlarni yoz" tsikllarida (BACKUP_KEY_PREFIX bilan
+    // boshlanmagani uchun) o'tkazib yuboriladi — ular faqat
+    // _finishApplyImportedBackup() ichida alohida, MAVJUD holatga
+    // QO'SHISH (merge) tarzida qayta ishlanadi.
+    if (typeof backup.data.exams === 'string') keys['__exams__'] = backup.data.exams;
   } else if (backup.keys && typeof backup.keys === 'object') {
     // Vaqtinchalik/eski "yangi format" — { keys: {...} }
     Object.keys(backup.keys).forEach(function(k){ keys[k] = backup.keys[k]; });
@@ -10804,6 +11010,7 @@ function showImportConfirmModal(backup) {
 
   var taskCount = '—';
   var coinCount = '—';
+  var examCount = null; // faqat backup ichida imtihon ma'lumoti bo'lsa ko'rsatiladi
   try {
     if (backup.keys[LOCAL_TASKS_KEY]) {
       taskCount = backup.meta && typeof backup.meta.taskCount === 'number' ? backup.meta.taskCount : (JSON.parse(backup.keys[LOCAL_TASKS_KEY]||'[]')||[]).length;
@@ -10813,6 +11020,12 @@ function showImportConfirmModal(backup) {
     if (backup.keys[LOCAL_STATE_KEY]) {
       var stParsed = JSON.parse(backup.keys[LOCAL_STATE_KEY]);
       coinCount = backup.meta && typeof backup.meta.coins === 'number' ? backup.meta.coins : (stParsed && stParsed.data ? (stParsed.data.coins||0) : '—');
+    }
+    if (backup.meta && typeof backup.meta.examCount === 'number') {
+      examCount = backup.meta.examCount;
+    } else if (typeof backup.keys['__exams__'] === 'string') {
+      var exParsed = JSON.parse(backup.keys['__exams__']);
+      examCount = (exParsed.ieltsResults||[]).length + (exParsed.satResults||[]).length;
     }
   } catch(e) {}
 
@@ -10827,6 +11040,7 @@ function showImportConfirmModal(backup) {
       '📅 ' + t('data_import_confirm_date') + ': <b style="color:var(--text)">' + dateStr + '</b><br>' +
       '📋 ' + t('data_import_confirm_tasks') + ': <b style="color:var(--text)">' + taskCount + '</b><br>' +
       '🪙 ' + t('data_import_confirm_coins') + ': <b style="color:var(--text)">' + coinCount + '</b>' +
+      (examCount !== null ? '<br>📚 ' + t('data_import_confirm_exams') + ': <b style="color:var(--text)">' + examCount + '</b>' : '') +
     '</div>' +
     '<p style="font-size:var(--fs-xs);color:#F5A623;margin-bottom:20px;line-height:1.6">' + t('data_import_confirm_warn') + '</p>' +
     '<div style="display:flex;gap:10px">' +
@@ -10964,6 +11178,46 @@ function _finishApplyImportedBackup(backup) {
       }
     });
 
+    // 2b) 🆕 IELTS/SAT natijalari (agar backup faqat shu turdagi — to'liq
+    // holat emas, alohida "exams" to'plami — ma'lumot olib kelgan bo'lsa).
+    // MUHIM: bu yerda LOCAL_STATE_KEY BUTUNLAY almashtirilmaydi — faqat
+    // ieltsResults/satResults/examDates maydonlari joriy qurilmadagi
+    // MAVJUD holatga QO'SHIB (merge) yoziladi. Shu tufayli boshqa hech
+    // qanday ma'lumot (tanga, streak, "Focus" va h.k.) o'zgarmaydi va
+    // aynan so'ralgan natijalar ishonchli tarzda ko'chib o'tadi.
+    if (typeof backup.keys['__exams__'] === 'string') {
+      try {
+        var examsData = JSON.parse(backup.keys['__exams__']);
+        var curRaw = localStorage.getItem(LOCAL_STATE_KEY);
+        var curWrap = curRaw ? JSON.parse(curRaw) : { data: {} };
+        if (!curWrap.data) curWrap.data = {};
+        curWrap.data.ieltsResults = examsData.ieltsResults || [];
+        curWrap.data.satResults = examsData.satResults || [];
+        curWrap.data.examDates = examsData.examDates || {};
+        if (examsData.ieltsData) curWrap.data.ieltsData = examsData.ieltsData;
+        if (!curWrap.data.profile) curWrap.data.profile = {};
+        // Mavjud "Nimaga tayyorlanyapsiz?" tanlovi (targetSubjects) — import
+        // qilingan fan(lar) hali ro'yxatda yo'q bo'lsa qo'shib qo'yamiz
+        // (mavjudlarini o'chirmasdan), shunda IELTS/SAT tab darhol ko'rinadi.
+        var curSubjects = Array.isArray(curWrap.data.profile.targetSubjects) ? curWrap.data.profile.targetSubjects.slice() : [];
+        (examsData.targetSubjects || []).forEach(function(code){
+          if (curSubjects.indexOf(code) === -1) curSubjects.push(code);
+        });
+        curWrap.data.profile.targetSubjects = curSubjects;
+        curWrap.updated_at = new Date().toISOString();
+        localStorage.setItem(LOCAL_STATE_KEY, JSON.stringify(curWrap));
+        // Xotiradagi S ni ham darhol yangilaymiz — pastdagi render() va
+        // reload'gacha bo'lgan bir zumlik ko'rinish ham to'g'ri bo'lsin.
+        S.ieltsResults = curWrap.data.ieltsResults;
+        S.satResults = curWrap.data.satResults;
+        S.examDates = curWrap.data.examDates;
+        if (!S.profile) S.profile = {};
+        S.profile.targetSubjects = curSubjects;
+      } catch (exErr) {
+        console.warn('IELTS/SAT natijalarini import qilishda xatolik:', exErr);
+      }
+    }
+
     // 3) Vazifalar — faqat backup faylida haqiqatan mavjud bo'lsa yoziladi.
     // Aks holda (masalan faqat IELTS/SAT eksport qilingan bo'lsa) joriy
     // vazifalar bilan ishlanmaydi va o'zgarishsiz qoladi.
@@ -10997,6 +11251,9 @@ function _finishApplyImportedBackup(backup) {
     S.tasks = verifyTasks;
     S.taskOrder = verifyTasks.map(function(x){ return x.id; });
     try { render(); } catch(e) {}
+    try { if (typeof updateIeltsTabVisibility === 'function') updateIeltsTabVisibility(); } catch(e) {}
+    try { if (typeof renderIeltsTab === 'function') renderIeltsTab(); } catch(e) {}
+    try { if (typeof renderSatTab === 'function') renderSatTab(); } catch(e) {}
 
     toast(t('data_import_success'));
     setTimeout(function() {
@@ -11247,7 +11504,13 @@ function taskCoinValue(tsk) {
 function grantTaskReward(tsk, dateStr) {
   var f = getTaskDayFlag(tsk.id, dateStr);
   if (f.rewardGiven) return 0;
-  var amt = f.rewardAmt || taskCoinValue(tsk);
+  // MUHIM: agar bu vazifa uchun jarima allaqachon HISOBLANGAN bo'lsa
+  // (f.rewardAmt saqlangan), o'sha aniq qiymatni ishlatamiz — aks holda
+  // (birinchi marta berilayotganda) joriy qarz holatiga qarab 1.5x
+  // qisqartirilgan miqdorni hisoblab, uni ANIQ shu qiymat sifatida
+  // qotiramiz (f.rewardAmt), shunda keyinchalik revokeTaskReward() ham
+  // aynan shu (kamaytirilgan) miqdorni qaytarib oladi — muvozanat buzilmaydi.
+  var amt = f.rewardAmt || applyDebtEarningPenalty(taskCoinValue(tsk));
   f.rewardAmt = amt; f.rewardGiven = true;
   S.coins = (S.coins||0) + amt;
   S.totalCoins = (S.totalCoins||0) + amt;
@@ -11981,52 +12244,6 @@ function saveTask() {
 }
 
 // ---- Task actions ----
-// Ota-task Done qilinganda, ichidagi hali bajarilmagan (done=false)
-// sub-tasklarni ALOHIDA asosiy vazifaga aylantirib chiqaradi (extractSubtaskToTask
-// bilan bir xil g'oya, faqat avtomatik va bir nechta sub-task uchun birdaniga).
-// Har biriga fromParentId/fromParentName yozib qo'yamiz — shu orqali: (1) task
-// ro'yxatida nomi oldida ota-task nomi qizil belgi sifatida ko'rinadi, (2) bu
-// task keyin Done qilinganda (qarang: toggleTask) avtomatik ravishda o'sha
-// ota-taskning ichiga tugallangan sub-task bo'lib qaytadi.
-function extractPendingSubtasksOnParentDone(tsk) {
-  var subs = ensureSubtasks(tsk);
-  if (!subs.length) return;
-  var remaining = [];
-  var extractedAny = false;
-  subs.forEach(function(s) {
-    if (s.done) { remaining.push(s); return; }
-    var newTask = {
-      // MUHIM TUZATISH: avval bu yerda har doim yangi `id: S.nextId++`
-      // berilardi — sub-taskning o'z (asl) id'si butunlay tashlab
-      // yuborilardi. addTaskAsSubtask() da xuddi shu muammo allaqachon
-      // tuzatilgan (eski ID saqlanadi), ammo bu yerda unutilgan edi.
-      // Sub-task id'lari Date.now() orqali (katta son) generatsiya
-      // qilinadi, S.nextId esa kichik ketma-ket sanoq — shu sabab
-      // to'qnashuv ehtimoli yo'q, xavfsiz saqlab qolish mumkin.
-      id: s.id, name: s.name, diff: s.diff||0, coins: s.coins||0,
-      repeat: s.repeat || 'daily',
-      days: s.repeat==='custom-days' ? (s.days||[]) : null,
-      interval: s.repeat==='interval' ? (s.interval||4) : null,
-      nextDate: s.repeat==='interval' ? (s.nextDate || s.startDate || today()) : null,
-      done: false, doneDate: null, skipped: !!s.skipped, skippedDate: s.skippedDate||null, lastDoneDate: null,
-      createdAt: today(),
-      label: s.label || null,
-      note: null, emoji: null,
-      isFrozen: false, frozenAt: null,
-      subtasks: Array.isArray(s.subtasks) ? s.subtasks : [],
-      fromParentId: tsk.id,
-      fromParentName: tsk.name,
-      fromSubtaskMeta: { diff: s.diff||0, coins: s.coins||0, repeat: s.repeat||'once', days: s.days||null, interval: s.interval||null, startDate: s.startDate||null, label: s.label||null },
-      // Challenge tizimi: ota-task challenge'ga tegishli bo'lsa, ajratib
-      // chiqarilgan sub-task ham o'sha challenge'ga tegishli bo'lib qoladi.
-      challengeId: tsk.challengeId || null,
-    };
-    S.tasks.push(newTask);
-    extractedAny = true;
-  });
-  tsk.subtasks = remaining;
-  if (extractedAny) ensureFullTaskOrder();
-}
 
 // 🧩 SUB-TASK SOZLAMALARI — 3 ta mustaqil on/off qoida (default: uchalasi ham OFF):
 //  1) subtaskAskCompleteOnParentDone — asosiy task hali tugallanmagan
@@ -12034,15 +12251,9 @@ function extractPendingSubtasksOnParentDone(tsk) {
 //     deb belgilaymizmi?" deb so'raladi.
 //  2) subtaskAutoCompleteParent — vazifaning BARCHA sub-tasklari
 //     (done yoki skipped) bajarilib bo'lgach, asosiy vazifa avtomatik Done bo'ladi.
-//  3) subtaskExtractOnParentDone — asosiy task Done qilinganda, ichidagi
-//     hali tugallanmagan sub-tasklar alohida mustaqil vazifaga aylantirib
-//     chiqariladi (qarang: extractPendingSubtasksOnParentDone()). Ilgari bu
-//     xatti-harakat sozlamasiz, doim yoqilgan kabi ishlardi — endi FAQAT
-//     shu sozlama yoqilganda (ON) ishga tushadi.
 function ensureSubtaskAutoSettingsDefaults() {
   if (typeof S.subtaskAskCompleteOnParentDone === 'undefined' || S.subtaskAskCompleteOnParentDone === null) S.subtaskAskCompleteOnParentDone = false;
   if (typeof S.subtaskAutoCompleteParent === 'undefined' || S.subtaskAutoCompleteParent === null) S.subtaskAutoCompleteParent = false;
-  if (typeof S.subtaskExtractOnParentDone === 'undefined' || S.subtaskExtractOnParentDone === null) S.subtaskExtractOnParentDone = false;
 }
 
 function updateSubtaskAskToggleUI() {
@@ -12067,17 +12278,6 @@ function updateSubtaskAutoCompleteToggleUI() {
   knob.style.background = on ? '#fff' : 'var(--text-dim)';
 }
 
-function updateSubtaskExtractToggleUI() {
-  var sw = document.getElementById('subtask-extract-switch');
-  var knob = document.getElementById('subtask-extract-knob');
-  if (!sw || !knob) return;
-  var on = !!S.subtaskExtractOnParentDone;
-  sw.style.background = on ? 'var(--accent)' : 'var(--surface2)';
-  sw.style.borderColor = on ? 'var(--accent)' : 'var(--border)';
-  knob.style.left = on ? '22px' : '2px';
-  knob.style.background = on ? '#fff' : 'var(--text-dim)';
-}
-
 function toggleSubtaskAskOnParentDone() {
   ensureSubtaskAutoSettingsDefaults();
   S.subtaskAskCompleteOnParentDone = !S.subtaskAskCompleteOnParentDone;
@@ -12094,15 +12294,6 @@ function toggleSubtaskAutoCompleteParent() {
   updateSubtaskAutoCompleteToggleUI();
   try { SFX.click(); } catch (e) {}
   try { toast(S.subtaskAutoCompleteParent ? t('subtask_autocomplete_setting_on_toast') : t('subtask_autocomplete_setting_off_toast')); } catch (e) {}
-}
-
-function toggleSubtaskExtractOnParentDone() {
-  ensureSubtaskAutoSettingsDefaults();
-  S.subtaskExtractOnParentDone = !S.subtaskExtractOnParentDone;
-  save();
-  updateSubtaskExtractToggleUI();
-  try { SFX.click(); } catch (e) {}
-  try { toast(S.subtaskExtractOnParentDone ? t('subtask_extract_setting_on_toast') : t('subtask_extract_setting_off_toast')); } catch (e) {}
 }
 
 // Sub-tasklarni "silsila" (loop) ichida bittalab bajarilgan deb belgilaganda,
@@ -12235,14 +12426,6 @@ function toggleTaskInternal(id) {
         _foldedBack = true;
       }
     }
-    // 🔀 TUGALLANMAGAN SUB-TASKLARNI AJRATIB CHIQARISH — bu task Done
-    // bo'lganda, ichidagi hali bajarilmagan sub-tasklar (agar bo'lsa)
-    // "yo'qolib qolmasligi" uchun asosiy tasklar ro'yxatiga alohida task
-    // sifatida chiqariladi (nomi oldida ota-taskning nomi qizil rangda
-    // belgi sifatida ko'rsatiladi). Foydalanuvchi buni keyin bajarsa,
-    // tanga/XP beriladi va u yana shu (hozir Done bo'lgan) ota-taskning
-    // ichiga tugallangan sub-task sifatida qaytadi (yuqoridagi blokka qarang).
-    if (!_foldedBack && S.subtaskExtractOnParentDone) extractPendingSubtasksOnParentDone(tsk);
   } else {
     SFX.click();
     tsk.doneDate=null;
@@ -13045,7 +13228,7 @@ function addReward() {
   // e'tiborsiz qoldiriladi.
   if (_addingRewardInProgress) return;
 
-  // QARZ BLOKI (tier2): og'ir qarzda (-10 🪙 dan past) yangi reward qo'shish
+  // QARZ BLOKI (tier2): og'ir qarzda (-30 🪙 dan past) yangi reward qo'shish
   // TAQIQLANADI — aks holda foydalanuvchi bloklangan rewardni o'chirib,
   // o'rniga darhol yangisini qo'shib, jazoni chetlab o'tishi mumkin edi.
   if (getDebtTier() === 2) {
@@ -13143,7 +13326,7 @@ function claimReward(id) {
   var r=S.rewards.find(function(x){return x.id===id;});
   if(!r){toast(t('reward_not_found_toast'));_claimingRewardIds[id]=false;return;}
   // QARZ BLOKI (bosqichli): tier1 -> faqat eng muammoli 1 ta reward bloklanadi,
-  // tier2 (-10 🪙 dan past) -> BARCHA rewardlar bloklanadi. Bu tekshiruv
+  // tier2 (-30 🪙 dan past) -> BARCHA rewardlar bloklanadi. Bu tekshiruv
   // tugma "cant-afford" holatidan mustaqil — boshqa yo'l bilan chaqirilsa ham
   // (masalan konsoldan) xaridni to'xtatadi (himoya server-side kabi).
   if (isRewardBlockedByDebt(r.id)) {
@@ -13212,7 +13395,7 @@ function showTab(tab) {
     if (typeof _pcClearAutoLockTimer === 'function') _pcClearAutoLockTimer();
   }
   if (tab !== 'stats' && tab !== 'calendar') SFX.click();
-  ['tasks','rewards','spin','profile','tarix','secret','goals','chest','ielts','sat','reyting'].forEach(function(t){
+  ['tasks','rewards','spin','profile','tarix','secret','goals','chest','ielts','sat','cefr','reyting'].forEach(function(t){
     var el=document.getElementById('view-'+t);
     if(el) el.style.display=tab===t?'':'none';
     var tb=document.getElementById('tab-'+t);
@@ -13231,6 +13414,7 @@ function showTab(tab) {
   if(tab==='chest') renderChest();
   if(tab==='ielts') renderIeltsTab();
   if(tab==='sat') renderSatTab();
+  if(tab==='cefr') renderCefrTab();
   if(tab==='stats') { showTab('profile'); return; }
   if(tab==='calendar') { showTab('profile'); return; }
 }
@@ -13293,6 +13477,14 @@ var editingRewardId = null;
 function openRewardEditModal(id) {
   const r = S.rewards.find(x=>x.id===id);
   if(!r){ toast(t('reward_not_found_toast')); return; }
+  // QARZ BLOKI: bloklangan mukofotni tahrirlab, masalan narxini pasaytirib,
+  // jazodan "bypass" qilib qutulish mumkin bo'lmasligi kerak — shuning
+  // uchun boshqa amallar (sotib olish/ishlatish/o'chirish) kabi edit ham
+  // taqiqlanadi, qarz yopilmaguncha.
+  if (isRewardBlockedByDebt(id)) {
+    toast(getDebtTier() === 2 ? t('debt_tier2_toast') : t('reward_blocked_toast'));
+    return;
+  }
   editingRewardId = id;
   document.getElementById('er-name').value = r.name;
   document.getElementById('er-cost').value = r.cost;
@@ -13577,34 +13769,61 @@ function ensureSubtasks(t) {
 // qarab, bugun qaytadan "bajarilmagan" holatga tushirilishi kerakmi — yo'qmi,
 // shuni aniqlaydi. Asosiy tasklardagi taskDueToday() bilan bir xil mantiq,
 // faqat sub-task obyekti uchun (checkReset() ichida chaqiriladi).
-function subtaskDueToday(s) {
+// 🐛 BUG FIX (5): ilgari bu funksiya har doim JORIY (bugungi) hafta kunidan
+// (`new Date().getDay()`) foydalanardi — shu sabab kalendarning o'tgan kun
+// panelida ochilgan sub-tasklar ro'yxati, o'sha tanlangan kunning emas,
+// BUGUNGI hafta kuniga qarab filtrlanardi. Endi ixtiyoriy `dateStr` parametri
+// qabul qilinadi (berilmasa — bugungi kun) va hafta kuni aynan o'sha
+// (timezone-xavfsiz "T00:00:00" bilan) sanadan hisoblanadi.
+function subtaskDueToday(s, dateStr) {
+  dateStr = dateStr || today();
   if (!s.repeat || s.repeat === 'once') return true;
-  var dow = new Date().getDay();
+  var dow = new Date(dateStr + 'T00:00:00').getDay();
   if (s.repeat === 'daily') return true;
   if (s.repeat === 'weekdays') return dow >= 1 && dow <= 5;
   if (s.repeat === 'custom-days' || s.repeat === 'weekly') return (s.days||[]).indexOf(dow) !== -1;
-  if (s.repeat === 'interval') return s.nextDate ? s.nextDate <= today() : true;
+  if (s.repeat === 'interval') return s.nextDate ? s.nextDate <= dateStr : true;
   return true;
 }
 
-function subtaskItemHtml(t, s, ctx) {
+// 🐛 BUG FIX (1): sub-taskning biror sanada "bajarilgan" bo'lganini endi
+// yagona manbadan — S.subtaskDoneLog (asosiy tasklardagi S.taskDoneLog bilan
+// bir xil g'oyada) — o'qiymiz, `s.done` orqali emas. `s.done` faqat JORIY
+// (bugungi) siklni bildiradi va checkReset() tomonidan har kuni qayta
+// tozalanadi — shu sababli u o'tgan kunlar tarixini saqlay olmaydi.
+function subtaskDoneOnDate(taskId, subId, dateStr) {
+  var key = taskId + '_' + subId;
+  return !!(S.subtaskDoneLog && S.subtaskDoneLog[key] && S.subtaskDoneLog[key].indexOf(dateStr) !== -1);
+}
+
+function subtaskItemHtml(t, s, ctx, dateStr) {
   // s.label tanlangan bo'lsa, endi butun qator fonga bo'yalmaydi — fon
   // doim odatdagi (qora/surface2) rangda qoladi, faqat nom oldida shu
   // rangdagi kichik nuqta ko'rsatiladi.
   ctx = ctx || '';
+  dateStr = dateStr || today();
+  // 🐛 BUG FIX (1): status endi `s.done`dan emas, tanlangan sana logidan
+  // (subtaskDoneOnDate) o'qiladi — shu sababli o'tgan kunlar panelida
+  // haqiqatan o'sha kunga tegishli holat ko'rsatiladi.
+  const isDoneOnDate = subtaskDoneOnDate(t.id, s.id, dateStr);
   const tintStyle = '';
   const labelDot = s.label ? `<span class="subtask-label-dot" style="background:${s.label}"></span>` : '';
   const ddId = 'subtask-dd-' + ctx + t.id + '-' + s.id;
+  // 🐛 BUG FIX (6): "+N 🪙" belgisi endi xom s.coins emas, taskCoinValue()
+  // orqali — joriy o'yin qiyinligi multiplikatorini (Easy x1.5 / Normal x1 /
+  // Hardcore x0.7) hisobga olgan holda ko'rsatiladi (toggleSubtask ichida
+  // haqiqatda BERILADIGAN miqdor bilan bir xil bo'lishi uchun).
+  const coinDisplay = taskCoinValue(s);
   // Har bir sub-task qatorida endi alohida edit/extract/delete tugmalari
   // o'rniga, asosiy tasklardagi kabi bitta "⋮" menyu tugmasi bor — ichida
   // Skip/Qaytarish, Tahrirlash, Chiqarish va O'chirish variantlari.
   return `
-      <div class="subtask-item${s.done?' done':''}${(s.skipped&&!s.done)?' skipped':''}" style="${tintStyle}">
-        <button class="subtask-check${s.done?' checked':''}" onclick="event.stopPropagation();toggleSubtask(${t.id},${s.id})">
-          ${s.done?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':''}
+      <div class="subtask-item${isDoneOnDate?' done':''}${(s.skipped&&!isDoneOnDate)?' skipped':''}" style="${tintStyle}">
+        <button class="subtask-check${isDoneOnDate?' checked':''}" onclick="event.stopPropagation();toggleSubtask(${t.id},${s.id},'${dateStr}')">
+          ${isDoneOnDate?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':''}
         </button>
         ${labelDot}<span class="subtask-name">${esc(s.name)}</span>
-        ${s.coins ? `<span class="badge badge-coins">+${s.coins}🪙</span>` : ''}
+        ${coinDisplay ? `<span class="badge badge-coins">+${coinDisplay}🪙</span>` : ''}
         <div class="task-dots-wrap subtask-dots-wrap">
           <button class="task-dots-btn subtask-dots-btn" onclick="event.stopPropagation();toggleSubtaskDropdown(${t.id},${s.id},this,event,'${ctx}')" title="${tr('task_actions_title')}">⋮</button>
           <div class="task-dropdown-menu subtask-dropdown-menu" id="${ddId}">
@@ -13636,28 +13855,33 @@ function toggleSubtaskDoneSection(taskId, btn, count, ctx) {
   }
 }
 
-function renderSubtasksHtml(t, ctx) {
+function renderSubtasksHtml(t, ctx, dateStr) {
   ctx = ctx || '';
+  dateStr = dateStr || today();
   const subs = ensureSubtasks(t);
   if (subs.length === 0) return '';
   // BUG FIX: avval bu yerda faqat s.done tekshirilardi — shu sababli
   // "Kunlarni tanlash" yoki "Har N kunda" turidagi sub-tasklar ham,
   // navbati kelmagan kunlarda ham, ro'yxatda doim ko'rinib turardi
   // (asosiy tasklar esa taskDueToday() orqali to'g'ri filtrlanadi).
-  // Endi sub-tasklar ham xuddi shunday — faqat bugun navbati kelganlari
-  // (subtaskDueToday) pending ro'yxatida ko'rsatiladi.
-  const pending = subs.filter(function(s){ return !s.done && subtaskDueToday(s); });
-  const done = subs.filter(function(s){ return s.done; });
+  // Endi sub-tasklar ham xuddi shunday — faqat TANLANGAN SANADA navbati
+  // kelganlari (subtaskDueToday) pending ro'yxatida ko'rsatiladi.
+  // 🐛 BUG FIX (1): "bajarilgan"/"kutilayotgan" holati endi `s.done`dan
+  // emas, subtaskDoneOnDate(dateStr) orqali — TANLANGAN sana logidan
+  // o'qiladi, shu sababli kalendarning o'tgan kun panelida haqiqatan
+  // o'sha kunga tegishli holat ko'rinadi.
+  const pending = subs.filter(function(s){ return !subtaskDoneOnDate(t.id, s.id, dateStr) && subtaskDueToday(s, dateStr); });
+  const done = subs.filter(function(s){ return subtaskDoneOnDate(t.id, s.id, dateStr); });
   let html = '';
   if (pending.length) {
     html += '<div class="subtask-list">';
-    pending.forEach(function(s){ html += subtaskItemHtml(t, s, ctx); });
+    pending.forEach(function(s){ html += subtaskItemHtml(t, s, ctx, dateStr); });
     html += '</div>';
   }
   if (done.length) {
     html += `<button type="button" class="subtask-done-toggle" data-open="0" onclick="event.stopPropagation();toggleSubtaskDoneSection(${t.id}, this, ${done.length}, '${ctx}')">${tr('subtask_done_toggle_show').replace('{n}', done.length)}</button>`;
     html += `<div class="subtask-list subtask-list-done" id="subtask-done-${ctx}${t.id}" style="display:none">`;
-    done.forEach(function(s){ html += subtaskItemHtml(t, s, ctx); });
+    done.forEach(function(s){ html += subtaskItemHtml(t, s, ctx, dateStr); });
     html += '</div>';
   }
   // Progress hisobi endi faqat EKRANDA ko'rinayotgan sub-tasklarga (pending+done)
@@ -13864,12 +14088,38 @@ function extractSubtaskToTask(taskId, subId) {
   toast(t('subtask_extracted_toast'));
 }
 
-function toggleSubtask(taskId, subId) {
+// Ota-vazifaning aynan bir SANADA (dateStr) "bajarilgan" deb hisoblanishini
+// tekshiradi — bugungi kun uchun tk.done (joriy sikl bayrog'i), o'tgan
+// kunlar uchun esa S.taskDoneLog (calToggleTaskDone shu logga yozadi).
+function taskDoneOnDate(taskId, dateStr) {
+  if (dateStr === today()) {
+    var _tsk = S.tasks.find(function (x) { return x.id === taskId; });
+    return !!(_tsk && _tsk.done);
+  }
+  return !!(S.taskDoneLog && S.taskDoneLog[taskId] && S.taskDoneLog[taskId].indexOf(dateStr) !== -1);
+}
+
+// 🐛 BUG FIX (2)+(3): toggleSubtask() endi ixtiyoriy `dateStr` parametrini
+// qabul qiladi (berilmasa — bugun). Bajarilish sanasi, tanga va XP endi
+// har doim today()ga emas, aynan shu tanlangan sanaga yoziladi. Sub-task
+// "bajarilgan/bajarilmagan" holati endi S.subtaskDoneLog orqali (asosiy
+// tasklardagi S.taskDoneLog bilan bir xil g'oyada) SHU SANA uchun aniq
+// belgilanadi — shu sababli renderSubtasksHtml/subtaskItemHtml (BUG FIX 1)
+// haqiqatan ham to'g'ri manbadan o'qiy oladi.
+function toggleSubtask(taskId, subId, dateStr) {
+  dateStr = dateStr || today();
   const tk = S.tasks.find(function(x){ return x.id === taskId; });
   if (!tk) return;
   const sub = ensureSubtasks(tk).find(function(s){ return s.id === subId; });
   if (!sub) return;
-  sub.done = !sub.done;
+
+  const isToday = dateStr === today();
+  const logKey = taskId + '_' + subId;
+  if (!S.subtaskDoneLog) S.subtaskDoneLog = {};
+  if (!S.subtaskDoneLog[logKey]) S.subtaskDoneLog[logKey] = [];
+  const logIdx = S.subtaskDoneLog[logKey].indexOf(dateStr);
+  const willBeDone = logIdx === -1; // hozir shu sanada belgilanmagan — demak endi belgilanadi
+
   // 🐛 BUG FIX (6): ilgari sub.coins to'g'ridan-to'g'ri (ko'paytiruvchisiz)
   // ishlatilardi — XP'da esa taskXPValue() orqali getDifficultyMultipliers()
   // allaqachon qo'llanardi. Endi tanga ham taskCoinValue() orqali hisoblanadi,
@@ -13879,11 +14129,20 @@ function toggleSubtask(taskId, subId) {
   // Asosiy vazifalar kabi (taskXPValue), sub-taskning o'z qiyinlik
   // darajasiga (diff) qarab XP hisoblanadi — avval bu umuman berilmasdi.
   const xpAmt = taskXPValue(sub);
-  if (sub.done) {
-    sub.doneDate = today();
-    // "Har N kunda" turi uchun — keyingi muddatni oldinga suramiz
-    // (asosiy tasklardagi nextDate mantig'i bilan bir xil).
-    if (sub.repeat === 'interval') { sub.nextDate = addDays(today(), Number(sub.interval)||1); }
+
+  if (willBeDone) {
+    S.subtaskDoneLog[logKey].push(dateStr);
+    // "Joriy sikl" bayrog'i (sub.done/sub.doneDate) faqat BUGUNGI holatni
+    // aks ettiradi — o'tgan kun uchun belgilansa, bu bayroqqa tegilmaydi,
+    // chunki u checkReset() tomonidan har kuni bugungi kun uchun qayta
+    // hisoblanadi va o'tgan kunlar tarixi endi S.subtaskDoneLog'da saqlanadi.
+    if (isToday) {
+      sub.done = true;
+      sub.doneDate = dateStr;
+      // "Har N kunda" turi uchun — keyingi muddatni oldinga suramiz
+      // (asosiy tasklardagi nextDate mantig'i bilan bir xil).
+      if (sub.repeat === 'interval') { sub.nextDate = addDays(dateStr, Number(sub.interval)||1); }
+    }
     if (amt) {
       S.coins = (S.coins||0) + amt;
       S.totalCoins = (S.totalCoins||0) + amt;
@@ -13899,8 +14158,12 @@ function toggleSubtask(taskId, subId) {
     confetti();
     toast(t('task_done_xp_toast').replace('{coins}', amt).replace('{xp}', xpAmt));
   } else {
-    sub.doneDate = null;
-    if (sub.repeat === 'interval') { sub.nextDate = today(); }
+    S.subtaskDoneLog[logKey].splice(logIdx, 1);
+    if (isToday) {
+      sub.done = false;
+      sub.doneDate = null;
+      if (sub.repeat === 'interval') { sub.nextDate = dateStr; }
+    }
     if (amt) {
       S.coins = (S.coins||0) - amt;
       S.totalCoins = (S.totalCoins||0) - amt;
@@ -13912,32 +14175,34 @@ function toggleSubtask(taskId, subId) {
     addXP(-xpAmt, sub.name + ' (bekor qilindi)');
     SFX.click();
   }
-  // 🧩 SOZLAMA: barcha sub-tasklar bajarilsa, asosiy vazifa avtomatik Done
-  // bo'lsin (agar shu sozlama yoqilgan bo'lsa). "So'rov" oqimidan (loop
-  // ichida) chaqirilgan bo'lsa — bu yerda ishga tushmaydi, chunki asosiy
-  // vazifa allaqachon o'sha oqim oxirida Done qilinadi.
-  if (sub.done && !_suppressAutoParentComplete) {
+
+  // 🐛 BUG FIX (3): avto-done/avto-undone mantig'i endi FAQAT shu
+  // `dateStr`dagi ota-vazifaga ta'sir qiladi — bugungi kun uchun (isToday)
+  // avvalgidek toggleTask() ishlatiladi, lekin O'TGAN KUN uchun endi
+  // to'g'ridan-to'g'ri bugungi toggleTask() o'rniga calToggleTaskDone(id,
+  // dateStr) chaqiriladi — shu sababli o'tgan kunda sub-task bosilganda
+  // bugungi ota-vazifa (tk.done) hech qachon o'zgarmaydi, faqat o'sha
+  // sananing taskDoneLog yozuvi o'zgaradi.
+  if (!_suppressAutoParentComplete) {
     ensureSubtaskAutoSettingsDefaults();
-    if (S.subtaskAutoCompleteParent && !tk.done) {
+    if (S.subtaskAutoCompleteParent) {
       var _allSubs = ensureSubtasks(tk);
-      var _allResolved = _allSubs.length > 0 && _allSubs.every(function (s) { return s.done || s.skipped; });
-      if (_allResolved) toggleTask(tk.id);
+      var _allResolved = _allSubs.length > 0 && _allSubs.every(function (s) {
+        return subtaskDoneOnDate(tk.id, s.id, dateStr) || s.skipped;
+      });
+      var _parentDoneOnDate = taskDoneOnDate(tk.id, dateStr);
+      if (_allResolved && !_parentDoneOnDate) {
+        // Barcha sub-tasklar shu sanada tugallangan, ota-vazifa esa hali
+        // shu sanada Done emas — avtomatik Done qilamiz.
+        if (isToday) toggleTask(tk.id); else calToggleTaskDone(tk.id, dateStr);
+      } else if (!_allResolved && _parentDoneOnDate) {
+        // Sub-task qaytadan "bajarilmagan"ga o'tdi, lekin ota-vazifa shu
+        // sanada hali ham Done bo'lib turibdi — uni ham qaytaramiz.
+        if (isToday) toggleTask(tk.id); else calToggleTaskDone(tk.id, dateStr);
+      }
     }
   }
-  // 🐛 BUG FIX (4): "Avtomatik Done" teskari tomonga ham sinxronlanishi
-  // kerak — agar sub-task qaytadan "bajarilmagan" (uncheck) qilinsa va
-  // ota-vazifa allaqachon Done bo'lib turgan bo'lsa (avtomatik yoki qo'lda),
-  // ichida yana bajarilmagan sub-task paydo bo'lgani uchun ota-vazifa ham
-  // qaytadan pending/todo holatiga o'tkaziladi — aks holda "1/3 bajarilgan"
-  // holatda ham "✅ Bajarildi" bo'lib qolib, statistika/progress chalkash
-  // ko'rinardi. toggleTask(tk.id) chaqirilganda tk.done=true bo'lgani
-  // uchun avtomatik "undone" filialiga o'tadi (mukofot/XP ham qaytariladi).
-  if (!sub.done && !_suppressAutoParentComplete) {
-    ensureSubtaskAutoSettingsDefaults();
-    if (S.subtaskAutoCompleteParent && tk.done) {
-      toggleTask(tk.id);
-    }
-  }
+
   save(); render();
   refreshCalDetailIfOpen();
 }
@@ -14320,7 +14585,7 @@ function renderRewards() {
   const grid=document.getElementById('rewards-grid'); grid.innerHTML='';
   if(S.rewards.length===0){grid.innerHTML='<p style="color:var(--text-muted);font-size:var(--fs-base)">'+t('rewards_empty')+'</p>';renderClaimSummary();renderRewardStats();return;}
   // QARZ BLOKI (bosqichli): tier0 -> bloklanmagan, tier1 -> faqat eng
-  // muammoli 1 ta reward, tier2 (-10 🪙 dan past) -> BARCHASI bloklangan.
+  // muammoli 1 ta reward (-10 dan boshlab), tier2 (-30 🪙 dan past) -> BARCHASI bloklangan.
   const debtTier = getDebtTier();
   S.rewards.forEach(function(r){
     const cant=S.coins<r.cost;
@@ -14423,7 +14688,9 @@ function renderRewards() {
 
     div.innerHTML=
       '<div style="display:flex;justify-content:space-between;margin-bottom:-6px">'+
-        '<button onclick="openRewardEditModal('+r.id+')" style="background:none;border:none;cursor:pointer;color:var(--text-dim);font-size:var(--fs-sm);padding:2px 4px;line-height:1" title="'+t('reward_edit_title')+'">✏️</button>'+
+        (isNegativeBlocked
+          ? '<button onclick="openRewardEditModal('+r.id+')" title="'+t('reward_blocked_title')+'" style="background:none;border:none;cursor:not-allowed;color:var(--red);font-size:var(--fs-sm);padding:2px 4px;line-height:1;opacity:0.6">🔒</button>'
+          : '<button onclick="openRewardEditModal('+r.id+')" style="background:none;border:none;cursor:pointer;color:var(--text-dim);font-size:var(--fs-sm);padding:2px 4px;line-height:1" title="'+t('reward_edit_title')+'">✏️</button>')+
         '<button onclick="deleteReward('+r.id+')" style="background:none;border:none;cursor:pointer;color:var(--text-dim);font-size:var(--fs-sm);padding:2px 4px;line-height:1" title="'+t('reward_delete_title')+'">🗑️</button>'+
       '</div>'+
       '<div class="r-icon">'+r.icon+'</div>'+
@@ -14702,15 +14969,20 @@ function getMostProblematicRewardId() {
   return found ? found.id : null;
 }
 
-// Bosqichli jazo (escalation) chegarasi: shu qiymatdan past (masalan -10)
-// bo'lsa BARCHA mukofotlar bloklanadi va yangi reward qo'shish taqiqlanadi.
-var DEBT_TIER2_THRESHOLD = -10;
+// Bosqichli jazo (escalation) chegaralari:
+// -1 dan -9 gacha  -> hali "yengil" qarz, hech qanday reward bloklanmaydi
+//                      (faqat 1.5x earning jarimasi ishlaydi, pastga qarang).
+// -10 dan -29 gacha -> eng ko'p ishlatilgan BITTA mukofot bloklanadi.
+// -30 va undan past -> BARCHA mukofotlar bloklanadi + yangi reward qo'sha olmaysiz.
+var DEBT_TIER1_THRESHOLD = -10;
+var DEBT_TIER2_THRESHOLD = -30;
 
-// 0 = qarz yo'q, 1 = yengil qarz (-1..-9 🪙 -> 1 ta reward bloklangan),
-// 2 = og'ir qarz (-10 🪙 va undan past -> BARCHA rewardlar bloklangan)
+// 0 = bloklovsiz (qarz yo'q YOKI -1..-9 oralig'idagi yengil qarz),
+// 1 = -10..-29 -> 1 ta (eng ko'p ishlatilgan) reward bloklangan,
+// 2 = -30 va undan past -> BARCHA rewardlar bloklangan
 function getDebtTier() {
   var c = S.coins || 0;
-  if (c >= 0) return 0;
+  if (c > DEBT_TIER1_THRESHOLD) return 0;
   if (c <= DEBT_TIER2_THRESHOLD) return 2;
   return 1;
 }
@@ -15023,7 +15295,6 @@ function render() {
   ensureSubtaskAutoSettingsDefaults();
   updateSubtaskAskToggleUI();
   updateSubtaskAutoCompleteToggleUI();
-  updateSubtaskExtractToggleUI();
   try { renderChestStats(); } catch (e) {}
   try { renderGoalsStats(); } catch (e) {}
   try { renderDsShortcuts(); } catch (e) {}
@@ -15409,6 +15680,7 @@ async function loadUserDataAndInit() {
         Object.keys(g.daysChecked||{}).forEach(function(d) { g.daysCoinsGiven[d] = 1; });
       }
     });
+    ensureCefrDefaults(); // eski (CEFR qo'shilishidan oldingi) foydalanuvchilar uchun xavfsiz standart qiymat
   } else {
     // LocalStorage'da hali holat yo'q — birinchi marta, boshlang'ich holatni saqlaymiz.
     // Yangi foydalanuvchi "Maqsadlarim" bo'limi qanday ishlashini tushunishi uchun
@@ -15438,6 +15710,7 @@ async function loadUserDataAndInit() {
     // 🎉 Yangi foydalanuvchi — birinchi marta ochilganda "Xush kelibsiz"
     // so'rovnomasini ko'rsatish uchun bayroq o'rnatamiz (render() dan keyin ishlatiladi).
     S.showWelcomeSurveyPending = true;
+    ensureCefrDefaults();
     saveToLocalStorage(S);
   }
 
@@ -15613,6 +15886,7 @@ function kiMissed(){
 window._kiQ=[];
 window._kiOv=null;
 function checkKI(){
+  if(!S.personalCheckEnabled)return; // Personal Check o'chiq bo'lsa, umuman so'ralmaydi
   var q=kiMissed(); // faqat kecha va o'tgan javob berilmagan kunlar
   if(!q.length)return;
   window._kiQ=q;
@@ -16351,6 +16625,33 @@ function _buildProfileGoalBox(examType) {
       etaHtml +
     '</div>';
 }
+function _buildCefrProfileGoalBox() {
+  var overall = (typeof cefrComputeOverall === 'function') ? cefrComputeOverall() : null;
+  if (!overall || !overall.level) return '';
+
+  var saved = getExamDate('cefr');
+  var goal = (saved && saved.target) ? saved.target : null;
+
+  var etaHtml = '';
+  if (!goal) {
+    etaHtml = '<div style="font-size:var(--fs-2xs);color:var(--text-dim);margin-top:4px">' + esc(t('exam_forecast_no_goal')) + '</div>';
+  } else if (overall.rank !== null && cefrLevelToRank(goal) !== null && overall.rank >= cefrLevelToRank(goal)) {
+    etaHtml = '<div style="font-size:var(--fs-2xs);color:#34D399;margin-top:4px;font-weight:600">🎉 Maqsadga yetdingiz!</div>';
+  } else if (saved && saved.date) {
+    var examDate = new Date(saved.date + 'T00:00:00');
+    var nowDate = new Date(); nowDate.setHours(0,0,0,0);
+    var diffDays = Math.round((examDate - nowDate) / 86400000);
+    etaHtml = diffDays >= 0
+      ? '<div style="font-size:var(--fs-2xs);color:var(--gold);margin-top:4px">🔮 Imtihongacha <b>' + diffDays + ' kun</b></div>'
+      : '';
+  }
+
+  return '<div style="background:linear-gradient(135deg,rgba(124,92,252,0.14),rgba(180,142,255,0.05));border:1px solid rgba(124,92,252,0.3);border-radius:var(--radius-md);padding:10px 16px;text-align:center;min-width:150px;flex:1">' +
+      '<div style="font-size:var(--fs-3xs);color:#B48EFF;letter-spacing:0.05em;text-transform:uppercase">CEFR · Overall</div>' +
+      '<div style="font-family:Syne,sans-serif;font-size:var(--fs-3xl);font-weight:700;color:#B48EFF;line-height:1.15;margin-top:2px">' + overall.level + (goal ? '<span style="font-size:var(--fs-xs);color:var(--text-dim);font-weight:500"> / ' + goal + '</span>' : '') + '</div>' +
+      etaHtml +
+    '</div>';
+}
 function renderProfileGoalWidget() {
   var box = document.getElementById('profile-header-goal-widget');
   if (!box) return;
@@ -16360,6 +16661,7 @@ function renderProfileGoalWidget() {
   if (hasExamSubject('sat')) subjects.push('sat');
 
   var boxesHtml = subjects.map(_buildProfileGoalBox).filter(Boolean).join('');
+  if (hasExamSubject('cefr')) boxesHtml += _buildCefrProfileGoalBox();
 
   if (!boxesHtml) {
     box.style.display = 'none';
@@ -16375,7 +16677,7 @@ function showProfileEdit() {
   var ov=document.getElementById('profile-edit-modal'); if(ov) ov.remove();
   var name=(S.profile&&S.profile.name)||'';
   var photo=(S.profile&&S.profile.photo)||'';
-  var lang=(S.profile&&S.profile.language)||'uz';
+  var lang=(S.profile&&S.profile.language)||'en';
   var prep=(S.profile&&S.profile.prep)||'none';
   // Yangi ko'p variantli tanlov: agar profilda targetSubjects massivi
   // saqlangan bo'lsa o'shani, aks holda eski (bitta qiymatli) prep
@@ -16439,7 +16741,7 @@ function showProfileEdit() {
     '<div style="margin-bottom:12px">'+
       '<label style="'+labelStyle+'">'+t('pe_prep_label')+'</label>'+
       '<div id="pe-prep-pills" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:2px">'+
-        ['ielts','sat','other'].map(function(code){
+        ['ielts','sat','cefr','other'].map(function(code){
           var m = targetSubjectMeta(code);
           var isSel = targetSubjects.indexOf(code) !== -1;
           return '<button type="button" class="pe-prep-pill'+(isSel?' sel':'')+'" data-subject="'+code+'">'+
@@ -17061,7 +17363,7 @@ function findReytingPlayerById(id) {
 function _ppFormatJoinedDate(dateStr) {
   if (!dateStr) return '—';
   try {
-    var lang = (S.profile && S.profile.language) || 'uz';
+    var lang = (S.profile && S.profile.language) || 'en';
     var locale = lang === 'ru' ? 'ru-RU' : (lang === 'en' ? 'en-US' : 'uz-UZ');
     var d = new Date(dateStr + 'T00:00:00');
     if (isNaN(d.getTime())) return dateStr;
@@ -19590,9 +19892,25 @@ function _rstResetStats() {
   S.pendingLevelUp = null;
   S.pendingMissedMsg = null;
   S.pendingStreakMsg = null;
-  S.ieltsResults = [];
-  S.satResults = [];
-  if (S.secretHabit) S.secretHabit.log = {}; // PIN o'zgarmaydi
+  // 🔴 TUZATILDI: IELTS/SAT natijalari endi shu yerda avtomatik
+  // o'chirilmaydi — ular "Statistika"dan alohida, faqat foydalanuvchi
+  // haqiqatan natija kiritgan fan(lar) uchun ko'rinadigan maxsus
+  // checkbox orqali (qarang: openResetOptionsModal / _rstResetExams)
+  // ixtiyoriy tozalanadi.
+  if (S.secretHabit) {
+    // 🔴 TUZATILDI: avval faqat .log tozalanardi, lekin Personal Check
+    // bo'limining pastidagi "Tarix" ro'yxati (.history), "Jami kun"
+    // hisobi uchun boshlanish sanasi (.startDate) va jarima summalari
+    // (.logCoins) alohida maydonlar bo'lgani uchun tozalanmay eski
+    // holicha qolib ketardi. PIN (pinSet/pinHash) o'zgarmaydi.
+    S.secretHabit.log = {};
+    S.secretHabit.history = [];
+    S.secretHabit.logCoins = {};
+    S.secretHabit.startDate = today();
+  }
+  S.kiAns = {};
+  S.kiSkipped = {};
+  S.kiStart = today();
 
   // 🎁 Rewards (Mukofotlar) bo'limidagi "Statistika" — bular S obyekti
   // ichida emas, ATAYLAB alohida localStorage kalitlarida (USAGE_HISTORY_KEY,
@@ -19640,11 +19958,32 @@ function _rstResetTasks() {
   S.chestAllDoneDate = null;
 }
 
+// -------- Faqat natija kiritilgan imtihon(lar)ni tozalash --------
+// examTypes: ['ielts'], ['sat'] yoki ['ielts','sat'] — faqat foydalanuvchi
+// haqiqatan natija kiritgan turlar ro'yxati (qarang: openResetOptionsModal).
+function _rstResetExams(examTypes) {
+  (examTypes || []).forEach(function (ex) {
+    if (ex === 'ielts') S.ieltsResults = [];
+    if (ex === 'sat') S.satResults = [];
+  });
+}
+
+// -------- Reset oynasida haqiqatan natija kiritilgan imtihon
+// turlarini aniqlaydi (bo'sh massiv bo'lsa — o'sha turdan hali hech
+// narsa kiritilmagan, demak reset ro'yxatida ko'rsatilmaydi) --------
+function _rstExamsWithData() {
+  var list = [];
+  if ((S.ieltsResults || []).length > 0) list.push('ielts');
+  if ((S.satResults || []).length > 0) list.push('sat');
+  return list;
+}
+
 // -------- Tanlangan bo'limlarga qarab reset'ni bajarish --------
-function _rstPerform(doCoins, doStats, doTasks) {
+function _rstPerform(doCoins, doStats, doTasks, examTypes) {
   if (doStats) _rstResetStats();
   if (doCoins) _rstResetCoins();
   if (doTasks) _rstResetTasks();
+  if (examTypes && examTypes.length) _rstResetExams(examTypes);
 
   save();
   if (typeof recalcStreakFromLog === 'function') recalcStreakFromLog();
@@ -19653,6 +19992,11 @@ function _rstPerform(doCoins, doStats, doTasks) {
   if (typeof renderRewards === 'function') renderRewards();
   if (typeof renderGoals === 'function') renderGoals();
   if (typeof renderChest === 'function') renderChest();
+  if (typeof renderSecretContent === 'function' && typeof _secretUnlocked !== 'undefined' && _secretUnlocked) renderSecretContent();
+  if (examTypes && examTypes.length) {
+    if (typeof renderIeltsTab === 'function') renderIeltsTab();
+    if (typeof renderSatTab === 'function') renderSatTab();
+  }
   toast(t('reset_done_toast'));
   showTab('tasks');
 }
@@ -19688,12 +20032,25 @@ function _rstOptRow(cbId, icon, label) {
   '</label>';
 }
 
-// -------- Asosiy oyna: Tanga / Statistika / Vazifalar / Hammasi --------
+// -------- Asosiy oyna: Tanga / Statistika / Vazifalar / Imtihon(lar) / Hammasi --------
 function openResetOptionsModal() {
   var ov = document.createElement('div');
   ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px';
   var box = document.createElement('div');
   box.style.cssText = 'background:#1C1C25;border:2px solid rgba(248,113,113,0.4);border-radius:var(--radius-xl);padding:26px 22px;width:100%;max-width:360px';
+
+  // 🆕 Imtihon (IELTS/SAT) qatori faqat foydalanuvchi haqiqatan shu
+  // fan(lar)dan kamida bitta natija kiritgan bo'lsagina ko'rinadi — aks
+  // holda umuman ro'yxatga qo'shilmaydi. Label ham faqat natija bor
+  // fan(lar) nomidan tuziladi (masalan faqat "IELTS", faqat "SAT" yoki
+  // ikkalasi bo'lsa "IELTS/SAT").
+  var examsWithData = _rstExamsWithData();
+  var examsRowHtml = '';
+  if (examsWithData.length) {
+    var examLabel = examsWithData.map(function (ex) { return ex === 'ielts' ? 'IELTS' : 'SAT'; }).join('/');
+    examsRowHtml = _rstOptRow('ro-exams-cb', '📚', examLabel);
+  }
+
   box.innerHTML =
     '<div style="text-align:center;font-size:var(--fs-5xl);margin-bottom:10px">⚠️</div>' +
     '<h3 style="text-align:center;font-family:Syne,sans-serif;font-size:var(--fs-md);font-weight:700;color:#F87171;margin-bottom:8px">' + t('reset_opts_title') + '</h3>' +
@@ -19702,6 +20059,7 @@ function openResetOptionsModal() {
       _rstOptRow('ro-coins-cb', '🪙', t('reset_opt_coins')) +
       _rstOptRow('ro-stats-cb', '📊', t('reset_opt_stats')) +
       _rstOptRow('ro-tasks-cb', '📋', t('reset_opt_tasks')) +
+      examsRowHtml +
       _rstOptRow('ro-all-cb', '💥', t('reset_opt_all')) +
     '</div>' +
     '<div style="display:flex;gap:10px">' +
@@ -19714,20 +20072,22 @@ function openResetOptionsModal() {
   var cbCoins = document.getElementById('ro-coins-cb');
   var cbStats = document.getElementById('ro-stats-cb');
   var cbTasks = document.getElementById('ro-tasks-cb');
+  var cbExams = document.getElementById('ro-exams-cb'); // mavjud bo'lmasa null
   var cbAll = document.getElementById('ro-all-cb');
   var confirmBtn = document.getElementById('reset-opts-confirm');
+  var toggleables = cbExams ? [cbCoins, cbStats, cbTasks, cbExams] : [cbCoins, cbStats, cbTasks];
 
   function syncUI() {
     var allOn = cbAll.checked;
-    [cbCoins, cbStats, cbTasks].forEach(function (cb) {
+    toggleables.forEach(function (cb) {
       cb.disabled = allOn;
       if (allOn) cb.checked = true;
     });
-    var any = cbCoins.checked || cbStats.checked || cbTasks.checked || cbAll.checked;
+    var any = toggleables.some(function (cb) { return cb.checked; }) || cbAll.checked;
     confirmBtn.disabled = !any;
     confirmBtn.style.opacity = any ? '1' : '0.5';
   }
-  [cbCoins, cbStats, cbTasks, cbAll].forEach(function (cb) {
+  toggleables.concat([cbAll]).forEach(function (cb) {
     cb.addEventListener('change', syncUI);
   });
   syncUI();
@@ -19741,6 +20101,8 @@ function openResetOptionsModal() {
     var doCoins = cbAll.checked || cbCoins.checked;
     var doStats = cbAll.checked || cbStats.checked;
     var doTasks = cbAll.checked || cbTasks.checked;
+    var doExams = cbAll.checked || (cbExams ? cbExams.checked : false);
+    var examTypes = doExams ? examsWithData : [];
 
     // Maxsus holat: tanga manfiy (masalan -10) va statistika alohida
     // tanlanmagan bo'lsa — avval ogohlantiramiz. Tasdiqlansa, tanga bilan
@@ -19749,13 +20111,13 @@ function openResetOptionsModal() {
       var coinsVal = S.coins;
       close();
       openNegativeCoinsWarning(coinsVal, function () {
-        _rstPerform(true, true, doTasks);
+        _rstPerform(true, true, doTasks, examTypes);
       });
       return;
     }
 
     close();
-    _rstPerform(doCoins, doStats, doTasks);
+    _rstPerform(doCoins, doStats, doTasks, examTypes);
   };
 }
 
@@ -20371,6 +20733,8 @@ function togglePersonalCheck() {
     }
     S.personalCheckEnabled = false;
     save();
+    if(window._kiOv){window._kiOv.remove();window._kiOv=null;}
+    window._kiQ=[];
     updatePcToggleUI();
     renderDsShortcuts();
     toast(t('pc_disabled_toast'));
@@ -20598,6 +20962,8 @@ async function pcVerifyKey(k) {
       // o'chirishdan oldin ham PIN tasdiqlanishi shart.
       S.personalCheckEnabled = false;
       save();
+      if(window._kiOv){window._kiOv.remove();window._kiOv=null;}
+      window._kiQ=[];
       document.getElementById('pc-verify-pin-overlay').style.display = 'none';
       _pcVerifyBuf = '';
       updatePcToggleUI();
@@ -21162,7 +21528,7 @@ function openGoalModal(id) {
     document.getElementById('gm-desc').value = g.desc || '';
     document.getElementById('gm-duration').value = g.duration || '';
     document.getElementById('gm-emoji').value = g.emoji || '🎯';
-    setGoalCoins(g.coins||1);
+    setGoalCoins((typeof g.coins === 'number') ? g.coins : 1);
     syncGoalDurChips();
   } else {
     title.textContent = t('gm_title_new');
@@ -21204,7 +21570,7 @@ function setGoalEmoji(e) {
 
 function setGoalCoins(val) {
   document.getElementById('gm-coins').value = val;
-  [1,3,5].forEach(function(v) {
+  [0,1,3,5].forEach(function(v) {
     var btn = document.getElementById('gm-coin-'+v);
     if(btn) btn.classList.toggle('sel', v===val);
   });
@@ -21215,7 +21581,8 @@ function saveGoal() {
   var desc = (document.getElementById('gm-desc').value || '').trim();
   var dur  = parseInt(document.getElementById('gm-duration').value) || 0;
   var emoji = (document.getElementById('gm-emoji').value || '').trim() || '🎯';
-  var coins = parseInt(document.getElementById('gm-coins').value) || 1;
+  var coinsRaw = parseInt(document.getElementById('gm-coins').value);
+  var coins = isNaN(coinsRaw) ? 1 : coinsRaw;
   if(!name) { document.getElementById('gm-name').focus(); toast(t('gm_name_required_toast')); return; }
   if(!dur)  { document.getElementById('gm-duration').focus(); toast(t('goal_duration_required_toast')); return; }
 
@@ -21252,7 +21619,7 @@ function goalCheckToday(id) {
   if(!g.daysChecked) g.daysChecked = {};
   if(!g.daysCoinsGiven) g.daysCoinsGiven = {};
   var yd = trackDate();
-  var coinAward = g.coins || 1;
+  var coinAward = (typeof g.coins === 'number') ? g.coins : 1;
 
   if(g.daysChecked[yd]) {
     // Uncheck — faqat shu kun tanga berilgan bo'lsa olib tashla.
@@ -21358,7 +21725,7 @@ function renderGoals() {
     // fallback faqat tuzatishdan oldin yaratilgan eski maqsadlar uchun.
     var completed = !!g.done || days >= total;
 
-    var coinAward = g.coins || 1;
+    var coinAward = (typeof g.coins === 'number') ? g.coins : 1;
     var coinLabel = coinAward===1 ? '🥉 +1 🪙' : coinAward===3 ? '🥈 +3 🪙' : '🥇 +5 🪙';
     var coinColor = coinAward===1 ? '#a3a3a3' : coinAward===3 ? '#60A5FA' : '#F5A623';
 
@@ -21993,6 +22360,31 @@ function _examTrendBuildSeries(forExamType) {
       points.push({ date: d, value: Math.round(total) });
     });
     return { points: points, unit: '', max: 1600 };
+  } else if (examType === 'cefr') {
+    // CEFR uchun "umumiy ball" tushunchasi yo'q — shuning uchun 4 ta asosiy
+    // ko'nikma (Listening/Reading/Writing/Speaking, "Full Mock" hisobga
+    // olinmaydi) darajalarini rank (A1=1...C2=6) ga aylantirib, har bir sana
+    // uchun o'rtachasini olamiz — xuddi IELTS 4 bo'limi o'rtachasi kabi.
+    var allHist = ((typeof S !== 'undefined' && S.cefr && S.cefr.history) || [])
+      .filter(function (r) { return CEFR_SECTIONS.indexOf(r.section) !== -1 && r.date; });
+    if (allHist.length === 0) return { points: [], unit: '', max: 6 };
+    var cefrDates = Array.from(new Set(allHist.map(function (r) { return r.date; }))).sort();
+    var cefrPoints = [];
+    cefrDates.forEach(function (d) {
+      var cum = allHist.filter(function (r) { return r.date <= d; });
+      var vals = [];
+      CEFR_SECTIONS.forEach(function (sec) {
+        var secEntries = cum.filter(function (r) { return r.section === sec; })
+          .sort(function (a, b) { return (a.date || '').localeCompare(b.date || ''); });
+        if (!secEntries.length) return;
+        var rank = cefrLevelToRank(secEntries[secEntries.length - 1].level);
+        if (rank !== null) vals.push(rank);
+      });
+      if (vals.length === 0) return;
+      var avg = vals.reduce(function (a, b) { return a + b; }, 0) / vals.length;
+      cefrPoints.push({ date: d, value: Math.round(avg * 100) / 100 });
+    });
+    return { points: cefrPoints, unit: '', max: 6 };
   }
   return { points: [], unit: '', max: 100 };
 }
@@ -22001,6 +22393,10 @@ function _examTrendGoal(forExamType) {
   var examType = forExamType || getExamType();
   var saved = getExamDate(examType);
   if (!saved || !saved.target) return null;
+  if (examType === 'cefr') {
+    // CEFR maqsadi son emas, daraja (A1-C2) — rank (1-6) ga aylantiramiz.
+    return (typeof cefrLevelToRank === 'function') ? cefrLevelToRank(saved.target) : null;
+  }
   var v = parseFloat(String(saved.target).replace(',', '.'));
   if (isNaN(v)) return null;
   if (examType === 'ielts' && (v <= 0 || v > 9)) return null;
@@ -22161,7 +22557,13 @@ function _examForecastConfidenceSuffix(pace) {
   return '';
 }
 function _examScoreLabel(examType, v) {
-  return examType === 'ielts' ? (Math.round(v * 2) / 2).toFixed(1) : String(Math.round(v));
+  if (examType === 'ielts') return (Math.round(v * 2) / 2).toFixed(1);
+  if (examType === 'cefr') {
+    var levels = (typeof CEFR_LEVELS !== 'undefined') ? CEFR_LEVELS : ['A1','A2','B1','B2','C1','C2'];
+    var rank = Math.max(1, Math.min(levels.length, Math.round(v)));
+    return levels[rank - 1] || String(rank);
+  }
+  return String(Math.round(v));
 }
 function _examFormatEtaDate(days) {
   var d = new Date(Date.now() + days * 86400000);
@@ -22262,11 +22664,12 @@ function renderExamForecastCard() {
   var subjects = [];
   if (hasExamSubject('ielts')) subjects.push({ type: 'ielts', label: '📊 IELTS' });
   if (hasExamSubject('sat')) subjects.push({ type: 'sat', label: '📐 SAT' });
+  if (hasExamSubject('cefr')) subjects.push({ type: 'cefr', label: '📘 CEFR' });
 
   var bodyEl = document.getElementById('exam-forecast-body');
   var lowDataEl = document.getElementById('exam-forecast-low-data');
 
-  var showLabels = subjects.length > 1; // faqat ikkalasi ham faol bo'lsa fan nomi ko'rsatiladi
+  var showLabels = subjects.length > 1; // faqat bir nechtasi faol bo'lsa fan nomi ko'rsatiladi
   var blocks = subjects.map(function (s) {
     return _buildExamForecastBlockHtml(s.type, showLabels ? s.label : null);
   }).filter(Boolean);
@@ -22881,16 +23284,30 @@ function _buildHoursCurve(stepTable, stepSize, minLevel, maxLevel) {
   }
   return points;
 }
+// CEFR: bitta darajadan (rank, A1=1...C2=6) keyingisiga chiqish uchun taxminiy
+// "guided learning hours" — Cambridge English GLH benchmarkiga yaqinlashtirilgan
+// kumulyativ o'sish (yuqori darajalarda ko'proq soat kerak bo'ladi).
+var CEFR_HOURS_PER_STEP = {
+  1: 180,  // A1 -> A2
+  2: 170,  // A2 -> B1
+  3: 150,  // B1 -> B2
+  4: 200,  // B2 -> C1
+  5: 300   // C1 -> C2
+};
+
 var _IELTS_HOURS_CURVE = _buildHoursCurve(IELTS_HOURS_PER_STEP, 0.5, 4.0, 9.0);
 var _SAT_HOURS_CURVE = _buildHoursCurve(SAT_HOURS_PER_STEP, 50, 400, 1600);
 var _SAT_SECTION_HOURS_CURVE = _buildHoursCurve(SAT_SECTION_HOURS_PER_STEP, 50, 200, 800);
+var _CEFR_HOURS_CURVE = _buildHoursCurve(CEFR_HOURS_PER_STEP, 1, 1, 6);
 
 function _examCurveFor(examType, isSingleSection) {
   if (examType === 'ielts') return _IELTS_HOURS_CURVE;
+  if (examType === 'cefr') return _CEFR_HOURS_CURVE;
   return isSingleSection ? _SAT_SECTION_HOURS_CURVE : _SAT_HOURS_CURVE;
 }
 function _examScaleFor(examType, isSingleSection) {
   if (examType === 'ielts') return { min: 4.0, max: 9.0 };
+  if (examType === 'cefr') return { min: 1, max: 6 };
   return isSingleSection ? { min: 200, max: 800 } : { min: 400, max: 1600 };
 }
 
@@ -22933,7 +23350,9 @@ function hoursNeededForExam(examType, fromLevel, toLevel, isSingleSection) {
   return _cumHoursAtLevel(curve, toLevel) - _cumHoursAtLevel(curve, fromLevel);
 }
 function _roundScoreForExam(examType, v) {
-  return examType === 'ielts' ? Math.round(v * 2) / 2 : Math.round(v);
+  if (examType === 'ielts') return Math.round(v * 2) / 2;
+  if (examType === 'cefr') return Math.max(1, Math.min(6, Math.round(v)));
+  return Math.round(v);
 }
 
 // Foydalanuvchining O'Z tarixi (sana+ball juftliklari) asosida uning
@@ -22994,7 +23413,7 @@ var EXAM_FORECAST_MAX_REALISTIC_DAYS = 18 * 30.44;
 // Umumiy (overall) ball/band uchun to'liq bashorat to'plamini qaytaradi:
 // hozirgi daraja, o'quv sur'ati, imtihon kunigacha bashorat, maqsadgacha ETA.
 function computeAdvancedExamForecast(examType) {
-  if (examType !== 'ielts' && examType !== 'sat') return null;
+  if (examType !== 'ielts' && examType !== 'sat' && examType !== 'cefr') return null;
   var data = _examTrendBuildSeries(examType);
   var points = data.points;
   if (!points.length) return null;
@@ -23050,6 +23469,17 @@ function _examSkillSeries(examType, sectionKey) {
       var avg = calcSatSectionAvg(sectionKey, cum, 'all');
       if (avg !== null) points.push({ date: d, value: avg });
     });
+  } else if (examType === 'cefr') {
+    var results = (S.cefr && S.cefr.history) || [];
+    var relevant = results.filter(function (r) { return r.section === sectionKey && r.date; });
+    if (!relevant.length) return [];
+    var dates = Array.from(new Set(relevant.map(function (r) { return r.date; }))).sort();
+    dates.forEach(function (d) {
+      var cum = relevant.filter(function (r) { return r.date <= d; })
+        .sort(function (a, b) { return (a.date || '').localeCompare(b.date || ''); });
+      var rank = cefrLevelToRank(cum[cum.length - 1].level);
+      if (rank !== null) points.push({ date: d, value: rank });
+    });
   }
   return points;
 }
@@ -23059,14 +23489,16 @@ function _examSkillSeries(examType, sectionKey) {
 // chiqish uchun necha soat kerakligi (bu doim ko'rsatiladi, tarix oz
 // bo'lsa ham, chunki jadval statistik benchmark'ga asoslangan).
 function computeExamSkillsBreakdown(examType) {
-  if (examType !== 'ielts' && examType !== 'sat') return [];
+  if (examType !== 'ielts' && examType !== 'sat' && examType !== 'cefr') return [];
   var sections = examType === 'ielts'
     ? [{ key: 'listening', labelKey: 'ielts_sec_listening' }, { key: 'reading', labelKey: 'ielts_sec_reading' }, { key: 'writing', labelKey: 'ielts_sec_writing' }, { key: 'speaking', labelKey: 'ielts_sec_speaking' }]
-    : [{ key: 'rw', labelKey: 'sat_sec_rw' }, { key: 'math', labelKey: 'sat_sec_math' }];
+    : examType === 'cefr'
+      ? [{ key: 'listening', labelKey: 'cefr_sec_listening' }, { key: 'reading', labelKey: 'cefr_sec_reading' }, { key: 'writing', labelKey: 'cefr_sec_writing' }, { key: 'speaking', labelKey: 'cefr_sec_speaking' }]
+      : [{ key: 'rw', labelKey: 'sat_sec_rw' }, { key: 'math', labelKey: 'sat_sec_math' }];
   var examDateObj = getExamDate(examType);
   var examDateStr = examDateObj && examDateObj.date;
   var scale = _examScaleFor(examType, examType === 'sat');
-  var stepSize = examType === 'ielts' ? 0.5 : 50;
+  var stepSize = examType === 'ielts' ? 0.5 : (examType === 'cefr' ? 1 : 50);
 
   var list = sections.map(function (s) {
     var points = _examSkillSeries(examType, s.key);
@@ -23152,11 +23584,14 @@ function hasExamSubject(code) {
 function updateIeltsTabVisibility() {
   var tabIelts = document.getElementById('tab-ielts');
   var tabSat   = document.getElementById('tab-sat');
+  var tabCefr  = document.getElementById('tab-cefr');
   var showIelts = hasExamSubject('ielts');
   var showSat   = hasExamSubject('sat');
+  var showCefr  = hasExamSubject('cefr');
 
   if (tabIelts) tabIelts.style.display = showIelts ? '' : 'none';
   if (tabSat)   tabSat.style.display   = showSat   ? '' : 'none';
+  if (tabCefr)  tabCefr.style.display  = showCefr  ? '' : 'none';
 
   // Agar hozir ko'rinmay qolgan tabda bo'lsak, Vazifalar tabiga o'tib ketamiz
   var viewIelts = document.getElementById('view-ielts');
@@ -23166,6 +23601,11 @@ function updateIeltsTabVisibility() {
   }
   var viewSat = document.getElementById('view-sat');
   if (!showSat && viewSat && viewSat.style.display !== 'none') {
+    showTab('tasks');
+    return;
+  }
+  var viewCefr = document.getElementById('view-cefr');
+  if (!showCefr && viewCefr && viewCefr.style.display !== 'none') {
     showTab('tasks');
   }
 }
@@ -23233,21 +23673,31 @@ function openIeltsModal(examType) {
   overlay.style.display = 'flex';
 
   // examType endi countdown kartaning "✏️ Sana" tugmasidan aniq
-  // uzatiladi (openIeltsModal('ielts') / openIeltsModal('sat')) — shu
-  // bilan ikkalasi ham tanlangan bo'lganda qaysi turni tahrirlayotgani
-  // aniq bo'ladi. Parametrsiz (eski) chaqiruvlar uchun orqaga moslik:
-  // joriy yagona tanlangan turga tushamiz.
-  if (examType !== 'ielts' && examType !== 'sat') examType = (getExamType() === 'sat') ? 'sat' : 'ielts';
+  // uzatiladi (openIeltsModal('ielts') / openIeltsModal('sat') /
+  // openIeltsModal('cefr')) — shu bilan uchalasi ham tanlangan bo'lganda
+  // qaysi turni tahrirlayotgani aniq bo'ladi. Parametrsiz (eski)
+  // chaqiruvlar uchun orqaga moslik: joriy yagona tanlangan turga tushamiz.
+  if (examType !== 'ielts' && examType !== 'sat' && examType !== 'cefr') examType = (getExamType() === 'sat') ? 'sat' : 'ielts';
   _ieltsModalEditingType = examType;
 
-  // SAT vs IELTS ga qarab modal sarlavhasi va placeholder ni o'zgartir
-  var isSat = examType === 'sat';
+  // SAT / IELTS / CEFR ga qarab modal sarlavhasi va maqsad maydoni o'zgaradi.
+  // IELTS/SAT — sonli ball (matn input), CEFR — daraja (A1-C2 tugmalar).
+  var isSat  = examType === 'sat';
+  var isCefr = examType === 'cefr';
   var titleEl = document.getElementById('ielts-modal-title');
   var labelEl = document.getElementById('ielts-target-label');
   var targetInp = document.getElementById('ielts-target-input');
-  if (titleEl) titleEl.textContent = isSat ? '📐 SAT Imtihon sanasi' : '📝 IELTS Imtihon sanasi';
-  if (labelEl) labelEl.textContent = isSat ? "Maqsad ball (400–1600, ixtiyoriy)" : "Maqsad ball (0–9, ixtiyoriy)";
-  if (targetInp) targetInp.placeholder = isSat ? 'masalan: 1400' : 'masalan: 7.0';
+  var numRow  = document.getElementById('ielts-target-numeric-row');
+  var cefrRow = document.getElementById('ielts-target-cefr-row');
+  if (titleEl) titleEl.textContent = isCefr ? '📘 CEFR Imtihon sanasi' : (isSat ? '📐 SAT Imtihon sanasi' : '📝 IELTS Imtihon sanasi');
+  if (numRow)  numRow.style.display  = isCefr ? 'none' : '';
+  if (cefrRow) cefrRow.style.display = isCefr ? '' : 'none';
+  if (!isCefr) {
+    if (labelEl) labelEl.textContent = isSat ? "Maqsad ball (400–1600, ixtiyoriy)" : "Maqsad ball (0–9, ixtiyoriy)";
+    if (targetInp) targetInp.placeholder = isSat ? 'masalan: 1400' : 'masalan: 7.0';
+  } else {
+    _renderIeltsCefrTargetBtns(null);
+  }
 
   // Mavjud sanani inputga yuklash (yoki, agar shu tur uchun hali
   // saqlanmagan bo'lsa, boshqa turni tahrirlashdan qolgan eski qiymat
@@ -23263,14 +23713,39 @@ function openIeltsModal(examType) {
     var saved = getExamDate(examType);
     if (saved && saved.date) {
       if (dateInp) dateInp.value = saved.date;
-      document.getElementById('ielts-target-input').value = saved.target || '';
+      if (isCefr) {
+        _renderIeltsCefrTargetBtns(saved.target || null);
+      } else {
+        document.getElementById('ielts-target-input').value = saved.target || '';
+      }
       document.getElementById('ielts-clear-btn').style.display = 'block';
     } else {
       if (dateInp) dateInp.value = '';
-      document.getElementById('ielts-target-input').value = '';
+      if (isCefr) {
+        _renderIeltsCefrTargetBtns(null);
+      } else {
+        document.getElementById('ielts-target-input').value = '';
+      }
       document.getElementById('ielts-clear-btn').style.display = 'none';
     }
   } catch(e) {}
+}
+
+// CEFR uchun maqsad — ball emas, DARAJA (A1-C2) tugma-tanlov.
+var _ieltsCefrTargetLevel = null;
+function _renderIeltsCefrTargetBtns(selected) {
+  _ieltsCefrTargetLevel = selected || null;
+  var wrap = document.getElementById('ielts-target-cefr-btns');
+  if (!wrap) return;
+  var levels = (typeof CEFR_LEVELS !== 'undefined') ? CEFR_LEVELS : ['A1','A2','B1','B2','C1','C2'];
+  wrap.innerHTML = levels.map(function(lvl) {
+    var active = (lvl === _ieltsCefrTargetLevel);
+    return '<button type="button" onclick="_selectIeltsCefrTargetLevel(\'' + lvl + '\')" style="padding:10px;border-radius:var(--radius-sm);border:2px solid ' + (active ? 'transparent' : 'var(--border)') + ';background:' + (active ? 'var(--accent)' : 'var(--surface2)') + ';color:' + (active ? '#fff' : 'var(--text-muted)') + ';font-size:var(--fs-sm);font-weight:700;cursor:pointer;transition:all 0.15s;font-family:Syne,sans-serif">' + lvl + '</button>';
+  }).join('');
+}
+function _selectIeltsCefrTargetLevel(lvl) {
+  _ieltsCefrTargetLevel = (_ieltsCefrTargetLevel === lvl) ? null : lvl; // qayta bosilsa bekor qilinadi
+  _renderIeltsCefrTargetBtns(_ieltsCefrTargetLevel);
 }
 
 function closeIeltsModal() {
@@ -23281,36 +23756,43 @@ function closeIeltsModal() {
 function saveIeltsDate() {
   var dateVal = document.getElementById('ielts-date-input').value;
   if (!dateVal) { toast('❗ ' + t('ielts_enter_date_toast')); return; }
-  var targetRaw = document.getElementById('ielts-target-input').value.trim();
   var examType = _ieltsModalEditingType || getExamType();
-  var isSat = examType === 'sat';
+  var isSat  = examType === 'sat';
+  var isCefr = examType === 'cefr';
 
   // XATOLIK #3 TUZATILDI: avval target ball uchun hech qanday sonlik/oraliq
   // tekshiruvi yo'q edi — "abc" kabi matnlar ham xotirjam saqlanib qolardi.
   // Endi bo'sh qoldirish (ixtiyoriy maydon) ruxsat etiladi, lekin biror
   // qiymat kiritilsa — u albatta to'g'ri sonli va imtihon turiga mos
-  // oraliqda bo'lishi shart: IELTS band 0–9, SAT ball 400–1600.
-  var targetVal = targetRaw; // saqlanadigan yakuniy qiymat (string)
-  if (targetRaw) {
-    var targetNum = parseFloat(targetRaw.replace(',', '.'));
-    if (isNaN(targetNum)) {
-      toast('❗ ' + t('exam_target_invalid_toast'));
-      return;
-    }
-    if (isSat) {
-      if (targetNum < 400 || targetNum > 1600) {
-        toast('❗ ' + t('exam_target_range_sat_toast'));
+  // oraliqda bo'lishi shart: IELTS band 0–9, SAT ball 400–1600, CEFR — A1-C2.
+  var targetVal;
+  if (isCefr) {
+    // CEFR: maqsad — tanlangan daraja tugmasi (ixtiyoriy)
+    targetVal = _ieltsCefrTargetLevel || '';
+  } else {
+    var targetRaw = document.getElementById('ielts-target-input').value.trim();
+    targetVal = targetRaw; // saqlanadigan yakuniy qiymat (string)
+    if (targetRaw) {
+      var targetNum = parseFloat(targetRaw.replace(',', '.'));
+      if (isNaN(targetNum)) {
+        toast('❗ ' + t('exam_target_invalid_toast'));
         return;
       }
-      targetVal = String(Math.round(targetNum));
-    } else {
-      if (targetNum < 0 || targetNum > 9) {
-        toast('❗ ' + t('exam_target_range_ielts_toast'));
-        return;
+      if (isSat) {
+        if (targetNum < 400 || targetNum > 1600) {
+          toast('❗ ' + t('exam_target_range_sat_toast'));
+          return;
+        }
+        targetVal = String(Math.round(targetNum));
+      } else {
+        if (targetNum < 0 || targetNum > 9) {
+          toast('❗ ' + t('exam_target_range_ielts_toast'));
+          return;
+        }
+        // IELTS band ballari rasmiy ravishda faqat 0.5 qadam bilan bo'ladi
+        // (masalan 6.0, 6.5, 7.0) — eng yaqin 0.5 ga yaxlitlaymiz.
+        targetVal = String(Math.round(targetNum * 2) / 2);
       }
-      // IELTS band ballari rasmiy ravishda faqat 0.5 qadam bilan bo'ladi
-      // (masalan 6.0, 6.5, 7.0) — eng yaqin 0.5 ga yaxlitlaymiz.
-      targetVal = String(Math.round(targetNum * 2) / 2);
     }
   }
 
@@ -23356,12 +23838,14 @@ function clearIeltsDate() {
 function renderIeltsCountdown() {
   var showIelts = hasExamSubject('ielts');
   var showSat   = hasExamSubject('sat');
+  var showCefr  = hasExamSubject('cefr');
   _renderExamCountdownCard('ielts', '', showIelts);
   _renderExamCountdownCard('sat', '-sat', showSat);
+  _renderExamCountdownCard('cefr', '-cefr', showCefr);
 }
 
-// examType — 'ielts' | 'sat'; suffix — mos HTML elementlar ID
-// qo'shimchasi ('' — IELTS uchun asosiy karta, '-sat' — SAT nusxasi).
+// examType — 'ielts' | 'sat' | 'cefr'; suffix — mos HTML elementlar ID
+// qo'shimchasi ('' — IELTS uchun asosiy karta, '-sat'/'-cefr' — nusxalar).
 function _renderExamCountdownCard(examType, suffix, isActive) {
   var card      = document.getElementById('ielts-countdown-card' + suffix);
   var noDateEl  = document.getElementById('ielts-no-date' + suffix);
@@ -23372,7 +23856,7 @@ function _renderExamCountdownCard(examType, suffix, isActive) {
   if (!noDateEl || !hasDateEl) return;
 
   if (!isActive) {
-    // Foydalanuvchi shu turni (IELTS yoki SAT) "Nimaga tayyorlanyapsiz?"
+    // Foydalanuvchi shu turni (IELTS/SAT/CEFR) "Nimaga tayyorlanyapsiz?"
     // ro'yxatida umuman tanlamagan — karta butunlay yashiriladi.
     if (card) card.style.display = 'none';
     if (editBtn) editBtn.style.display = 'none';
@@ -23384,8 +23868,9 @@ function _renderExamCountdownCard(examType, suffix, isActive) {
   if (card) card.style.display = '';
 
   if (editBtn) editBtn.style.display = '';
-  if (titleEl) titleEl.textContent = (examType === 'sat' ? '📐 SAT' : '📝 IELTS') + ' ' + t('exam_title_suffix');
-  if (bgEmoji) bgEmoji.textContent = '📝';
+  var titlePrefix = examType === 'sat' ? '📐 SAT' : (examType === 'cefr' ? '📘 CEFR' : '📝 IELTS');
+  if (titleEl) titleEl.textContent = titlePrefix + ' ' + t('exam_title_suffix');
+  if (bgEmoji) bgEmoji.textContent = examType === 'cefr' ? '📘' : '📝';
 
   var saved = getExamDate(examType);
 
@@ -23436,15 +23921,22 @@ function _renderExamCountdownCard(examType, suffix, isActive) {
   daysEl.style.fontSize = diffDays > 99 ? '38px' : '52px';
   var targetStr = '';
   if (saved.target) {
-    var isSatMode = (examType === 'sat');
-    var targetNum = parseFloat(saved.target);
+    var isSatMode  = (examType === 'sat');
+    var isCefrMode = (examType === 'cefr');
     var validTarget = true;
-    if (isSatMode) {
-      // SAT: 1000-1600 oralig'ida bo'lishi kerak
-      validTarget = !isNaN(targetNum) && targetNum >= 400 && targetNum <= 1600;
+    if (isCefrMode) {
+      // CEFR: maqsad — A1..C2 darajalardan biri bo'lishi kerak (son emas)
+      var cefrLevelsList = (typeof CEFR_LEVELS !== 'undefined') ? CEFR_LEVELS : ['A1','A2','B1','B2','C1','C2'];
+      validTarget = cefrLevelsList.indexOf(saved.target) !== -1;
     } else {
-      // IELTS: 0-9 oralig'i
-      validTarget = !isNaN(targetNum) && targetNum >= 0 && targetNum <= 9;
+      var targetNum = parseFloat(saved.target);
+      if (isSatMode) {
+        // SAT: 1000-1600 oralig'ida bo'lishi kerak
+        validTarget = !isNaN(targetNum) && targetNum >= 400 && targetNum <= 1600;
+      } else {
+        // IELTS: 0-9 oralig'i
+        validTarget = !isNaN(targetNum) && targetNum >= 0 && targetNum <= 9;
+      }
     }
     if (validTarget) targetStr = t('ielts_target_inline') + saved.target;
   }
@@ -24314,7 +24806,11 @@ function renderDayDetailContent(dateStr) {
     // (▸/▾ va bajarilgan/jami hisoblagich bilan birga).
     var subs = ensureSubtasks(tsk);
     var hasSubs = subs.length > 0;
-    var subsDoneCount = subs.filter(function(s){ return s.done; }).length;
+    // 🐛 BUG FIX (1): sarlavhadagi (n/n) hisoblagich ham endi joriy s.done'dan
+    // emas, xuddi renderSubtasksHtml/subtaskItemHtml kabi TANLANGAN sana
+    // logidan (subtaskDoneOnDate) o'qiladi — aks holda o'tgan kun panelida
+    // bugungi holat ko'rsatilardi.
+    var subsDoneCount = subs.filter(function(s){ return subtaskDoneOnDate(tsk.id, s.id, dateStr); }).length;
     var nameHtml = hasSubs
       ? '<span id="cal-subtask-indicator-' + tsk.id + '" style="display:inline-block;width:12px;color:var(--text-dim)">' + (expandedCalSubtaskTasks.has(tsk.id)?'▾':'▸') + '</span>' +
         esc(tsk.name) +
@@ -24333,7 +24829,7 @@ function renderDayDetailContent(dateStr) {
           '<span style="' + nameStyle + '"' + nameOnclick + '>' + nameHtml + '</span>' +
           '<span id="calcoin-' + tsk.id + '" style="font-size:var(--fs-xs);color:#F5A623;font-weight:600">' + coins + '</span>' +
         '</div>' +
-        (hasSubs ? '<div class="subtask-wrap" id="cal-subtask-wrap-' + tsk.id + '" style="display:' + (expandedCalSubtaskTasks.has(tsk.id)?'block':'none') + '" onclick="event.stopPropagation()">' + renderSubtasksHtml(tsk, 'cal-') + '</div>' : '') +
+        (hasSubs ? '<div class="subtask-wrap" id="cal-subtask-wrap-' + tsk.id + '" style="display:' + (expandedCalSubtaskTasks.has(tsk.id)?'block':'none') + '" onclick="event.stopPropagation()">' + renderSubtasksHtml(tsk, 'cal-', dateStr) + '</div>' : '') +
       '</div>';
   });
   } catch (e) {
@@ -24420,6 +24916,15 @@ function calEditTask(id, dateStr) {
   editTask(id);
 }
 
+// 🐛 BUG FIX (4): calToggleTaskDone() endi to'g'ridan-to'g'ri ichki mantiqqa
+// o'tmaydi — avval, xuddi toggleTask() bugungi kun uchun qiladigani kabi,
+// agar ota-vazifa shu (o'tgan) SANADA hali "Done" bo'lmagan bo'lsa va uning
+// o'sha sanada hali tugallanmagan sub-tasklari bo'lsa, S.subtaskAskCompleteOnParentDone
+// sozlamasiga qarab foydalanuvchidan "sub-tasklarni ham belgilaymizmi?" deb
+// so'raladi. "Ha" deyilsa — barcha tugallanmagan sub-tasklar aynan SHU dateStr
+// uchun toggleSubtask(taskId, subId, dateStr) orqali avtomatik belgilanadi
+// (asosiy Tasks bo'limidagi bugungi xatti-harakat bilan bir xil), so'ng haqiqiy
+// ota-vazifa toggle'i (calToggleTaskDoneInternal) bajariladi.
 function calToggleTaskDone(id, dateStr) {
   var tk = S.tasks.find(function(x){ return x.id === id; });
   if (!tk) return;
@@ -24432,6 +24937,37 @@ function calToggleTaskDone(id, dateStr) {
     showDayDetail(dateStr);
     return;
   }
+
+  if (!S.taskDoneLog) S.taskDoneLog = {};
+  if (!S.taskDoneLog[id]) S.taskDoneLog[id] = [];
+  var _willBeDone = S.taskDoneLog[id].indexOf(dateStr) === -1;
+
+  if (_willBeDone) {
+    ensureSubtaskAutoSettingsDefaults();
+    var _subs = ensureSubtasks(tk);
+    var _hasPending = _subs.some(function (s) {
+      return !subtaskDoneOnDate(tk.id, s.id, dateStr) && !s.skipped;
+    });
+    if (S.subtaskAskCompleteOnParentDone && _hasPending) {
+      askMarkSubtasksDoneModal(tk, function (markAll) {
+        if (markAll) {
+          _suppressAutoParentComplete = true;
+          _subs.forEach(function (s) {
+            if (!subtaskDoneOnDate(tk.id, s.id, dateStr) && !s.skipped) toggleSubtask(tk.id, s.id, dateStr);
+          });
+          _suppressAutoParentComplete = false;
+        }
+        calToggleTaskDoneInternal(id, dateStr);
+      });
+      return;
+    }
+  }
+  calToggleTaskDoneInternal(id, dateStr);
+}
+
+function calToggleTaskDoneInternal(id, dateStr) {
+  var tk = S.tasks.find(function(x){ return x.id === id; });
+  if (!tk) return;
 
   if (!S.taskDoneLog) S.taskDoneLog = {};
   if (!S.taskDoneLog[id]) S.taskDoneLog[id] = [];
@@ -24540,13 +25076,6 @@ function calToggleTaskDone(id, dateStr) {
       var candidate = addDays(dateStr, iv);
       if (!tk.nextDate || candidate > tk.nextDate) tk.nextDate = candidate;
     }
-    // MUHIM TUZATISH: agar bu taskning hali bajarilmagan sub-tasklari bo'lsa,
-    // asosiy Tasks bo'limidagi toggleTask() dagi kabi ularni alohida
-    // (standalone) tasklarga ajratib chiqaramiz — aks holda task "✅ Bajarildi"
-    // deb belgilanadi-yu, lekin sub-tasklari hali "1/3" kabi tugallanmagan
-    // holda qolib, kalendar kunini (yashil rang) va progress hisoblagichini
-    // chalkash/nomuvofiq qilib qo'yardi.
-    if (S.subtaskExtractOnParentDone) extractPendingSubtasksOnParentDone(tk);
   }
 
   // ---- STREAK'NI KUNLAR ZANJIRIGA QARAB DINAMIK QAYTA HISOBLASH ----
@@ -25608,6 +26137,120 @@ setTimeout(function(){ updateMoodBtn(); }, 100);
         <button onclick="closeSatResultModal()" style="flex:1;padding:12px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:var(--fs-base);cursor:pointer" data-i18n="btn_cancel">Bekor</button>
         <button onclick="saveSatResult()" style="flex:2;padding:12px;border-radius:var(--radius-md);border:none;background:var(--accent);color:#fff;font-size:var(--fs-base);font-weight:600;cursor:pointer" data-i18n="btn_save_disk">💾 Saqlash</button>
       </div>
+    </div>
+  </div>
+
+  <!-- CEFR Result Modal (2-bosqich) -->
+  <div id="cefr-result-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:300;align-items:center;justify-content:center;padding:20px">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:24px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto">
+      <div style="font-family:Syne,sans-serif;font-size:var(--fs-lg);font-weight:700;margin-bottom:6px" data-i18n="cefr_modal_title">🇪🇺 CEFR Natija</div>
+      <div style="font-size:var(--fs-xs);color:var(--text-muted);margin-bottom:18px" data-i18n="cefr_modal_sub">Bitta bo'lim natijasini kiriting</div>
+
+      <!-- STEP 1: Section tanlash -->
+      <div style="margin-bottom:14px">
+        <label style="font-size:var(--fs-xs);color:var(--text-muted);display:block;margin-bottom:8px" data-i18n="cefr_select_section">Bo'lim tanlang</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <button id="cefr-sec-listening" onclick="selectCefrSection('listening')" style="padding:10px;border-radius:var(--radius-sm);border:2px solid rgba(96,165,250,0.3);background:rgba(96,165,250,0.06);color:#60A5FA;font-size:var(--fs-sm);font-weight:600;cursor:pointer;transition:all 0.2s" data-i18n="ielts_sec_listening">🎧 Listening</button>
+          <button id="cefr-sec-reading" onclick="selectCefrSection('reading')" style="padding:10px;border-radius:var(--radius-sm);border:2px solid rgba(52,211,153,0.3);background:rgba(52,211,153,0.06);color:#34D399;font-size:var(--fs-sm);font-weight:600;cursor:pointer;transition:all 0.2s" data-i18n="ielts_sec_reading">📖 Reading</button>
+          <button id="cefr-sec-writing" onclick="selectCefrSection('writing')" style="padding:10px;border-radius:var(--radius-sm);border:2px solid rgba(245,166,35,0.3);background:rgba(245,166,35,0.06);color:#F5A623;font-size:var(--fs-sm);font-weight:600;cursor:pointer;transition:all 0.2s" data-i18n="ielts_sec_writing">✍️ Writing</button>
+          <button id="cefr-sec-speaking" onclick="selectCefrSection('speaking')" style="padding:10px;border-radius:var(--radius-sm);border:2px solid rgba(248,113,113,0.3);background:rgba(248,113,113,0.06);color:#F87171;font-size:var(--fs-sm);font-weight:600;cursor:pointer;transition:all 0.2s" data-i18n="ielts_sec_speaking">🗣️ Speaking</button>
+        </div>
+        <button id="cefr-sec-full" onclick="selectCefrSection('full')" style="width:100%;margin-top:8px;padding:10px;border-radius:var(--radius-sm);border:2px solid rgba(124,92,252,0.3);background:rgba(124,92,252,0.06);color:#B48EFF;font-size:var(--fs-sm);font-weight:600;cursor:pointer;transition:all 0.2s">🧩 Full Mock (to'liq test)</button>
+      </div>
+
+      <!-- Sana -->
+      <div style="margin-bottom:14px">
+        <label style="font-size:var(--fs-xs);color:var(--text-muted);display:block;margin-bottom:6px" data-i18n="ielts_date_label">Sana</label>
+        <input type="date" id="cefr-res-date" style="width:100%;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:var(--fs-base);font-family:DM Sans,sans-serif;outline:none;box-sizing:border-box" />
+      </div>
+
+      <!-- Kiritish usuli: Raw ball orqali (avtomatik konversiya) YOKI
+           to'g'ridan-to'g'ri Darajani tanlash. selectCefrInputMode() shu
+           ikki qatorni (#cefr-raw-row / #cefr-level-row) almashtiradi. -->
+      <div style="margin-bottom:14px">
+        <label style="font-size:var(--fs-xs);color:var(--text-muted);display:block;margin-bottom:8px" data-i18n="cefr_input_mode_label">Natijani qanday kiritmoqchisiz?</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <button type="button" id="cefr-mode-raw" onclick="selectCefrInputMode('raw')" style="padding:10px;border-radius:var(--radius-sm);border:2px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:var(--fs-sm);font-weight:600;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif" data-i18n="cefr_mode_raw_btn">🔢 Ball orqali</button>
+          <button type="button" id="cefr-mode-level" onclick="selectCefrInputMode('level')" style="padding:10px;border-radius:var(--radius-sm);border:2px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:var(--fs-sm);font-weight:600;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif" data-i18n="cefr_mode_level_btn">🔤 Daraja orqali</button>
+        </div>
+      </div>
+
+      <!-- Raw ball qatori (0-35 shkala — cefrRawToLevel() konversiyasiga mos) — faqat 'raw' rejimida ko'rinadi -->
+      <div id="cefr-raw-row" style="display:none;margin-bottom:14px">
+        <label style="font-size:var(--fs-xs);color:var(--text-muted);display:block;margin-bottom:6px" data-i18n="cefr_score_label">CEFR ball (0-35)</label>
+        <div style="display:flex;gap:10px;align-items:center">
+          <input type="number" id="cefr-res-raw" min="0" max="35" step="1" placeholder="masalan: 22" data-i18n-ph="cefr_score_ph"
+            oninput="calcCefrLevelLive()"
+            style="flex:1;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:var(--fs-base);font-family:DM Sans,sans-serif;outline:none;box-sizing:border-box" />
+          <div style="font-size:var(--fs-sm);color:var(--text-muted)">&#8594;</div>
+          <div id="cefr-res-level-preview" style="min-width:64px;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:var(--fs-md);font-weight:700;text-align:center;color:var(--text)">—</div>
+        </div>
+        <div style="font-size:var(--fs-2xs);color:var(--text-dim);margin-top:5px" data-i18n="cefr_conv_hint">Bu taxminiy konversiya — real test markazi natijasidan farq qilishi mumkin.</div>
+      </div>
+
+      <!-- Darajani to'g'ridan-to'g'ri tanlash qatori (A1-C2) — faqat 'level' rejimida ko'rinadi.
+           Tugmalar (#cefr-level-btns ichiga) openCefrResultModal() tomonidan CEFR_LEVELS asosida chiziladi. -->
+      <div id="cefr-level-row" style="display:none;margin-bottom:14px">
+        <label style="font-size:var(--fs-xs);color:var(--text-muted);display:block;margin-bottom:8px" data-i18n="cefr_level_select_label">Darajani tanlang</label>
+        <div id="cefr-level-btns" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px"></div>
+      </div>
+
+      <div style="display:flex;gap:10px">
+        <button onclick="closeCefrResultModal()" style="flex:1;padding:12px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:var(--fs-base);cursor:pointer" data-i18n="btn_cancel">Bekor</button>
+        <button onclick="saveCefrResult()" style="flex:2;padding:12px;border-radius:var(--radius-md);border:none;background:var(--accent);color:#fff;font-size:var(--fs-base);font-weight:600;cursor:pointer" data-i18n="btn_save_disk">💾 Saqlash</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CEFR Filter Modal -->
+  <div id="cefr-filter-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:300;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeCefrFilterModal()">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:24px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto">
+      <div style="font-family:Syne,sans-serif;font-size:var(--fs-lg);font-weight:700;margin-bottom:18px" data-i18n="ielts_filter_title">🔎 Natijalarni filtrlash</div>
+
+      <div style="margin-bottom:14px">
+        <label style="font-size:var(--fs-xs);color:var(--text-muted);display:block;margin-bottom:8px" data-i18n="ielts_filter_module_label">Modul</label>
+        <div id="cefr-filter-module-btns" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:6px">
+        <button onclick="resetCefrFilter()" style="flex:1;padding:12px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:var(--fs-base);cursor:pointer" data-i18n="ielts_filter_reset_btn">Tozalash</button>
+        <button onclick="applyCefrFilter()" style="flex:2;padding:12px;border-radius:var(--radius-md);border:none;background:var(--accent);color:#fff;font-size:var(--fs-base);font-weight:600;cursor:pointer" data-i18n="ielts_filter_apply_btn">Qo'llash</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CEFR Detailed Analysis Modal (2-bosqich) -->
+  <div id="cefr-detail-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:300;align-items:flex-end;justify-content:center;padding:0" onclick="if(event.target===this)closeCefrDetailModal()">
+    <div style="background:var(--surface);border:1px solid rgba(124,92,252,0.3);border-radius:var(--radius-xl) 24px 0 0;padding:0;width:100%;max-width:560px;max-height:94vh;display:flex;flex-direction:column;overflow:hidden;animation:slideUp 0.25s ease">
+      <!-- Handle -->
+      <div style="display:flex;justify-content:center;padding:12px 0 0;flex-shrink:0">
+        <div style="width:40px;height:4px;border-radius:var(--radius-full);background:var(--border-hover)"></div>
+      </div>
+      <!-- Header -->
+      <div style="padding:16px 22px 16px;display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0;border-bottom:1px solid var(--border)">
+        <div>
+          <div style="font-family:Syne,sans-serif;font-size:var(--fs-lg);font-weight:700;color:var(--text)">🇪🇺 CEFR — Chuqur tahlil</div>
+          <div id="cefr-detail-overall-sub" style="font-size:var(--fs-sm);color:var(--text-muted);margin-top:5px"></div>
+        </div>
+        <button onclick="closeCefrDetailModal()" style="background:var(--surface2);border:none;width:34px;height:34px;border-radius:50%;color:var(--text-muted);font-size:var(--fs-md);cursor:pointer;flex-shrink:0">✕</button>
+      </div>
+      <!-- Section tabs -->
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:16px 16px 0;flex-shrink:0">
+        <button id="cefr-dtab-listening" onclick="selectCefrDetailSection('listening')" style="padding:11px 4px;border-radius:var(--radius-md);border:2px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:var(--fs-2xs);font-weight:600;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif;line-height:1.3">🎧 L</button>
+        <button id="cefr-dtab-reading" onclick="selectCefrDetailSection('reading')" style="padding:11px 4px;border-radius:var(--radius-md);border:2px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:var(--fs-2xs);font-weight:600;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif;line-height:1.3">📖 R</button>
+        <button id="cefr-dtab-writing" onclick="selectCefrDetailSection('writing')" style="padding:11px 4px;border-radius:var(--radius-md);border:2px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:var(--fs-2xs);font-weight:600;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif;line-height:1.3">✍️ W</button>
+        <button id="cefr-dtab-speaking" onclick="selectCefrDetailSection('speaking')" style="padding:11px 4px;border-radius:var(--radius-md);border:2px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:var(--fs-2xs);font-weight:600;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif;line-height:1.3">🗣️ S</button>
+        <button id="cefr-dtab-full" onclick="selectCefrDetailSection('full')" style="padding:11px 4px;border-radius:var(--radius-md);border:2px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:var(--fs-2xs);font-weight:600;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif;line-height:1.3">🧩 Full</button>
+      </div>
+      <!-- Window-size filter -->
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 22px 0;flex-shrink:0">
+        <label for="cefr-detail-window-select" style="font-size:var(--fs-xs);color:var(--text-muted);flex:1">Oxirgi nechta urinish hisoblansin?</label>
+        <select id="cefr-detail-window-select" onchange="onCefrDetailWindowChange(this.value)" style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:var(--fs-sm);font-weight:600;padding:8px 10px;font-family:'DM Sans',sans-serif;cursor:pointer"></select>
+      </div>
+      <!-- Hint -->
+      <div style="padding:12px 22px 0;font-size:var(--fs-xs);color:var(--text-dim);line-height:1.5">Joriy daraja va dinamika tanlangan filtrdagi oxirgi urinishlar asosida hisoblanadi.</div>
+      <!-- Content -->
+      <div id="cefr-detail-content" style="flex:1;overflow-y:auto;padding:18px 22px 30px"></div>
     </div>
   </div>
 
@@ -26717,6 +27360,534 @@ function deleteIeltsResult(id) {
   renderIeltsTab();
   try { renderExamTrendChart(); } catch(e) {}
   try { renderExamForecastCard(); } catch(e) {}
+}
+
+// ============================================================
+// 🇪🇺 CEFR TAB — 1-BOSQICH (State + UI qobig'i) + 2-BOSQICH (modallar)
+// ------------------------------------------------------------
+// 1-bosqichda faqat S.cefr asosida ekranni chizuvchi renderCefrTab()
+// yozilgan edi. 2-bosqichda haqiqiy natija kiritish (cefr-result-modal)
+// va chuqur tahlil (cefr-detail-modal) oynalari + ularni boshqaruvchi
+// to'liq JS logikasi qo'shildi.
+// ============================================================
+var CEFR_LEVELS = ['A1','A2','B1','B2','C1','C2'];
+var CEFR_SECTIONS = ['listening','reading','writing','speaking']; // asosiy 4 ta ko'nikma kartasi uchun
+var CEFR_DETAIL_SECTIONS = ['listening','reading','writing','speaking','full']; // detail modal tablari uchun ("full" — Full Mock)
+var CEFR_SECTION_LABELS = { listening:'🎧 Listening', reading:'📖 Reading', writing:'✍️ Writing', speaking:'🗣️ Speaking', full:'🧩 Full Mock' };
+var CEFR_SECTION_COLORS = {
+  listening: { hex:'#60A5FA', rgb:'96,165,250' },
+  reading:   { hex:'#34D399', rgb:'52,211,153' },
+  writing:   { hex:'#F5A623', rgb:'245,166,35' },
+  speaking:  { hex:'#F87171', rgb:'248,113,113' },
+  full:      { hex:'#B48EFF', rgb:'124,92,252' }
+};
+
+// Eski (S.cefr hali yo'q) foydalanuvchilar uchun ham xavfsiz — struktura
+// mavjud bo'lmasa, standart bo'sh holat bilan to'ldiradi.
+function ensureCefrDefaults() {
+  if (!S.cefr || typeof S.cefr !== 'object') {
+    S.cefr = { targetLevel: null, examDate: null, examDateSavedAt: null, history: [] };
+  }
+  if (!Array.isArray(S.cefr.history)) S.cefr.history = [];
+  if (typeof S.cefr.targetLevel === 'undefined') S.cefr.targetLevel = null;
+  if (typeof S.cefr.examDate === 'undefined') S.cefr.examDate = null;
+}
+
+// ============================================================
+// 🧮 Raw ball (0-35) -> CEFR daraja taxminiy konversiyasi
+// ------------------------------------------------------------
+// Bu rasmiy shkala EMAS — turli CEFR testlari (Linguaskill, EF SET va h.k.)
+// turlicha shkalaga ega, shu sabab bu yerda 0-35 oralig'i uchun soddalashtirilgan,
+// chiziqli taqsimlangan taxminiy jadval ishlatiladi (foydalanuvchiga UI'da
+// "taxminiy konversiya" deb ogohlantiriladi).
+function cefrRawToLevel(raw) {
+  var r = Number(raw);
+  if (isNaN(r)) return null;
+  if (r >= 30) return 'C2';
+  if (r >= 25) return 'C1';
+  if (r >= 20) return 'B2';
+  if (r >= 15) return 'B1';
+  if (r >= 10) return 'A2';
+  return 'A1';
+}
+
+// CEFR darajalarni sonli tartibga aylantiradi (dinamikani solishtirish uchun) —
+// A1=1 ... C2=6.
+function cefrLevelToRank(level) {
+  var idx = CEFR_LEVELS.indexOf(level);
+  return idx === -1 ? null : idx + 1;
+}
+
+// ============================================================
+// 💾 S.cefr.history HELPER FUNKSIYALARI — kiritish/o'chirish
+// ------------------------------------------------------------
+function addCefrResultEntry(entry) {
+  ensureCefrDefaults();
+  var e = Object.assign({ id: Date.now(), raw: null }, entry);
+  S.cefr.history.push(e);
+  save();
+  return e;
+}
+function deleteCefrResultEntry(id) {
+  ensureCefrDefaults();
+  S.cefr.history = S.cefr.history.filter(function(h){ return h.id !== id; });
+  save();
+  renderCefrTab();
+  // Agar detail modal ochiq bo'lsa, uni ham yangilaymiz
+  var modal = document.getElementById('cefr-detail-modal');
+  if (modal && modal.style.display === 'flex' && _cefrDetailSection) {
+    renderCefrDetailContent(_cefrDetailSection);
+    _cefrDetailRefreshSubHeader();
+  }
+}
+
+// ============ CEFR FILTR (Bo'lim bo'yicha) — IELTS filtr modaliga o'xshash,
+// lekin CEFR'da faqat bitta bosqich (sub-modul yo'q): "Barchasi" yoki
+// Listening/Reading/Writing/Speaking/Full Mock'dan biri tanlanadi.
+// ============================================================
+var _cefrFilterModule = 'all';
+
+function openCefrFilterModal() {
+  var modal = document.getElementById('cefr-filter-modal');
+  if (!modal) return;
+  renderCefrFilterModal();
+  modal.style.display = 'flex';
+}
+function closeCefrFilterModal() {
+  var modal = document.getElementById('cefr-filter-modal');
+  if (modal) modal.style.display = 'none';
+}
+function renderCefrFilterModal() {
+  var modMap = [
+    { key: 'all',       label: t('ielts_filter_all'),   emoji: '🌐', color: '#B48EFF' },
+    { key: 'listening', label: t('cefr_sec_listening'),  emoji: '🎧', color: '#60A5FA' },
+    { key: 'reading',   label: t('cefr_sec_reading'),    emoji: '📖', color: '#34D399' },
+    { key: 'writing',   label: t('cefr_sec_writing'),    emoji: '✍️', color: '#F5A623' },
+    { key: 'speaking',  label: t('cefr_sec_speaking'),   emoji: '🗣️', color: '#F87171' },
+    { key: 'full',      label: t('cefr_sec_full'),       emoji: '🧩', color: '#B48EFF' }
+  ];
+  var modWrap = document.getElementById('cefr-filter-module-btns');
+  if (modWrap) {
+    modWrap.innerHTML = modMap.map(function(m) {
+      var sel = (m.key === _cefrFilterModule);
+      return '<button onclick="selectCefrFilterModule(\'' + m.key + '\')" style="' +
+        'padding:9px 8px;border-radius:var(--radius-md);border:2px solid ' + (sel ? m.color : 'var(--border)') + ';' +
+        'background:' + (sel ? m.color + '22' : 'var(--surface2)') + ';' +
+        'color:' + (sel ? m.color : 'var(--text-muted)') + ';' +
+        'font-size:var(--fs-xs);font-weight:600;cursor:pointer;transition:all 0.15s;font-family:DM Sans,sans-serif;text-align:center">' +
+        m.emoji + ' ' + m.label + '</button>';
+    }).join('');
+  }
+}
+function selectCefrFilterModule(key) {
+  _cefrFilterModule = key;
+  renderCefrFilterModal();
+}
+function applyCefrFilter() {
+  closeCefrFilterModal();
+  renderCefrTab();
+}
+function resetCefrFilter() {
+  _cefrFilterModule = 'all';
+  renderCefrFilterModal();
+  renderCefrTab();
+}
+
+function renderCefrTab() {
+  ensureCefrDefaults();
+  var hist = S.cefr.history || [];
+
+  // ===== OVERALL (o'rtacha) HISOBLASH — IELTS'dagi bir xil mantiq =====
+  // 4 ta asosiy ko'nikma (Listening/Reading/Writing/Speaking — "Full Mock"
+  // kirmaydi) uchun ENG SO'NGGI darajani rank (A1=1...C2=6) ga aylantirib,
+  // barchasi mavjud bo'lsa o'rtachasini (eng yaqin butun rankka yaxlitlab)
+  // yana CEFR darajaga aylantiramiz. Faqat qisman ma'lumot bo'lsa "—".
+  var overallCard = document.getElementById('cefr-overall-card');
+  var overallLabel = document.getElementById('cefr-overall-label');
+  if (overallLabel) overallLabel.textContent = t('cefr_overall_avg');
+
+  if (hist.length === 0) {
+    if (overallCard) overallCard.style.display = 'none';
+  } else if (overallCard) {
+    overallCard.style.display = 'block';
+
+    var secRanks = {};
+    CEFR_SECTIONS.forEach(function (s) {
+      var entries = hist.filter(function (h) { return h.section === s; })
+        .sort(function (a, b) { return (a.date || '').localeCompare(b.date || ''); });
+      if (!entries.length) return;
+      var rank = cefrLevelToRank(entries[entries.length - 1].level);
+      if (rank !== null) secRanks[s] = rank;
+    });
+    var secKeys = Object.keys(secRanks);
+
+    var valEl = document.getElementById('cefr-overall-val');
+    var subEl = document.getElementById('cefr-overall-sub');
+
+    var subParts = [];
+    CEFR_SECTIONS.forEach(function (s) {
+      var short = { listening: 'L', reading: 'R', writing: 'W', speaking: 'S' }[s];
+      if (secRanks[s] !== undefined) subParts.push(short + ':' + CEFR_LEVELS[secRanks[s] - 1]);
+    });
+
+    if (secKeys.length === 4) {
+      var sum = secKeys.reduce(function (acc, k) { return acc + secRanks[k]; }, 0);
+      var avgRank = Math.max(1, Math.min(CEFR_LEVELS.length, Math.round(sum / 4)));
+      if (valEl) { valEl.textContent = CEFR_LEVELS[avgRank - 1]; valEl.style.fontSize = '52px'; }
+    } else {
+      if (valEl) { valEl.textContent = '—'; valEl.style.fontSize = '52px'; }
+    }
+
+    if (subEl) {
+      subEl.textContent = subParts.join(' ');
+      // Asosiy ekranda breakdown ko'rsatilmaydi — bu ma'lumot IELTS/SAT'dagi
+      // kabi faqat "Chuqur tahlil" modalida (kartochka bosilganda) ko'rinadi.
+      subEl.style.display = 'none';
+    }
+    var tapHint = document.getElementById('cefr-overall-tap-hint');
+    if (tapHint) tapHint.style.display = 'block';
+  }
+
+  // Natijalar tarixi ro'yxati (o'chirish tugmasi bilan) — faol bo'lim
+  // filtri (_cefrFilterModule) qo'llaniladi, "🔎 Filtr" tugmasidagi nuqta
+  // (cefr-filter-dot) filtr aktiv ekanini bildiradi.
+  var filterDot = document.getElementById('cefr-filter-dot');
+  if (filterDot) filterDot.style.display = (_cefrFilterModule !== 'all') ? 'block' : 'none';
+
+  var list = document.getElementById('cefr-history-list');
+  var empty = document.getElementById('cefr-history-empty');
+  if (list && empty) {
+    var histFiltered = hist.slice()
+      .filter(function(h){ return _cefrFilterModule === 'all' || h.section === _cefrFilterModule; })
+      .sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
+    if (!histFiltered.length) {
+      list.innerHTML = '';
+      empty.style.display = 'block';
+    } else {
+      empty.style.display = 'none';
+      list.innerHTML = histFiltered.map(function(h) {
+        var label = CEFR_SECTION_LABELS[h.section] || h.section;
+        var rawSuffix = (h.raw !== null && h.raw !== undefined) ? (' <span style="font-size:var(--fs-2xs);color:var(--text-dim);font-weight:400">(' + h.raw + '/35)</span>') : '';
+        return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 14px;display:flex;justify-content:space-between;align-items:center">' +
+          '<div><div style="font-size:var(--fs-sm);font-weight:600;color:var(--text)">' + label + '</div>' +
+          '<div style="font-size:var(--fs-2xs);color:var(--text-dim);margin-top:2px">' + (h.date || '') + '</div></div>' +
+          '<div style="display:flex;align-items:center;gap:10px">' +
+            '<div style="font-family:Syne,sans-serif;font-size:var(--fs-xl);font-weight:700;color:#B48EFF">' + (h.level || '—') + rawSuffix + '</div>' +
+            '<button onclick="deleteCefrResultEntry(' + h.id + ')" title="O\'chirish" style="background:transparent;border:none;color:var(--text-dim);font-size:var(--fs-md);cursor:pointer;padding:4px">🗑️</button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+  }
+}
+
+// Overall kartochka bosilganda — IELTS/SAT'dagi kabi chuqur tahlil modali ochiladi.
+function onCefrOverallCardClick() {
+  openCefrDetailModal();
+}
+
+// ============================================================
+// 📥 CEFR RESULT MODAL — natija kiritish
+// ============================================================
+var _cefrSection = null;      // 'listening' | 'reading' | 'writing' | 'speaking' | 'full'
+var _cefrInputMode = null;    // 'raw' | 'level'
+var _cefrSelectedLevel = null;
+
+function openCefrResultModal() {
+  var modal = document.getElementById('cefr-result-modal');
+  if (!modal) return;
+
+  _cefrSection = null;
+  _cefrInputMode = null;
+  _cefrSelectedLevel = null;
+
+  // Section tugmalarini reset qilamiz
+  CEFR_DETAIL_SECTIONS.forEach(function(sec) {
+    var btn = document.getElementById('cefr-sec-' + sec);
+    if (btn) btn.style.opacity = '1';
+  });
+
+  // Kiritish usuli tugmalarini reset qilamiz
+  ['raw','level'].forEach(function(m) {
+    var btn = document.getElementById('cefr-mode-' + m);
+    if (btn) { btn.style.background = 'var(--surface2)'; btn.style.borderColor = 'var(--border)'; btn.style.color = 'var(--text-muted)'; }
+  });
+
+  var rawRow = document.getElementById('cefr-raw-row');
+  var levelRow = document.getElementById('cefr-level-row');
+  if (rawRow) rawRow.style.display = 'none';
+  if (levelRow) levelRow.style.display = 'none';
+
+  var rawInp = document.getElementById('cefr-res-raw');
+  var preview = document.getElementById('cefr-res-level-preview');
+  if (rawInp) rawInp.value = '';
+  if (preview) preview.textContent = '—';
+
+  // Daraja tugmalarini chizamiz
+  var levelBtns = document.getElementById('cefr-level-btns');
+  if (levelBtns) {
+    levelBtns.innerHTML = CEFR_LEVELS.map(function(lvl) {
+      return '<button id="cefr-lvl-' + lvl + '" onclick="selectCefrLevel(\'' + lvl + '\')" style="padding:10px;border-radius:var(--radius-sm);border:2px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:var(--fs-sm);font-weight:700;cursor:pointer;transition:all 0.15s;font-family:Syne,sans-serif">' + lvl + '</button>';
+    }).join('');
+  }
+
+  var dateInp = document.getElementById('cefr-res-date');
+  if (dateInp) { dateInp.value = today(); dateInp.max = today(); }
+
+  modal.style.display = 'flex';
+}
+
+function closeCefrResultModal() {
+  var modal = document.getElementById('cefr-result-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function selectCefrSection(sec) {
+  _cefrSection = sec;
+  CEFR_DETAIL_SECTIONS.forEach(function(s) {
+    var btn = document.getElementById('cefr-sec-' + s);
+    if (btn) btn.style.opacity = (s === sec) ? '1' : '0.4';
+  });
+}
+
+function selectCefrInputMode(mode) {
+  _cefrInputMode = mode;
+  ['raw','level'].forEach(function(m) {
+    var btn = document.getElementById('cefr-mode-' + m);
+    if (!btn) return;
+    var active = (m === mode);
+    btn.style.background = active ? 'var(--accent)' : 'var(--surface2)';
+    btn.style.borderColor = active ? 'transparent' : 'var(--border)';
+    btn.style.color = active ? '#fff' : 'var(--text-muted)';
+  });
+
+  var rawRow = document.getElementById('cefr-raw-row');
+  var levelRow = document.getElementById('cefr-level-row');
+  if (mode === 'raw') {
+    if (rawRow) rawRow.style.display = 'block';
+    if (levelRow) levelRow.style.display = 'none';
+    var rawInp = document.getElementById('cefr-res-raw');
+    var preview = document.getElementById('cefr-res-level-preview');
+    if (rawInp) rawInp.value = '';
+    if (preview) preview.textContent = '—';
+  } else {
+    if (rawRow) rawRow.style.display = 'none';
+    if (levelRow) levelRow.style.display = 'block';
+    _cefrSelectedLevel = null;
+    CEFR_LEVELS.forEach(function(lvl) {
+      var btn = document.getElementById('cefr-lvl-' + lvl);
+      if (btn) { btn.style.background = 'var(--surface2)'; btn.style.borderColor = 'var(--border)'; btn.style.color = 'var(--text-muted)'; }
+    });
+  }
+}
+
+function calcCefrLevelLive() {
+  var rawInp = document.getElementById('cefr-res-raw');
+  var preview = document.getElementById('cefr-res-level-preview');
+  if (!rawInp || !preview) return;
+  var raw = rawInp.value;
+  if (raw === '' || raw === null || isNaN(Number(raw))) { preview.textContent = '—'; return; }
+  var clamped = Math.max(0, Math.min(35, Number(raw)));
+  preview.textContent = cefrRawToLevel(clamped) || '—';
+}
+
+function selectCefrLevel(lvl) {
+  _cefrSelectedLevel = lvl;
+  CEFR_LEVELS.forEach(function(l) {
+    var btn = document.getElementById('cefr-lvl-' + l);
+    if (!btn) return;
+    if (l === lvl) {
+      btn.style.background = 'var(--accent)';
+      btn.style.borderColor = 'transparent';
+      btn.style.color = '#fff';
+    } else {
+      btn.style.background = 'var(--surface2)';
+      btn.style.borderColor = 'var(--border)';
+      btn.style.color = 'var(--text-muted)';
+    }
+  });
+}
+
+function saveCefrResult() {
+  if (!_cefrSection) { toast("Bo'limni tanlang"); return; }
+  if (!_cefrInputMode) { toast("Kiritish usulini tanlang"); return; }
+
+  var dateInp = document.getElementById('cefr-res-date');
+  var dateVal = (dateInp && dateInp.value) ? dateInp.value : today();
+
+  var level = null, rawVal = null;
+
+  if (_cefrInputMode === 'raw') {
+    var rawInp = document.getElementById('cefr-res-raw');
+    var raw = rawInp ? rawInp.value : '';
+    if (raw === '' || raw === null || isNaN(Number(raw))) { toast("Raw ballni kiriting"); return; }
+    rawVal = Math.max(0, Math.min(35, Number(raw)));
+    level = cefrRawToLevel(rawVal);
+  } else {
+    if (!_cefrSelectedLevel) { toast("Darajani tanlang"); return; }
+    level = _cefrSelectedLevel;
+  }
+
+  addCefrResultEntry({ section: _cefrSection, level: level, raw: rawVal, date: dateVal });
+
+  closeCefrResultModal();
+  renderCefrTab();
+  toast('✅ Natija saqlandi');
+}
+
+// ============================================================
+// 📊 CEFR DETAIL MODAL — chuqur tahlil
+// ============================================================
+var _cefrDetailSection = null;
+var _cefrDetailWindowSize = 5;
+
+function openCefrDetailModal(initialSection) {
+  ensureCefrDefaults();
+  var modal = document.getElementById('cefr-detail-modal');
+  if (!modal) return;
+
+  _cefrDetailWindowSize = 5;
+  _cefrPopulateWindowSelect();
+  _cefrDetailRefreshSubHeader();
+
+  modal.style.display = 'flex';
+
+  var hist = S.cefr.history;
+  var defaultSec = initialSection || CEFR_DETAIL_SECTIONS.find(function(s){ return hist.some(function(h){ return h.section === s; }); }) || 'listening';
+  selectCefrDetailSection(defaultSec);
+}
+
+function closeCefrDetailModal() {
+  var modal = document.getElementById('cefr-detail-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function onCefrDetailWindowChange(val) {
+  _cefrDetailWindowSize = (val === 'all') ? 'all' : parseInt(val, 10);
+  _cefrDetailRefreshSubHeader();
+  if (_cefrDetailSection) renderCefrDetailContent(_cefrDetailSection);
+}
+
+function selectCefrDetailSection(sec) {
+  _cefrDetailSection = sec;
+  CEFR_DETAIL_SECTIONS.forEach(function(s) {
+    var btn = document.getElementById('cefr-dtab-' + s);
+    if (!btn) return;
+    var c = CEFR_SECTION_COLORS[s];
+    var active = (s === sec);
+    btn.style.background  = active ? 'rgba(' + c.rgb + ',0.14)' : 'var(--surface2)';
+    btn.style.color       = active ? c.hex : 'var(--text-muted)';
+    btn.style.borderColor = active ? 'rgba(' + c.rgb + ',0.55)' : 'var(--border)';
+  });
+  renderCefrDetailContent(sec);
+}
+
+function _cefrPopulateWindowSelect() {
+  var sel = document.getElementById('cefr-detail-window-select');
+  if (!sel) return;
+  var opts = [3, 5, 10, 'all'];
+  sel.innerHTML = opts.map(function(v) {
+    var label = (v === 'all') ? 'Barchasi' : ('Oxirgi ' + v + ' ta');
+    return '<option value="' + v + '">' + label + '</option>';
+  }).join('');
+  sel.value = String(_cefrDetailWindowSize);
+}
+
+function _cefrDetailRefreshSubHeader() {
+  var subEl = document.getElementById('cefr-detail-overall-sub');
+  if (!subEl) return;
+  var hist = S.cefr.history || [];
+  var parts = [];
+  CEFR_DETAIL_SECTIONS.forEach(function(s) {
+    var entries = hist.filter(function(h){ return h.section === s; }).sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); });
+    var windowed = (_cefrDetailWindowSize === 'all') ? entries : entries.slice(-_cefrDetailWindowSize);
+    if (!windowed.length) return;
+    var last = windowed[windowed.length - 1];
+    var short = { listening:'L', reading:'R', writing:'W', speaking:'S', full:'Full' }[s];
+    parts.push(short + ':' + last.level);
+  });
+  subEl.textContent = parts.join('   ·   ');
+}
+
+// Berilgan bo'lim (sec) uchun: joriy daraja (tanlangan filtr asosidagi eng
+// so'nggi natija), oddiy dinamika (filtr oynasidagi birinchi va oxirgi
+// natija darajasini solishtirish) va urinishlar ro'yxatini (o'chirish
+// tugmasi bilan) chizadi.
+function renderCefrDetailContent(sec) {
+  var content = document.getElementById('cefr-detail-content');
+  if (!content) return;
+
+  var hist = (S.cefr.history || []).filter(function(h){ return h.section === sec; })
+    .sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); }); // eskidan yangiga
+
+  var color = CEFR_SECTION_COLORS[sec].hex;
+  var rgb = CEFR_SECTION_COLORS[sec].rgb;
+  var label = CEFR_SECTION_LABELS[sec];
+
+  if (!hist.length) {
+    content.innerHTML = '<div style="text-align:center;padding:50px 20px;color:var(--text-dim);font-size:var(--fs-base)">Bu bo\'lim uchun hali natija kiritilmagan</div>';
+    return;
+  }
+
+  var windowSize = _cefrDetailWindowSize;
+  var windowed = (windowSize === 'all') ? hist : hist.slice(-windowSize);
+  var current = windowed[windowed.length - 1];
+  var earliest = windowed[0];
+
+  var currentRank = cefrLevelToRank(current.level);
+  var earliestRank = cefrLevelToRank(earliest.level);
+  var trendHtml = '';
+  if (windowed.length > 1 && currentRank !== null && earliestRank !== null) {
+    if (currentRank > earliestRank) {
+      trendHtml = '<span style="color:#34D399">▲ ' + earliest.level + ' → ' + current.level + ' (yaxshilanish)</span>';
+    } else if (currentRank < earliestRank) {
+      trendHtml = '<span style="color:#F87171">▼ ' + earliest.level + ' → ' + current.level + ' (pasayish)</span>';
+    } else {
+      trendHtml = '<span style="color:var(--text-muted)">— ' + current.level + ' (o\'zgarishsiz)</span>';
+    }
+  } else {
+    trendHtml = '<span style="color:var(--text-muted)">Dinamika uchun kamida 2 ta natija kerak</span>';
+  }
+
+  var html = '';
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding:16px 18px;background:rgba(' + rgb + ',0.1);border:1px solid rgba(' + rgb + ',0.3);border-radius:var(--radius-md)">' +
+    '<div style="display:flex;align-items:center;gap:7px">' +
+      '<span style="font-size:var(--fs-sm);color:' + color + ';font-weight:600">Joriy daraja (' + label + ')</span>' +
+    '</div>' +
+    '<div style="font-family:Syne,sans-serif;font-size:var(--fs-3xl);font-weight:700;color:' + color + '">' + (current.level || '—') + '</div>' +
+  '</div>';
+
+  html += '<div style="font-size:var(--fs-sm);margin-bottom:18px;padding:10px 14px;background:var(--surface2);border-radius:var(--radius-sm)">' + trendHtml + '</div>';
+
+  var lastNLabel = (windowSize === 'all') ? 'Barchasi' : ('Oxirgi ' + windowed.length + ' ta');
+  html += '<div style="font-size:var(--fs-base);font-weight:700;color:var(--text);margin-bottom:11px">Urinishlar tarixi (' + lastNLabel + ')</div>';
+
+  var displayList = hist.slice().reverse(); // eng yangi tepada, BARCHA urinishlar (windowdan tashqarisi ham ko'rinadi, lekin xira)
+  html += '<div style="display:flex;flex-direction:column;gap:8px">' +
+    displayList.map(function(h) {
+      var inWindow = windowed.indexOf(h) !== -1;
+      var cardStyle = inWindow
+        ? 'background:rgba(' + rgb + ',0.14);border:1px solid rgba(' + rgb + ',0.55);'
+        : 'background:var(--surface2);border:1px solid var(--border);opacity:0.55;';
+      var rawSuffix = (h.raw !== null && h.raw !== undefined) ? (' <span style="font-size:var(--fs-2xs);color:var(--text-dim)">(' + h.raw + '/35)</span>') : '';
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:var(--radius-sm);font-size:var(--fs-sm);' + cardStyle + '">' +
+        '<span style="color:var(--text-muted)">' + _ieltsPrettyDate(h.date) + '</span>' +
+        '<span style="display:flex;align-items:center;gap:10px">' +
+          '<span style="color:var(--text);font-weight:700">→ ' + h.level + rawSuffix + '</span>' +
+          '<button onclick="deleteCefrResultEntry(' + h.id + ')" title="O\'chirish" style="background:transparent;border:none;color:var(--text-dim);font-size:var(--fs-md);cursor:pointer;padding:2px">🗑️</button>' +
+        '</span>' +
+      '</div>';
+    }).join('') +
+  '</div>';
+
+  content.innerHTML = html;
+}
+
+function openCefrTargetModal() {
+  toast("CEFR maqsad daraja modali keyingi bosqichda qo'shiladi");
+}
+function openCefrDateModal() {
+  toast("CEFR imtihon sanasi modali keyingi bosqichda qo'shiladi");
 }
 
 // ============ SAT RESULT FUNCTIONS ============
@@ -27999,9 +29170,9 @@ function wsRenderStep() {
       '<div style="' + titleStyle + '">' + t('ws_step_goal_title') + '</div>' +
       '<div style="' + descStyle + '">' + t('ws_step_goal_desc') + '</div>' +
       '<div id="ws-goal-pills" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">' +
-        ['sat', 'ielts', 'other'].map(function (code) {
+        ['sat', 'ielts', 'cefr', 'other'].map(function (code) {
           var isSel = wsState.goal === code;
-          var label = code === 'sat' ? t('ws_goal_sat') : code === 'ielts' ? t('ws_goal_ielts') : t('ws_goal_other');
+          var label = code === 'sat' ? t('ws_goal_sat') : code === 'ielts' ? t('ws_goal_ielts') : code === 'cefr' ? t('ws_goal_cefr') : t('ws_goal_other');
           return '<button type="button" class="pe-prep-pill' + (isSel ? ' sel' : '') + '" data-goal="' + code + '"><span class="pe-prep-check">✅</span>' + label + '</button>';
         }).join('') +
       '</div>' +
@@ -28337,6 +29508,7 @@ function wsFinish(method, toastKey) {
   try { if (typeof updateFocusToggleUI === 'function') updateFocusToggleUI(); } catch (e) {}
   try { if (typeof updateDifficultySelectUI === 'function') updateDifficultySelectUI(); } catch (e) {}
   try { render(); } catch (e) {}
+  try { updateIeltsTabVisibility(); } catch (e) {}
 
   closeWelcomeSurvey();
   if (typeof toast === 'function') toast(t(toastKey || 'onb_finish_toast'));
@@ -28394,6 +29566,24 @@ document.addEventListener('DOMContentLoaded', wsCheckSupabaseSession);
   var POMO_POS_KEY     = 'pomoFloatPos';
   var POMO_LOGS_KEY    = 'pomoLogs';
   var POMO_LOGS_MAX    = 2000; // eskirgan yozuvlarni cheklash
+
+  // 🆕 Tanaffus statistikasi — necha marta tanaffus TO'LIQ olingani va
+  // necha marta "Tanaffusni o'tkazib yuborish" tugmasi bilan SKIP qilingani.
+  var POMO_BREAK_STATS_KEY = 'pomoBreakStats';
+  var pomoBreakStats = { taken: 0, skipped: 0 };
+  function pomoLoadBreakStats() {
+    try {
+      var raw = localStorage.getItem(POMO_BREAK_STATS_KEY);
+      var parsed = raw ? JSON.parse(raw) : null;
+      pomoBreakStats = {
+        taken: (parsed && typeof parsed.taken === 'number') ? parsed.taken : 0,
+        skipped: (parsed && typeof parsed.skipped === 'number') ? parsed.skipped : 0
+      };
+    } catch (e) { pomoBreakStats = { taken: 0, skipped: 0 }; }
+  }
+  function pomoSaveBreakStats() {
+    try { localStorage.setItem(POMO_BREAK_STATS_KEY, JSON.stringify(pomoBreakStats)); } catch (e) {}
+  }
 
   // ---------------- Pomodoro SOZLAMALARI (Timers / Sounds) ----------------
   // Sozlamalar oynasi (⚙️) orqali o'zgartiriladi va localStorage'da saqlanadi.
@@ -29701,8 +30891,12 @@ document.addEventListener('DOMContentLoaded', wsCheckSupabaseSession);
     act.lastTickAt = Date.now();
     act.running = true;
     pomoSaveActivities();
+    // 🆕 Tanaffus SKIP qilindi — statistikaga +1.
+    pomoBreakStats.skipped = (pomoBreakStats.skipped || 0) + 1;
+    pomoSaveBreakStats();
     pomoUpdateFloatUI();
     pomoRenderActivityList();
+    pomoRenderCalendarIfOpen();
     pomoStartTicking();
     if (typeof toast === 'function') toast(t('pomo_toast_break_skipped'));
   };
@@ -30539,17 +31733,30 @@ document.addEventListener('DOMContentLoaded', wsCheckSupabaseSession);
   var POMO_CHART_COLORS = ['var(--accent)', 'var(--gold)', 'var(--green)', 'var(--info)', 'var(--red)', '#c084fc', '#2dd4bf', '#fb923c'];
   function pomoStatsColor(idx) { return POMO_CHART_COLORS[idx % POMO_CHART_COLORS.length]; }
 
+  // 🆕 "Produktivlik tahlili" endi 3 ta alohida bo'lim o'rniga BITTA bo'lim +
+  // tab tugmalari (Kun / Soat / Qism) — joy tejash uchun. pomoStatsProdTab
+  // qaysi tab tanlanganini eslab qoladi, shu bilan Kalendar oynasi qayta
+  // ochilganda ham foydalanuvchi oxirgi tanlagan ko'rinishi saqlanadi.
+  var pomoStatsProdTab = 'weekday'; // 'weekday' | 'hour' | 'daypart'
+  window.pomoStatsSetProdTab = function (tab) {
+    pomoStatsProdTab = tab;
+    pomoRenderStatsExtras();
+    try { SFX.click(); } catch (e) {}
+  };
+
   function pomoRenderStatsExtras() {
     var weekBox     = document.getElementById('pomo-stats-week-chart');
     var metricsBox  = document.getElementById('pomo-stats-metrics');
-    var weekdayBox  = document.getElementById('pomo-stats-weekday-dist');
-    var hourBox     = document.getElementById('pomo-stats-hour-chart');
+    var prodBox     = document.getElementById('pomo-stats-prod-box');
     var catBox      = document.getElementById('pomo-stats-category-box');
     var compareBox  = document.getElementById('pomo-stats-compare-box');
-    var daypartBox  = document.getElementById('pomo-stats-daypart-box');
-    var rankBox     = document.getElementById('pomo-stats-task-rank-box');
-    var taskBarBox  = document.getElementById('pomo-stats-task-bar-box');
-    if (!weekBox && !metricsBox && !weekdayBox && !hourBox && !catBox && !compareBox && !daypartBox && !rankBox && !taskBarBox) return; // modal hali DOM'da yo'q
+    if (!weekBox && !metricsBox && !prodBox && !catBox && !compareBox) return; // modal hali DOM'da yo'q
+
+    // Tab tugmalarining "tanlangan" holatini yangilash
+    var prodTabBtns = document.querySelectorAll('.pomo-prod-tab-btn');
+    for (var pbi = 0; pbi < prodTabBtns.length; pbi++) {
+      prodTabBtns[pbi].classList.toggle('sel', prodTabBtns[pbi].getAttribute('data-prod-tab') === pomoStatsProdTab);
+    }
 
     var dayTotals = pomoStatsDayTotals();
     var hasAnyData = Object.keys(dayTotals).length > 0;
@@ -30600,11 +31807,20 @@ document.addEventListener('DOMContentLoaded', wsCheckSupabaseSession);
       var curStreak = pomoStatsCurrentStreak(dayTotals);
       var recordStreak = Math.max(pomoStatsLongestStreak(dayTotals), curStreak);
       var totalSessions = pomoLogs.length;
+      // 🆕 Tanaffus statistikasi — nechi marta to'liq olingani va nechi marta
+      // "Skip" bilan o'tkazib yuborilgani (pomoBreakStats, break-done/skip
+      // hodisalarida real vaqtda yangilanadi).
+      var breaksTaken   = pomoBreakStats.taken || 0;
+      var breaksSkipped = pomoBreakStats.skipped || 0;
+      var breaksTotal   = breaksTaken + breaksSkipped;
+      var breaksTakenPct = breaksTotal > 0 ? Math.round((breaksTaken / breaksTotal) * 100) : 0;
       var html = '';
       html += '<div class="pomo-stats-metric-card"><div class="pomo-stats-metric-icon">⏳</div><div class="pomo-stats-metric-value">' + (totalMs > 0 ? pomoFormatLimit(Math.round(totalMs / 60000)) : '0 daqiqa') + '</div><div class="pomo-stats-metric-label">Jami fokus</div></div>';
       html += '<div class="pomo-stats-metric-card"><div class="pomo-stats-metric-icon">📅</div><div class="pomo-stats-metric-value">' + (avgMs > 0 ? pomoFormatLimit(Math.round(avgMs / 60000)) : '0 daqiqa') + '</div><div class="pomo-stats-metric-label">Kunlik o\'rtacha</div></div>';
       html += '<div class="pomo-stats-metric-card"><div class="pomo-stats-metric-icon">🔥</div><div class="pomo-stats-metric-value">' + curStreak + ' kun</div><div class="pomo-stats-metric-label">Joriy seriya</div><div class="pomo-stats-metric-sub">🏆 Rekord: ' + recordStreak + ' kun</div></div>';
       html += '<div class="pomo-stats-metric-card"><div class="pomo-stats-metric-icon">✅</div><div class="pomo-stats-metric-value">' + totalSessions + '</div><div class="pomo-stats-metric-label">Jami sessiyalar</div></div>';
+      html += '<div class="pomo-stats-metric-card"><div class="pomo-stats-metric-icon">☕</div><div class="pomo-stats-metric-value">' + breaksTaken + '</div><div class="pomo-stats-metric-label">Tanaffus olingan</div>' + (breaksTotal > 0 ? '<div class="pomo-stats-metric-sub">' + breaksTakenPct + '%</div>' : '') + '</div>';
+      html += '<div class="pomo-stats-metric-card"><div class="pomo-stats-metric-icon">⏭️</div><div class="pomo-stats-metric-value">' + breaksSkipped + '</div><div class="pomo-stats-metric-label">Tanaffus tashlab yuborilgan</div>' + (breaksTotal > 0 ? '<div class="pomo-stats-metric-sub">' + (100 - breaksTakenPct) + '%</div>' : '') + '</div>';
       metricsBox.innerHTML = html;
     }
 
@@ -30845,7 +32061,12 @@ document.addEventListener('DOMContentLoaded', wsCheckSupabaseSession);
         }
       } else {
         if (deltaMs < act.breakRemainingMs) { act.breakRemainingMs -= deltaMs; deltaMs = 0; }
-        else { deltaMs -= act.breakRemainingMs; act.breakRemainingMs = 0; act.phase = 'work'; events.push('break-done'); }
+        else {
+          deltaMs -= act.breakRemainingMs; act.breakRemainingMs = 0; act.phase = 'work'; events.push('break-done');
+          // 🆕 Tanaffus TO'LIQ (skip qilinmasdan) tugadi — statistikaga +1.
+          pomoBreakStats.taken = (pomoBreakStats.taken || 0) + 1;
+          pomoSaveBreakStats();
+        }
       }
     }
     return events;
@@ -30911,6 +32132,7 @@ document.addEventListener('DOMContentLoaded', wsCheckSupabaseSession);
     pomoLoadSettings();
     pomoLoadActivities();
     pomoLoadLogs();
+    pomoLoadBreakStats();
     pomoRolloverStaleActivities(); // to'xtatilgan amaliyliklarning eski kunlik hisoblagichini tozalash
     pomoHistoryState.date = pomoTodayKey();
     try { pomoActiveId = localStorage.getItem(POMO_ACTIVE_KEY) || null; } catch (e) { pomoActiveId = null; }
