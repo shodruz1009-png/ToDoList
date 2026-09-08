@@ -1,13 +1,15 @@
 // ============================================================
-// ToDoList PWA — Service Worker (v16 — Supabase auth: email+parol va
-// Google OAuth bilan ro'yxatdan o'tish/kirish qo'shildi, eski mahalliy
-// nik/parol tizimi olib tashlandi)
+// ToDoList PWA — Service Worker (v18 — ilovaga moslab yangilandi:
+// worldtimeapi.org orqali olinadigan server vaqti endi hech qachon
+// SW keshidan qaytarilmaydi, chunki bu "soat firibgarligi" (clock
+// tamper) tekshiruvi uchun ishlatiladi va eskirgan/kesh javob soat
+// tekshiruvini butunlay buzib qo'yishi mumkin edi.)
 // ============================================================
 
 // MUHIM: har safar index.html (yoki boshqa kod)ni yangilab qayta
-// joylashtirganingizda, bu raqamni oshiring (v16 -> v17 -> ...).
+// joylashtirganingizda, bu raqamni oshiring (v18 -> v19 -> ...).
 // Shunda eski kesh butunlay o'chiriladi va yangi fayllar qayta yuklanadi.
-const CACHE_VERSION = 'v17';
+const CACHE_VERSION = 'v18';
 const CACHE_NAME = `todolist-cache-${CACHE_VERSION}`;
 
 // Pre-cache qilinadigan asosiy fayllar
@@ -34,6 +36,13 @@ const PRECACHE_URLS = [
 // o'zi avtomatik keshlanadi, shuning uchun oldindan sanab o'tirishning
 // hojati yo'q (va CDN vaqtincha ishlamay qolsa ham install bosqichi
 // buzilib qolmaydi).
+
+// Eslatma 3: Fokus rejimidagi ambient tovushlar (yomg'ir, oq shovqin,
+// lo-fi pad va h.k.) tashqi mp3/wav fayl sifatida YO'Q — ular ilova
+// ichida Web Audio API (AudioContext + oscillator/noise buffer) orqali
+// real vaqtda generatsiya qilinadi. Shuning uchun bu Service Worker
+// hech qanday audio faylni keshlamaydi va bilan bog'liq alohida
+// qoidaga ehtiyoj yo'q.
 
 // ---------------- INSTALL ----------------
 self.addEventListener('install', (event) => {
@@ -97,6 +106,21 @@ self.addEventListener('fetch', (event) => {
   // hech qachon eski keshdan qaytarilmasligi kerak, aks holda
   // autentifikatsiya yoki ma'lumotlar eskirib qolishi mumkin).
   if (url.hostname.endsWith('.supabase.co')) {
+    return;
+  }
+
+  // 0.1 worldtimeapi.org (haqiqiy server vaqti — "soat firibgarligi"
+  // / clock-tamper tekshiruvi uchun ishlatiladi, qarang: fetchServerTimeSafe()):
+  // Service Worker BUTUNLAY chetlab o'tadi. AVVAL bu so'rov pastdagi
+  // cache-first oqimiga tushib qolardi — birinchi muvaffaqiyatli javob
+  // SW keshiga saqlanib qolar, keyingi barcha chaqiruvlar esa (hatto
+  // fetch() ichida `cache:'no-store'` yozilgan bo'lsa ham, chunki bu
+  // faqat brauzer HTTP keshiga tegishli, SW CacheStorage'ga emas)
+  // O'SHA ESKI, DONGAB QOLGAN vaqtni qaytarardi. Natijada foydalanuvchi
+  // tizim soatini orqaga surib "firibgarlik" qilsa ham, tekshiruv buni
+  // sezmay qolishi mumkin edi. Endi bu so'rov har doim jonli tarmoqdan
+  // ketadi va hech qachon keshlanmaydi.
+  if (url.hostname === 'worldtimeapi.org') {
     return;
   }
 
