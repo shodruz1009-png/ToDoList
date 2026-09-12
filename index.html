@@ -1607,6 +1607,15 @@
   html.layout-desktop #ds-aside #header-coins-pill svg { width: 13px !important; height: 13px !important; }
   html.layout-desktop #ds-aside #coins-display,
   html.layout-desktop #ds-aside .coins-text { font-size:var(--fs-xs) !important; }
+  /* 👥 Do'stlar tugmasi endi "Tezkor kirish" bo'limida (tanga ustida emas) —
+     faqat desktop shell'da, kompakt (mobil) dizaynda tugma o'z joyida
+     (tanga oldida) qoladi. */
+  html.layout-desktop #ds-aside #header-friends-btn {
+    width: 100% !important; justify-content: flex-start !important; height: auto !important;
+    padding: 7px 9px !important; border-radius: var(--radius-sm) !important;
+    background: var(--surface2) !important; font-size: var(--fs-xs) !important;
+    font-weight: 500 !important; gap: 6px !important; margin-bottom: 6px;
+  }
   html.layout-desktop #ds-aside #level-panel {
     display: block !important; margin-bottom: 0; width: 100%;
     padding: 10px 10px !important; border-radius:var(--radius-md) !important;
@@ -24161,6 +24170,12 @@ function buildDesktopShell() {
   shortcutsTitle.id = 'ds-aside-title';
   shortcutsTitle.textContent = 'Tezkor kirish';
   aside.appendChild(shortcutsTitle);
+
+  // 👥 Do'stlar tugmasi "Tezkor kirish" sarlavhasi ostiga ko'chadi (tanga
+  // belgisi ustida emas). #ds-shortcuts dan TASHQARIDA joylashtirilyapti,
+  // chunki renderDsShortcuts() shortcuts.innerHTML ni to'liq qayta yozadi
+  // va real DOM elementini yo'qotib qo'yardi.
+  _dsMove(document.getElementById('header-friends-btn'), aside);
 
   var shortcuts = document.createElement('div');
   shortcuts.id = 'ds-shortcuts';
