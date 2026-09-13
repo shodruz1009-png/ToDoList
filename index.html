@@ -4038,7 +4038,7 @@ if ('serviceWorker' in navigator) {
       <label data-i18n="gm_desc_label">Tavsif (ixtiyoriy)</label>
       <input type="text" id="gm-desc" placeholder="Qisqacha izoh..." data-i18n-ph="gm_desc_ph" />
     </div>
-    <div class="modal-field">
+    <div class="modal-field" id="gm-field-duration">
       <label data-i18n="gm_duration_label">Muddat (kun)</label>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px" id="gm-duration-presets">
         <button class="rcost-chip" onclick="setGoalDur(7)">7</button>
@@ -4049,6 +4049,47 @@ if ('serviceWorker' in navigator) {
         <button class="rcost-chip" onclick="setGoalDur(90)">90</button>
       </div>
       <input type="number" id="gm-duration" placeholder="Yoki kunlar sonini kiriting..." data-i18n-ph="gm_duration_ph" min="1" oninput="syncGoalDurChips()" />
+    </div>
+    <!-- 🆕 ODAT JADVALI: maqsad endi tasklardagi kabi qaysi kunlari
+         "faol"/"navbatda" bo'lishini tanlash imkonini beradi — Har kuni,
+         Kunlarni tanlash (masalan faqat Dushanba+Seshanba), Har N kunda,
+         yoki Bir marta. -->
+    <div class="modal-field" id="gm-field-repeat">
+      <label data-i18n="task_repeat_label">Takrorlanish</label>
+      <div class="repeat-opts">
+        <button class="repeat-opt sel" data-rep="daily" onclick="gmSelRepeat('daily')" data-i18n="task_repeat_daily">🔄 Har kuni</button>
+        <button class="repeat-opt" data-rep="custom-days" onclick="gmSelRepeat('custom-days')" data-i18n="task_repeat_customdays">📆 Kunlarni tanlash</button>
+        <button class="repeat-opt" data-rep="interval" onclick="gmSelRepeat('interval')" data-i18n="task_repeat_interval">? Har N kunda</button>
+        <button class="repeat-opt" data-rep="once" onclick="gmSelRepeat('once')" data-i18n="task_repeat_once">1️⃣ Bir marta</button>
+      </div>
+    </div>
+    <div class="modal-field" id="gm-field-custom-days" style="display:none">
+      <label data-i18n="task_which_days_label">Qaysi kunlarda?</label>
+      <div class="day-picker">
+        <button class="day-btn" data-d="1" onclick="gmToggleDay(1)">Du</button>
+        <button class="day-btn" data-d="2" onclick="gmToggleDay(2)">Se</button>
+        <button class="day-btn" data-d="3" onclick="gmToggleDay(3)">Ch</button>
+        <button class="day-btn" data-d="4" onclick="gmToggleDay(4)">Pa</button>
+        <button class="day-btn" data-d="5" onclick="gmToggleDay(5)">Ju</button>
+        <button class="day-btn" data-d="6" onclick="gmToggleDay(6)">Sh</button>
+        <button class="day-btn" data-d="0" onclick="gmToggleDay(0)">Ya</button>
+      </div>
+    </div>
+    <div class="modal-field" id="gm-field-interval" style="display:none">
+      <label data-i18n="task_interval_label">Har necha kunda bir?</label>
+      <select id="gm-interval">
+        <option value="2" data-i18n="task_interval_2">Har 2 kunda</option>
+        <option value="3" data-i18n="task_interval_3">Har 3 kunda</option>
+        <option value="4" selected data-i18n="task_interval_4">Har 4 kunda</option>
+        <option value="5" data-i18n="task_interval_5">Har 5 kunda</option>
+        <option value="7" data-i18n="task_interval_7">Har haftada</option>
+        <option value="10" data-i18n="task_interval_10">Har 10 kunda</option>
+        <option value="14" data-i18n="task_interval_14">Har 2 haftada</option>
+      </select>
+    </div>
+    <div class="modal-field" id="gm-field-startdate" style="display:none">
+      <label data-i18n="task_startdate_label">Qachondan boshlanadi?</label>
+      <input type="date" id="gm-startdate" />
     </div>
     <div class="modal-field">
       <label data-i18n="gm_emoji_label">Emoji (ixtiyoriy)</label>
@@ -4069,8 +4110,8 @@ if ('serviceWorker' in navigator) {
       <div style="display:flex;gap:8px;flex-wrap:wrap" id="gm-coin-opts">
         <button class="diff-opt"     id="gm-coin-0" onclick="setGoalCoins(0)"><span data-i18n="gm_coin_free">🆓 Bepul</span><br><span style="font-size:var(--fs-xs);color:var(--text-muted)">+0 🪙</span></button>
         <button class="diff-opt sel" id="gm-coin-1" onclick="setGoalCoins(1)"><span data-i18n="gm_coin_easy">🥉 Oddiy</span><br><span style="font-size:var(--fs-xs);color:var(--gold)">+1 🪙</span></button>
-        <button class="diff-opt"     id="gm-coin-3" onclick="setGoalCoins(3)"><span data-i18n="gm_coin_medium">🥈 O'rta</span><br><span style="font-size:var(--fs-xs);color:var(--gold)">+3 🪙</span></button>
-        <button class="diff-opt"     id="gm-coin-5" onclick="setGoalCoins(5)"><span data-i18n="gm_coin_hard">🥇 Qiyin</span><br><span style="font-size:var(--fs-xs);color:var(--gold)">+5 🪙</span></button>
+        <button class="diff-opt"     id="gm-coin-2" onclick="setGoalCoins(2)"><span data-i18n="gm_coin_medium">🥈 O'rta</span><br><span style="font-size:var(--fs-xs);color:var(--gold)">+2 🪙</span></button>
+        <button class="diff-opt"     id="gm-coin-3" onclick="setGoalCoins(3)"><span data-i18n="gm_coin_hard">🥇 Qiyin</span><br><span style="font-size:var(--fs-xs);color:var(--gold)">+3 🪙</span></button>
       </div>
       <input type="hidden" id="gm-coins" value="1" />
     </div>
@@ -4841,6 +4882,7 @@ const I18N = {
     goal_check_todo: '☐ Kecha bajardim',
     goal_check_done_today: '✅ Bugun bajardim!',
     goal_check_todo_today: '☐ Bugun bajardim',
+    goal_not_today: '📅 Bugun navbati emas',
     // Chest
     chest_tasks_title: '🎲 Chest Vazifalar',
     chest_add_btn: "+ Qo'shish",
@@ -5202,18 +5244,19 @@ const I18N = {
     ws_reg_desc: "Nik, email va parol kiriting — shular bilan istalgan qurilmadan kirishingiz mumkin bo'ladi. Xohlasangiz, Google orqali ham ro'yxatdan o'ting.",
     ws_reg_name_ph: "Nik",
     ws_reg_email_ph: "Email",
-    ws_reg_pass_ph: "Parol (kamida 4 ta belgi)",
+    ws_reg_pass_ph: "Parol (kamida 6 ta belgi)",
     ws_reg_google_btn: "🔵 Google bilan ro'yxatdan o'tish",
     ws_email_invalid_toast: "To'g'ri email manzil kiriting",
     ws_reg_google_linked: "✅ Google ulandi",
     ws_reg_google_linked_toast: "✅ Google akkaunt ulandi",
     ws_reg_submit_btn: "Ro'yxatdan o'tish",
     ws_reg_name_invalid_toast: "Nik kamida 3 ta belgidan iborat bo'lishi va faqat ruxsat etilgan belgilardan tuzilishi kerak",
-    ws_reg_pass_invalid_toast: "Parol kamida 4 ta belgidan iborat bo'lishi kerak",
+    ws_reg_pass_invalid_toast: "Parol kamida 6 ta belgidan iborat bo'lishi kerak",
     ws_reg_taken_toast: "Bu nik allaqachon band, boshqasini tanlang",
     ws_reg_success_toast: "🎉 Akkaunt yaratildi! Xush kelibsiz",
     ws_login_title: "🔑 Akkauntga kirish",
     ws_login_desc: "Google akkauntingizni tanlab kiring yoki email va parolingizni kiriting.",
+    ws_login_desc_simple: "Email va parolingizni kiriting. Diqqat: kirishdan so'ng shu qurilmadagi ma'lumotlar akkauntingizdagi ma'lumotlar bilan almashtiriladi.",
     ws_login_google_btn: "🔵 Google orqali kirish",
     ws_login_or: "yoki",
     ws_login_email_ph: "Email",
@@ -6403,6 +6446,7 @@ const I18N = {
     goal_check_todo: '☐ Done yesterday',
     goal_check_done_today: '✅ Done today!',
     goal_check_todo_today: '☐ Done today',
+    goal_not_today: '📅 Not scheduled today',
     // Chest
     chest_tasks_title: '🎲 Chest Tasks',
     chest_add_btn: '+ Add',
@@ -6769,18 +6813,19 @@ const I18N = {
     ws_reg_desc: "Pick a nickname, enter your email and a password — you'll use them to log in from any device. You can also sign up with Google.",
     ws_reg_name_ph: "Nickname",
     ws_reg_email_ph: "Email",
-    ws_reg_pass_ph: "Password (at least 4 characters)",
+    ws_reg_pass_ph: "Password (at least 6 characters)",
     ws_reg_google_btn: "🔵 Sign up with Google",
     ws_email_invalid_toast: "Please enter a valid email address",
     ws_reg_google_linked: "✅ Google linked",
     ws_reg_google_linked_toast: "✅ Google account linked",
     ws_reg_submit_btn: "Register",
     ws_reg_name_invalid_toast: "Nickname must be at least 3 characters and use only allowed characters",
-    ws_reg_pass_invalid_toast: "Password must be at least 4 characters",
+    ws_reg_pass_invalid_toast: "Password must be at least 6 characters",
     ws_reg_taken_toast: "That nickname is already taken, please pick another",
     ws_reg_success_toast: "🎉 Account created! Welcome",
     ws_login_title: "🔑 Log in",
     ws_login_desc: "Choose your Google account, or enter your email and password.",
+    ws_login_desc_simple: "Enter your email and password. Note: logging in will replace this device's data with your account's data.",
     ws_login_google_btn: "🔵 Continue with Google",
     ws_login_or: "or",
     ws_login_email_ph: "Email",
@@ -7967,6 +8012,7 @@ const I18N = {
     goal_check_todo: '☐ Вчера выполнил',
     goal_check_done_today: '✅ Сегодня выполнил!',
     goal_check_todo_today: '☐ Сегодня выполнил',
+    goal_not_today: '📅 Сегодня не по графику',
     // Сундук
     chest_tasks_title: '🎲 Задачи сундука',
     chest_add_btn: '+ Добавить',
@@ -8332,18 +8378,19 @@ const I18N = {
     ws_reg_desc: 'Придумайте ник, укажите email и пароль — с их помощью вы сможете войти с любого устройства. При желании зарегистрируйтесь через Google.',
     ws_reg_name_ph: 'Ник',
     ws_reg_email_ph: 'Email',
-    ws_reg_pass_ph: 'Пароль (минимум 4 символа)',
+    ws_reg_pass_ph: 'Пароль (минимум 6 символов)',
     ws_reg_google_btn: '🔵 Зарегистрироваться через Google',
     ws_email_invalid_toast: 'Введите корректный email адрес',
     ws_reg_google_linked: '✅ Google привязан',
     ws_reg_google_linked_toast: '✅ Google-аккаунт привязан',
     ws_reg_submit_btn: 'Зарегистрироваться',
     ws_reg_name_invalid_toast: 'Ник должен быть не короче 3 символов и содержать только разрешённые символы',
-    ws_reg_pass_invalid_toast: 'Пароль должен быть не короче 4 символов',
+    ws_reg_pass_invalid_toast: 'Пароль должен быть не короче 6 символов',
     ws_reg_taken_toast: 'Этот ник уже занят, выберите другой',
     ws_reg_success_toast: '🎉 Аккаунт создан! Добро пожаловать',
     ws_login_title: '🔑 Вход в аккаунт',
     ws_login_desc: 'Выберите Google-аккаунт или введите email и пароль.',
+    ws_login_desc_simple: 'Введите email и пароль. Внимание: после входа данные на этом устройстве будут заменены данными вашего аккаунта.',
     ws_login_google_btn: '🔵 Войти через Google',
     ws_login_or: 'или',
     ws_login_email_ph: 'Email',
@@ -12504,7 +12551,25 @@ function removeTestDataForJuly1() {
 async function bootSharedApp() {
   await loadUserDataAndInit();
 }
-bootSharedApp();
+// MUHIM (BUG TUZATILDI): bootSharedApp() ilgari shu yerda DARHOL chaqirilardi.
+// Muammo: loadUserDataAndInit() ichida await'lardan keyin ensureCefrDefaults()
+// funksiyasi chaqiriladi, lekin bu funksiya faylning PASTROQ qismidagi alohida
+// <script> blokida e'lon qilingan. await'lar mikrotask sifatida deyarli
+// zumda bajarilib ketgani uchun, brauzer hali pastdagi <script> blokini
+// o'qib ulgurmasdan turib ensureCefrDefaults() chaqirilib, "ReferenceError:
+// ensureCefrDefaults is not defined" xatosini berardi. Bu xato
+// loadUserDataAndInit()ni yarim yo'lda to'xtatib qo'yardi — aynan shu joydan
+// keyin S.tasks LocalStorage'dagi haqiqiy vazifalar bilan to'ldirilishi kerak
+// edi, shuning uchun ekranda tasklar "yo'q bo'lib qolgandek" ko'rinardi
+// (aslida ular LocalStorage'da saqlanib qolardi, shunchaki ilova ularni
+// S.tasks ichiga yuklab ulgurmasdi).
+// YECHIM: ilovani ishga tushirishni sahifa TO'LIQ yuklanguncha (barcha
+// <script> bloklar, jumladan ensureCefrDefaults ham) kechiktiramiz.
+if (document.readyState === 'complete') {
+  bootSharedApp();
+} else {
+  window.addEventListener('load', bootSharedApp);
+}
 
 // ============ KO'P-OYNA SINXRONIZATSIYASI (multi-tab/PWA race fix) ============
 // MUAMMO: agar ilova bir vaqtda 2 xil joyda ochiq bo'lsa (masalan uy ekranidagi
@@ -12675,6 +12740,9 @@ function save() {
   S._savedAt = Date.now();
   S._localUpdatedAt = new Date().toISOString();
   saveToLocalStorage(S);
+  // Akkaunt bulutga ulangan bo'lsa (S.cloudLinked), profil (nik/tanga/xp/
+  // streak) fonda debounce bilan Supabase'ga ham yoziladi.
+  try { if (typeof scheduleCloudSync === 'function') scheduleCloudSync(); } catch (e) {}
 }
 
 function wasTaskDoneOnDate(t, dateStr) {
@@ -18341,6 +18409,7 @@ function showProfileEdit() {
       openAccountLinkModal();
     } else {
       if (!confirm(t('pe_logout_confirm'))) return;
+      try { if (typeof cloudLogout === 'function') cloudLogout(); } catch (e) {}
       if (!S.profile) S.profile = {};
       S.profile.loginMethod = 'guest';
       save();
@@ -21557,6 +21626,80 @@ function renderSecretContent() {
 // ============================================================
 var _editingGoalId = null;
 
+// 🆕 ODAT JADVALI: maqsad modalidagi "takrorlanish" holati — tasklardagi
+// mRepeat/mDays/mInterval bilan bir xil g'oyaga asoslangan, lekin butunlay
+// alohida o'zgaruvchilar (gmRepeat/gmDays/gmInterval), shunda goal modali
+// task/subtask modallariga hech qanday ta'sir qilmaydi.
+var gmRepeat = 'daily', gmDays = [], gmInterval = 4;
+
+function gmSelRepeat(r) {
+  gmRepeat = r;
+  // MUHIM: querySelectorAll faqat '#goal-modal-box' ichida qidiriladi —
+  // aks holda bu tugmalar task/subtask modalidagi bir xil nomli
+  // (.repeat-opt) tugmalarning "sel" holatiga ham ta'sir qilib qo'yardi.
+  document.querySelectorAll('#goal-modal-box .repeat-opt').forEach(function(el) {
+    el.classList.toggle('sel', el.dataset.rep === r);
+  });
+  document.getElementById('gm-field-custom-days').style.display = r==='custom-days' ? '' : 'none';
+  document.getElementById('gm-field-interval').style.display = r==='interval' ? '' : 'none';
+  document.getElementById('gm-field-startdate').style.display = r==='interval' ? '' : 'none';
+  // "Bir marta" tanlanganda muddat (necha kun) maydoni ma'nosiz bo'lib
+  // qoladi — chunki bunday maqsad faqat BIR marta belgilanadi.
+  document.getElementById('gm-field-duration').style.display = r==='once' ? 'none' : '';
+}
+
+function gmToggleDay(d) {
+  var idx = gmDays.indexOf(d);
+  if (idx>=0) gmDays.splice(idx,1); else gmDays.push(d);
+  document.querySelectorAll('#goal-modal-box .day-btn').forEach(function(el) {
+    el.classList.toggle('sel', gmDays.includes(parseInt(el.dataset.d)));
+  });
+}
+
+// 🆕 KALENDAR UCHUN: maqsad biror aniq SANADA (o'tgan, bugungi yoki
+// kelajakdagi) navbatdami — bu funksiya faqat "bugun" emas, ISTALGAN sana
+// uchun ishlaydi, shu bilan Goals kalendari (renderGoalCalendar) va
+// kartochkadagi "Bugun bajardim" tugmasi (goalDueToday) BITTA umumiy,
+// izchil manbadan foydalanadi. "Har N kunda" turi tasklar kalendaridagi
+// kabi (calIsTaskDueOnDate) qat'iy, o'zgarmas modul-arifmetika formulasiga
+// asoslanadi (g.nextDate kabi "harakatlanadigan" holatga EMAS) — shunda
+// o'tgan kunlar har doim bir xil, ishonchli natija beradi.
+function isGoalDueOnDate(g, dateStr) {
+  // Maqsad hali yaratilmagan kunlarga ta'sir qilmaydi.
+  if (g.startDate && dateStr < g.startDate) return false;
+  // Agar o'sha kuni aniq belgilangan (checked) bo'lsa — demak albatta due
+  // bo'lgan, boshqa hisobga hojat yo'q (masalan jadval keyinchalik
+  // o'zgartirilgan bo'lsa ham, eski belgilangan kunlar yo'qolib qolmaydi).
+  if (g.daysChecked && g.daysChecked[dateStr]) return true;
+  var rep = g.repeat || 'daily';
+  if (rep === 'daily') return true;
+  if (rep === 'custom-days') {
+    var dow = new Date(dateStr + 'T00:00:00').getDay();
+    return (g.days||[]).indexOf(dow) !== -1;
+  }
+  if (rep === 'interval') {
+    var origin = g.intervalStart || g.startDate || dateStr;
+    var originTime = new Date(origin + 'T00:00:00').getTime();
+    var dateTime = new Date(dateStr + 'T00:00:00').getTime();
+    var diffDays = Math.round((dateTime - originTime) / 86400000);
+    if (diffDays < 0) return false;
+    var interval = Math.max(1, Number(g.interval) || 1);
+    return diffDays % interval === 0;
+  }
+  if (rep === 'once') {
+    return dateStr === today() && !g.done;
+  }
+  return true;
+}
+
+// Maqsad "bugun navbatdami" — yuqoridagi isGoalDueOnDate() ni joriy sana
+// bilan chaqiradi. Eski (repeat maydoni hali yo'q) maqsadlar avtomatik
+// 'daily' deb hisoblanadi — ya'ni ilgarigidek har kuni navbatda bo'lishda
+// davom etadi.
+function goalDueToday(g) {
+  return isGoalDueOnDate(g, today());
+}
+
 function openGoalModal(id) {
   _editingGoalId = id || null;
   var title = document.getElementById('goal-modal-title');
@@ -21569,6 +21712,15 @@ function openGoalModal(id) {
     document.getElementById('gm-duration').value = g.duration || '';
     document.getElementById('gm-emoji').value = g.emoji || '🎯';
     setGoalCoins((typeof g.coins === 'number') ? g.coins : 1);
+    gmRepeat = g.repeat || 'daily';
+    gmDays = g.days ? [...g.days] : [];
+    gmInterval = g.interval || 4;
+    document.getElementById('gm-interval').value = gmInterval;
+    document.getElementById('gm-startdate').value = g.intervalStart || g.startDate || today();
+    gmSelRepeat(gmRepeat);
+    document.querySelectorAll('#goal-modal-box .day-btn').forEach(function(el){
+      el.classList.toggle('sel', gmDays.includes(parseInt(el.dataset.d)));
+    });
     syncGoalDurChips();
   } else {
     title.textContent = t('gm_title_new');
@@ -21577,6 +21729,11 @@ function openGoalModal(id) {
     document.getElementById('gm-duration').value = '';
     document.getElementById('gm-emoji').value = '🎯';
     setGoalCoins(1);
+    gmRepeat = 'daily'; gmDays = []; gmInterval = 4;
+    document.getElementById('gm-interval').value = '4';
+    document.getElementById('gm-startdate').value = today();
+    gmSelRepeat('daily');
+    document.querySelectorAll('#goal-modal-box .day-btn').forEach(function(el){ el.classList.remove('sel'); });
     syncGoalDurChips();
   }
   document.getElementById('goal-modal-overlay').classList.add('open');
@@ -21610,7 +21767,7 @@ function setGoalEmoji(e) {
 
 function setGoalCoins(val) {
   document.getElementById('gm-coins').value = val;
-  [0,1,3,5].forEach(function(v) {
+  [0,1,2,3].forEach(function(v) {
     var btn = document.getElementById('gm-coin-'+v);
     if(btn) btn.classList.toggle('sel', v===val);
   });
@@ -21619,26 +21776,50 @@ function setGoalCoins(val) {
 function saveGoal() {
   var name = (document.getElementById('gm-name').value || '').trim();
   var desc = (document.getElementById('gm-desc').value || '').trim();
-  var dur  = parseInt(document.getElementById('gm-duration').value) || 0;
   var emoji = (document.getElementById('gm-emoji').value || '').trim() || '🎯';
   var coinsRaw = parseInt(document.getElementById('gm-coins').value);
   var coins = isNaN(coinsRaw) ? 1 : coinsRaw;
+  // 🆕 "Bir marta" turidagi maqsad faqat bitta marotaba belgilanadi, shuning
+  // uchun muddat (duration) har doim 1 ga tenglanadi va foydalanuvchidan
+  // kunlar sonini so'ramaymiz.
+  var dur = (gmRepeat === 'once') ? 1 : (parseInt(document.getElementById('gm-duration').value) || 0);
+  var interval = Math.max(1, parseInt(document.getElementById('gm-interval').value) || 4);
+  var startDateInput = document.getElementById('gm-startdate').value || today();
   if(!name) { document.getElementById('gm-name').focus(); toast(t('gm_name_required_toast')); return; }
-  if(!dur)  { document.getElementById('gm-duration').focus(); toast(t('goal_duration_required_toast')); return; }
+  if(gmRepeat !== 'once' && !dur)  { document.getElementById('gm-duration').focus(); toast(t('goal_duration_required_toast')); return; }
+  if(gmRepeat === 'custom-days' && gmDays.length === 0) { toast(t('task_select_day_toast')); return; }
 
   if(!S.goals) S.goals = [];
   if(_editingGoalId) {
     var g = S.goals.find(function(x){return x.id===_editingGoalId;});
     if(g){
       g.name=name; g.desc=desc; g.emoji=emoji; g.coins=coins;
+      var repeatChanged = (g.repeat||'daily') !== gmRepeat;
+      g.repeat = gmRepeat;
+      g.days = gmRepeat==='custom-days' ? [...gmDays] : null;
+      g.interval = gmRepeat==='interval' ? interval : null;
+      // Interval jadvalining "kelib chiqish nuqtasi" (origin) — faqat
+      // repeat turi endigina 'interval'ga o'zgartirilganda yoki
+      // foydalanuvchi boshlanish sanasini qo'lda o'zgartirganda qayta
+      // o'rnatiladi. isGoalDueOnDate() bu sanadan boshlab qat'iy
+      // modul-arifmetika bilan hisoblaydi (holatga bog'liq emas).
+      if (gmRepeat==='interval' && (repeatChanged || g.intervalStart !== startDateInput)) {
+        g.intervalStart = startDateInput;
+      } else if (gmRepeat !== 'interval') {
+        g.intervalStart = null;
+      }
       // 🔴 TUZATILDI: muddat (duration) tahrirlanganda g.endDate qayta
       // hisoblanmasdi — maqsad muddati UI'da o'zgargandek ko'rinsa ham,
       // "necha kun qoldi" va "muddati o'tgan" hisob-kitobi eski sanaga
       // asoslanardi. Endi duration o'zgarganda startDate asosida qayta
-      // hisoblanadi.
-      if (g.duration !== dur) {
+      // hisoblanadi. MUHIM (ODAT JADVALI): qat'iy muddat (endDate) endi
+      // FAQAT "Har kuni" turidagi maqsadlar uchun qo'llaniladi — chunki
+      // "Kunlarni tanlash"/"Har N kunda"/"Bir marta" turlari kalendar
+      // kunlariga emas, belgilangan jadvalga qarab davom etadigan
+      // ochiq (deadline'siz) odatlardir.
+      if (g.duration !== dur || repeatChanged) {
         g.duration = dur;
-        g.endDate = addDays(g.startDate || today(), dur - 1);
+        g.endDate = (gmRepeat === 'daily') ? addDays(g.startDate || today(), dur - 1) : null;
       }
     }
   } else {
@@ -21647,51 +21828,59 @@ function saveGoal() {
     // uchun mahalliy vaqt zonasida (masalan UTC+5) 1 kunlik siljish
     // xatosiga sabab bo'lardi (xuddi addDays() ustidagi izohda aytilgan
     // muammo kabi). Endi mavjud, sinovdan o'tgan addDays() ishlatiladi.
-    var endDate = addDays(startDate, dur - 1);
-    S.goals.push({ id: Date.now(), name:name, desc:desc, duration:dur, emoji:emoji, startDate:startDate, endDate:endDate, done:false, daysChecked:{}, coins:coins });
+    // Qat'iy muddat (endDate) faqat "Har kuni" turi uchun — qolganlari
+    // ochiq (deadline'siz) odat sifatida ishlaydi (yuqoridagi izohga q.).
+    var endDate = (gmRepeat === 'daily') ? addDays(startDate, dur - 1) : null;
+    S.goals.push({
+      id: Date.now(), name:name, desc:desc, duration:dur, emoji:emoji,
+      startDate:startDate, endDate:endDate, done:false, daysChecked:{}, coins:coins,
+      repeat: gmRepeat,
+      days: gmRepeat==='custom-days' ? [...gmDays] : null,
+      interval: gmRepeat==='interval' ? interval : null,
+      intervalStart: gmRepeat==='interval' ? startDateInput : null
+    });
     toast(emoji + t('gm_added_toast'));
   }
   save(); closeGoalModal(); renderGoals();
 }
 
-function goalCheckToday(id) {
-  var g = (S.goals||[]).find(function(x){return x.id===id;}); if(!g) return;
+// Umumiy ICHKI funksiya: ma'lum bir SANA uchun maqsadni belgilaydi yoki
+// bekor qiladi (tanga berish/qaytarish, umrbod hisoblagich va "tugallandi"
+// holatini yangilaydi). Ham "Bugun bajardim" tugmasi (goalCheckToday), ham
+// Goals kalendari (goalCalToggleDay) shu BITTA manbadan foydalanadi —
+// shunda ikkalasi har doim bir xil, izchil natijaga ega bo'ladi.
+function _goalToggleDateCore(g, dateStr) {
   if(!g.daysChecked) g.daysChecked = {};
   if(!g.daysCoinsGiven) g.daysCoinsGiven = {};
-  var yd = trackDate();
   var coinAward = (typeof g.coins === 'number') ? g.coins : 1;
-
-  if(g.daysChecked[yd]) {
+  var nowChecked;
+  if(g.daysChecked[dateStr]) {
     // Uncheck — faqat shu kun tanga berilgan bo'lsa olib tashla.
     // 🔴 TUZATILDI (1.1): endi g.coins ning JORIY qiymati emas, balki shu
     // kun uchun aynan qancha tanga berilgani "muzlatilgan" (frozen/snapshot)
-    // holda saqlanadi (daysCoinsGiven[yd] endi flag emas, haqiqiy son).
+    // holda saqlanadi (daysCoinsGiven[dateStr] endi flag emas, haqiqiy son).
     // Shu sababli maqsad tahrirlanib tanga miqdori keyin o'zgartirilsa ham,
     // uncheck qilinganda AYNAN o'sha paytda berilgan miqdor qaytarib olinadi.
-    delete g.daysChecked[yd];
-    var frozenAward = g.daysCoinsGiven[yd];
+    delete g.daysChecked[dateStr];
+    var frozenAward = g.daysCoinsGiven[dateStr];
     if(frozenAward) {
-      delete g.daysCoinsGiven[yd];
+      delete g.daysCoinsGiven[dateStr];
       // 1.2: S.totalCoins (umrbod hisoblagich) bu yerda ASLO kamaytirilmaydi —
       // faqat joriy balans S.coins dan ayiriladi (spendCoins yordamchisi orqali).
       spendCoins(frozenAward);
       addTarixLog('out', g.name+' '+t('btn_cancel').toLowerCase(), -frozenAward, 'goal_'+g.id);
     }
-    toast(t('goal_mark_removed_toast'));
+    nowChecked = false;
   } else {
-    // Check — faqat bugun hali tanga berilmagan bo'lsa ber, va aynan shu
-    // miqdorni (coinAward) o'sha kun uchun "muzlatib" saqlaymiz.
-    g.daysChecked[yd] = 1;
-    if(!g.daysCoinsGiven[yd]) {
-      g.daysCoinsGiven[yd] = coinAward;
+    // Check — faqat shu kun uchun hali tanga berilmagan bo'lsa ber, va
+    // aynan shu miqdorni (coinAward) o'sha kun uchun "muzlatib" saqlaymiz.
+    g.daysChecked[dateStr] = 1;
+    if(!g.daysCoinsGiven[dateStr]) {
+      g.daysCoinsGiven[dateStr] = coinAward;
       addLifetimeCoins(coinAward);
       addTarixLog('in', g.emoji+' '+g.name, coinAward, 'goal_'+g.id);
-      toast(g.emoji + ' ' + t('goal_day_added_toast').replace('{coins}', coinAward));
-      confetti();
-      SFX.coin();
-    } else {
-      toast(g.emoji + ' ' + t('goal_marked_toast'));
     }
+    nowChecked = true;
   }
 
   // 🔴 TUZATILDI: g.done hech qayerda true qilinmasdi — maqsad 100%
@@ -21700,14 +21889,174 @@ function goalCheckToday(id) {
   var daysDone = g.daysChecked ? Object.keys(g.daysChecked).length : 0;
   var wasDone = !!g.done;
   g.done = daysDone >= (g.duration || 1);
-  if (g.done && !wasDone) {
-    toast('🏆 ' + g.emoji + ' ' + t('goal_completed'));
+  return { nowChecked: nowChecked, coinAward: coinAward, justCompleted: (g.done && !wasDone) };
+}
+
+function goalCheckToday(id) {
+  var g = (S.goals||[]).find(function(x){return x.id===id;}); if(!g) return;
+  // 🆕 ODAT JADVALI: agar maqsad bugungi kun uchun navbatda bo'lmasa
+  // (masalan faqat Dushanba/Seshanbaga sozlangan, lekin bugun Chorshanba),
+  // belgilashga umuman ruxsat berilmaydi.
+  if (!goalDueToday(g)) { toast(t('goal_not_today')); return; }
+  var yd = trackDate();
+  var result = _goalToggleDateCore(g, yd);
+
+  if (result.nowChecked) {
+    toast(g.emoji + ' ' + t('goal_day_added_toast').replace('{coins}', result.coinAward));
+    confetti();
+    SFX.coin();
+  } else {
+    toast(t('goal_mark_removed_toast'));
   }
+  if (result.justCompleted) toast('🏆 ' + g.emoji + ' ' + t('goal_completed'));
 
   save(); renderGoals(); render();
 }
 
-function deleteGoal(id) {
+// ============================================================
+// 📅 MAQSAD KALENDARI — bitta maqsadning o'tgan/joriy/kelajak kunlarini
+// oy ko'rinishida ko'rsatadi, va o'tgan kunlarni ham (jadvalga mos kelsa)
+// bosib done/undone qilish imkonini beradi — tasklardagi umumiy kalendar
+// singari, lekin FAQAT shu bitta maqsad uchun.
+// ============================================================
+var _goalCalId = null, _goalCalYear = null, _goalCalMonth = null;
+
+function openGoalCalendar(id) {
+  var g = (S.goals||[]).find(function(x){return x.id===id;});
+  if (!g) return;
+  _goalCalId = id;
+  var now = new Date();
+  _goalCalYear = now.getFullYear();
+  _goalCalMonth = now.getMonth();
+  renderGoalCalendar();
+  document.getElementById('goal-cal-modal-overlay').classList.add('open');
+}
+
+function closeGoalCalendar() {
+  document.getElementById('goal-cal-modal-overlay').classList.remove('open');
+  _goalCalId = null;
+}
+
+function goalCalPrevMonth() {
+  _goalCalMonth--;
+  if (_goalCalMonth < 0) { _goalCalMonth = 11; _goalCalYear--; }
+  renderGoalCalendar();
+}
+
+function goalCalNextMonth() {
+  _goalCalMonth++;
+  if (_goalCalMonth > 11) { _goalCalMonth = 0; _goalCalYear++; }
+  renderGoalCalendar();
+}
+
+// Kalendar katakchasidagi ✅/⬜/❌ bosilganda ishlaydi. Kelajak kunlar va
+// jadvalga mos kelmaydigan (masalan tanlanmagan hafta kuni) kunlar
+// bosilmaydi — kartochkadagi "Bugun bajardim" tugmasi bilan bir xil qoida.
+function goalCalToggleDay(id, dateStr) {
+  var g = (S.goals||[]).find(function(x){return x.id===id;}); if(!g) return;
+  var td = today();
+  if (dateStr > td) return; // kelajak kunni belgilab bo'lmaydi
+  if (!isGoalDueOnDate(g, dateStr)) { toast(t('goal_not_today')); return; }
+
+  var result = _goalToggleDateCore(g, dateStr);
+  if (result.nowChecked) {
+    toast(g.emoji + ' ' + dateStr + ' — +' + result.coinAward + ' 🪙');
+  } else {
+    toast(t('goal_mark_removed_toast'));
+  }
+  if (result.justCompleted) toast('🏆 ' + g.emoji + ' ' + t('goal_completed'));
+
+  save(); renderGoalCalendar(); renderGoals(); render();
+}
+
+function renderGoalCalendar() {
+  var g = (S.goals||[]).find(function(x){return x.id===_goalCalId;});
+  var overlay = document.getElementById('goal-cal-modal-overlay');
+  if (!g) { if (overlay) overlay.classList.remove('open'); return; }
+
+  var titleEl = document.getElementById('goal-cal-title');
+  if (titleEl) titleEl.textContent = (g.emoji||'🎯') + ' ' + g.name;
+
+  var label = document.getElementById('goal-cal-month-label');
+  if (label) label.textContent = getMonthsFullArr()[_goalCalMonth] + ' ' + _goalCalYear;
+
+  var grid = document.getElementById('goal-cal-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  var firstDay = new Date(_goalCalYear, _goalCalMonth, 1).getDay(); // 0=Yak
+  var startOffset = (firstDay === 0) ? 6 : firstDay - 1; // Dushanbadan boshlanadi
+  var daysInMonth = new Date(_goalCalYear, _goalCalMonth + 1, 0).getDate();
+  var todayStr = today();
+
+  for (var i = 0; i < startOffset; i++) {
+    var empty = document.createElement('div');
+    empty.style.cssText = 'aspect-ratio:1;max-height:48px;';
+    grid.appendChild(empty);
+  }
+
+  for (var day = 1; day <= daysInMonth; day++) {
+    var dateStr = getDateStr(_goalCalYear, _goalCalMonth, day);
+    var isFuture = dateStr > todayStr;
+    var isToday = dateStr === todayStr;
+    var notCreatedYet = g.startDate && dateStr < g.startDate;
+    var isChecked = !!(g.daysChecked && g.daysChecked[dateStr]);
+    var isDue = !notCreatedYet && isGoalDueOnDate(g, dateStr);
+
+    var bg, opacity = '1', icon = '';
+    if (notCreatedYet) {
+      bg = 'transparent'; opacity = '0.2';
+    } else if (isChecked) {
+      bg = '#34D399'; icon = '✅';
+    } else if (!isDue) {
+      bg = 'var(--surface2)'; opacity = '0.45';
+    } else if (isFuture) {
+      bg = 'transparent'; opacity = '0.35';
+    } else {
+      // Due edi, lekin belgilanmagan va bugundan oldingi kun — o'tkazib
+      // yuborilgan (❌) deb ko'rsatiladi.
+      bg = 'rgba(248,113,113,0.7)'; icon = '❌';
+    }
+
+    var canToggle = !notCreatedYet && !isFuture && isDue;
+
+    var cell = document.createElement('div');
+    cell.dataset.date = dateStr;
+    cell.style.cssText =
+      'aspect-ratio:1;max-height:48px;border-radius:var(--radius-sm);background:' + bg +
+      ';opacity:' + opacity +
+      ';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:var(--fs-2xs);font-weight:600' +
+      ';color:' + (bg === 'transparent' || bg === 'var(--surface2)' ? 'var(--text-dim)' : 'rgba(0,0,0,0.75)') +
+      ';cursor:' + (canToggle ? 'pointer' : 'default') +
+      ';transition:transform 0.15s;position:relative;' +
+      (isToday ? 'box-shadow:0 0 0 2px var(--accent);' : '');
+
+    var dayNumEl = document.createElement('span');
+    dayNumEl.style.cssText = 'line-height:1';
+    dayNumEl.textContent = day;
+    cell.appendChild(dayNumEl);
+
+    if (icon) {
+      var iconEl = document.createElement('span');
+      iconEl.style.cssText = 'font-size:9px;line-height:1';
+      iconEl.textContent = icon;
+      cell.appendChild(iconEl);
+    }
+
+    if (canToggle) {
+      cell.title = isChecked ? t('goal_check_done_today') : t('goal_check_todo_today');
+      cell.addEventListener('click', function(e) {
+        goalCalToggleDay(_goalCalId, e.currentTarget.dataset.date);
+      });
+      cell.addEventListener('mouseenter', function(e){ e.currentTarget.style.transform = 'scale(1.12)'; });
+      cell.addEventListener('mouseleave', function(e){ e.currentTarget.style.transform = ''; });
+    }
+
+    grid.appendChild(cell);
+  }
+}
+
+
   // 🔴 TUZATILDI (v2): ilgari native window.confirm() ishlatilgan edi —
   // PWA "standalone" rejimida (uy ekraniga qo'shilgan ilova) va ko'plab
   // mobil in-app brauzerlarda (Instagram, Telegram va h.k. ichki brauzeri)
@@ -21766,14 +22115,24 @@ function renderGoals() {
     var completed = !!g.done || days >= total;
 
     var coinAward = (typeof g.coins === 'number') ? g.coins : 1;
-    var coinLabel = coinAward===1 ? '🥉 +1 🪙' : coinAward===3 ? '🥈 +3 🪙' : '🥇 +5 🪙';
-    var coinColor = coinAward===1 ? '#a3a3a3' : coinAward===3 ? '#60A5FA' : '#F5A623';
+    var coinLabel = coinAward===0 ? '🆓 +0 🪙' : coinAward===1 ? '🥉 +1 🪙' : coinAward===2 ? '🥈 +2 🪙' : '🥇 +3 🪙';
+    var coinColor = coinAward===0 ? '#a3a3a3' : coinAward===1 ? '#a3a3a3' : coinAward===2 ? '#60A5FA' : '#F5A623';
+    // 🆕 ODAT JADVALI: bugun bu maqsad navbatdami, va uning jadvali qanday
+    // ko'rinishda (Har kuni / Du,Se / Har 3 kunda / Bir marta) — repeatLabel()
+    // tasklar uchun yozilgan umumiy funksiya, u yerda ham xuddi shu maydonlar
+    // (repeat/days/interval) ishlatilgani uchun bu yerda ham to'g'ridan-to'g'ri
+    // ishlatsa bo'ladi.
+    var dueToday = goalDueToday(g);
+    var rl = repeatLabel(g);
 
     var card = document.createElement('div');
     card.style.cssText = 'background:var(--surface);border:1px solid ' + (completed?'rgba(52,211,153,0.4)':expired?'rgba(248,113,113,0.3)':'var(--border)') + ';border-radius:var(--radius-lg);padding:16px;';
 
     var daysLeft = g.endDate ? Math.max(0, Math.ceil((new Date(g.endDate)-new Date(td))/86400000)) : 0;
-    var statusText = completed ? t('goal_completed') : expired ? t('goal_expired') : daysLeft + ' ' + t('goal_days_left');
+    // 🆕 "Kunlarni tanlash"/"Har N kunda"/"Bir marta" turlarida qat'iy
+    // muddat (g.endDate) yo'q — bunday hollarda "necha kun qoldi" o'rniga
+    // maqsadning jadvali (masalan "Du, Se") ko'rsatiladi.
+    var statusText = completed ? t('goal_completed') : expired ? t('goal_expired') : (g.endDate ? (daysLeft + ' ' + t('goal_days_left')) : rl.text);
     var statusColor = completed ? '#34D399' : expired ? '#F87171' : 'var(--text-muted)';
 
     card.innerHTML =
@@ -21791,6 +22150,11 @@ function renderGoals() {
           '<button onclick="deleteGoal('+g.id+')" style="background:none;border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 8px;font-size:var(--fs-2xs);color:var(--text-muted);cursor:pointer">🗑</button>' +
         '</div>' +
       '</div>' +
+      // 🆕 ODAT JADVALI: maqsadning takrorlanish jadvali (masalan "🔄 Har kuni",
+      // "Du, Se", "Har 3 kunda", "Bir marta") kichik yorliq sifatida ko'rsatiladi —
+      // muddat (g.endDate) allaqachon shu ma'lumotni beradigan "Har kuni" turi
+      // bundan mustasno (statusText'da ko'rinadi).
+      (g.endDate ? '' : '<div style="margin-bottom:8px"><span class="'+rl.cls+'" style="font-size:var(--fs-2xs)">'+esc(rl.text)+'</span></div>') +
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
         '<span style="font-size:var(--fs-xs);color:var(--text-muted)">' + days + '/' + total + ' ' + t('goal_days_unit') + '</span>' +
         '<span style="font-size:var(--fs-xs);color:'+statusColor+'">' + statusText + '</span>' +
@@ -21799,9 +22163,18 @@ function renderGoals() {
         '<div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,var(--accent),#B48EFF);border-radius:var(--radius-full);transition:width 0.5s ease"></div>' +
       '</div>' +
       (!completed && !expired ?
-        '<button onclick="goalCheckToday('+g.id+')" style="width:100%;padding:10px;border-radius:var(--radius-sm);border:' + (checkedToday?'2px solid #34D399':'1px solid var(--border)') + ';background:' + (checkedToday?'rgba(52,211,153,0.15)':'var(--surface2)') + ';color:' + (checkedToday?'#34D399':'var(--text-muted)') + ';font-size:var(--fs-sm);font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif">' +
-          (checkedToday ? t(isYesterdayMode() ? 'goal_check_done' : 'goal_check_done_today') : t(isYesterdayMode() ? 'goal_check_todo' : 'goal_check_todo_today')) +
-        '</button>'
+        (dueToday ?
+          '<button onclick="goalCheckToday('+g.id+')" style="width:100%;padding:10px;border-radius:var(--radius-sm);border:' + (checkedToday?'2px solid #34D399':'1px solid var(--border)') + ';background:' + (checkedToday?'rgba(52,211,153,0.15)':'var(--surface2)') + ';color:' + (checkedToday?'#34D399':'var(--text-muted)') + ';font-size:var(--fs-sm);font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif">' +
+            (checkedToday ? t(isYesterdayMode() ? 'goal_check_done' : 'goal_check_done_today') : t(isYesterdayMode() ? 'goal_check_todo' : 'goal_check_todo_today')) +
+          '</button>'
+        :
+          // 🆕 Bugun bu maqsadning navbati emas (masalan faqat Du/Se
+          // tanlangan, bugun esa boshqa kun) — tugma o'rniga shunchaki
+          // holat ko'rsatiladi, bosilmaydi.
+          '<div style="width:100%;padding:10px;border-radius:var(--radius-sm);border:1px dashed var(--border);background:transparent;color:var(--text-muted);font-size:var(--fs-sm);font-weight:600;text-align:center;font-family:DM Sans,sans-serif">' +
+            t('goal_not_today') +
+          '</div>'
+        )
       : '');
     list.appendChild(card);
   });
@@ -29386,6 +29759,7 @@ function wsRenderStep() {
             '<div style="display:flex;align-items:center;gap:10px;margin:2px 0"><div style="flex:1;height:1px;background:var(--border)"></div><span style="font-size:var(--fs-2xs);color:var(--text-dim)">' + t('ws_login_or') + '</span><div style="flex:1;height:1px;background:var(--border)"></div></div>'
           ) +
           '<button type="button" id="ws-mode-register" style="padding:12px;border-radius:var(--radius-md);border:none;background:var(--accent);color:#fff;font-size:var(--fs-sm);font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif">' + t('ws_auth_register_btn') + '</button>' +
+          '<button type="button" id="ws-mode-login" style="padding:12px;border-radius:var(--radius-md);border:1px solid var(--border-hover);background:var(--surface2);color:var(--text);font-size:var(--fs-sm);font-weight:600;cursor:pointer;font-family:\'DM Sans\',sans-serif">' + t('ws_auth_login_btn') + '</button>' +
         '</div>' +
         '<div class="onboarding-tt-actions" style="margin-top:16px">' +
           '<button class="onboarding-btn onboarding-btn-ghost" id="ws-back-btn" style="flex:1">' + t(wsState.miniMode ? 'btn_cancel' : 'guide_back_btn') + '</button>' +
@@ -29395,9 +29769,21 @@ function wsRenderStep() {
         '<div style="' + titleStyle + '">' + t('ws_reg_title') + '</div>' +
         '<div style="' + descStyle + '">' + t('ws_reg_desc') + '</div>' +
         '<input id="ws-reg-name-input" type="text" maxlength="' + USERNAME_MAX_LEN + '" placeholder="' + t('ws_reg_name_ph') + '" value="' + esc(wsState.regName) + '" style="' + fieldStyle + '" />' +
+        '<input id="ws-reg-email-input" type="email" placeholder="' + t('ws_reg_email_ph') + '" value="' + esc(wsState.regEmail || '') + '" style="' + fieldStyle + '" />' +
+        '<input id="ws-reg-pass-input" type="password" placeholder="' + t('ws_reg_pass_ph') + '" value="' + esc(wsState.regPass || '') + '" style="' + fieldStyle + '" />' +
         '<div class="onboarding-tt-actions" style="margin-top:16px">' +
           '<button class="onboarding-btn onboarding-btn-ghost" id="ws-back-btn">' + t('guide_back_btn') + '</button>' +
           '<button class="onboarding-btn onboarding-btn-primary" id="ws-reg-submit-btn">' + t('ws_reg_submit_btn') + '</button>' +
+        '</div>';
+    } else if (wsState.authMode === 'login') {
+      html +=
+        '<div style="' + titleStyle + '">' + t('ws_login_title') + '</div>' +
+        '<div style="' + descStyle + '">' + t('ws_login_desc_simple') + '</div>' +
+        '<input id="ws-login-email-input" type="email" placeholder="' + t('ws_login_email_ph') + '" value="' + esc(wsState.loginEmail || '') + '" style="' + fieldStyle + '" />' +
+        '<input id="ws-login-pass-input" type="password" placeholder="' + t('ws_login_pass_ph') + '" value="' + esc(wsState.loginPass || '') + '" style="' + fieldStyle + '" />' +
+        '<div class="onboarding-tt-actions" style="margin-top:16px">' +
+          '<button class="onboarding-btn onboarding-btn-ghost" id="ws-back-btn">' + t('guide_back_btn') + '</button>' +
+          '<button class="onboarding-btn onboarding-btn-primary" id="ws-login-submit-btn">' + t('ws_login_submit_btn') + '</button>' +
         '</div>';
     }
   }
@@ -29448,12 +29834,26 @@ function wsAttachHandlers() {
   if (modeGuestBtn) modeGuestBtn.onclick = wsGuestLogin;
   var modeRegisterBtn = document.getElementById('ws-mode-register');
   if (modeRegisterBtn) modeRegisterBtn.onclick = function () { wsState.authMode = 'register'; wsRenderStep(); };
+  var modeLoginBtn = document.getElementById('ws-mode-login');
+  if (modeLoginBtn) modeLoginBtn.onclick = function () { wsState.authMode = 'login'; wsRenderStep(); };
 
-  // Ism tanlash formasi — to'liq mahalliy, hech qanday tarmoq so'rovi yo'q
+  // Ro'yxatdan o'tish formasi — Supabase Auth orqali haqiqiy akkaunt yaratadi
   var regNameInput = document.getElementById('ws-reg-name-input');
   if (regNameInput) regNameInput.oninput = function () { wsState.regName = regNameInput.value; };
+  var regEmailInput = document.getElementById('ws-reg-email-input');
+  if (regEmailInput) regEmailInput.oninput = function () { wsState.regEmail = regEmailInput.value; };
+  var regPassInput = document.getElementById('ws-reg-pass-input');
+  if (regPassInput) regPassInput.oninput = function () { wsState.regPass = regPassInput.value; };
   var regSubmitBtn = document.getElementById('ws-reg-submit-btn');
-  if (regSubmitBtn) regSubmitBtn.onclick = function () { wsSubmitLocalName(); };
+  if (regSubmitBtn) regSubmitBtn.onclick = function () { wsSubmitRegister(); };
+
+  // Kirish formasi — Supabase Auth orqali mavjud akkauntga kiradi
+  var loginEmailInput = document.getElementById('ws-login-email-input');
+  if (loginEmailInput) loginEmailInput.oninput = function () { wsState.loginEmail = loginEmailInput.value; };
+  var loginPassInput = document.getElementById('ws-login-pass-input');
+  if (loginPassInput) loginPassInput.oninput = function () { wsState.loginPass = loginPassInput.value; };
+  var loginSubmitBtn = document.getElementById('ws-login-submit-btn');
+  if (loginSubmitBtn) loginSubmitBtn.onclick = function () { wsSubmitLogin(); };
 }
 
 function wsNext() {
@@ -29484,24 +29884,35 @@ function wsBack() {
 }
 
 // ============================================================
-// 👤 MAHALLIY ISM TANLASH — 100% OFFLINE
+// ☁️ SUPABASE AUTH — haqiqiy Ro'yxatdan o'tish / Kirish / Mehmon
 // ------------------------------------------------------------
-// 🔴 TUZATILDI: ilgari shu yerda Supabase Auth (auth.users +
-// public.profiles) orqali haqiqiy ro'yxatdan o'tish/kirish (email+parol
-// va Google OAuth) bo'lgan. Ilova endi hech qanday tashqi backendga
-// ulanmaydi — shuning uchun bularning barchasi olib tashlandi va o'rniga
-// bitta oddiy, to'liq mahalliy funksiya qoldirildi: foydalanuvchi
-// xohlasa o'ziga maxsus ism tanlaydi (wsSubmitLocalName), xohlasa
-// "Mehmon" sifatida avtomatik ism bilan davom etadi (wsGuestLogin).
-// Ikkalasi ham faqat localStorage'ga yoziladi, tarmoq so'rovi yubormaydi.
+// Mehmon (wsGuestLogin) hamon 100% mahalliy: hech qanday tarmoq so'rovi
+// yubormaydi, faqat S.profile.name'ga avtomatik ism yozadi.
+// Ro'yxatdan o'tish (wsSubmitRegister) va Kirish (wsSubmitLogin) endi
+// haqiqiy Supabase Auth orqali ishlaydi (email+parol). Muvaffaqiyatli
+// bo'lsa S.cloudUserId/S.cloudLinked o'rnatiladi va shundan keyin har bir
+// save() chaqiruvida profil (nik/tanga/xp/daraja/streak) fonda Supabase
+// "profiles" jadvaliga sinxronlanadi (scheduleCloudSync, pastda).
 // ============================================================
 
-// Ism tanlash formasini yuboradi: nikni tekshiradi (uzunlik, ruxsat
-// etilgan belgilar, taqiqlangan/band bo'lmasligi) va to'g'ridan-to'g'ri
-// mahalliy holatga (S.profile.name) yozadi — hech qanday tarmoq so'rovi
-// yuborilmaydi.
-function wsSubmitLocalName() {
+function wsSetAuthBusy(btnId, busy, busyLabel) {
+  var btn = document.getElementById(btnId);
+  if (!btn) return;
+  if (busy) { btn.dataset.origLabel = btn.innerHTML; btn.innerHTML = busyLabel; btn.disabled = true; btn.style.opacity = '0.6'; }
+  else { if (btn.dataset.origLabel) btn.innerHTML = btn.dataset.origLabel; btn.disabled = false; btn.style.opacity = '1'; }
+}
+
+// Ro'yxatdan o'tish formasini yuboradi: avval nikni mahalliy qoidalar
+// bo'yicha tekshiradi (uzunlik/ruxsat etilgan belgilar/taqiqlangan
+// so'zlar emasligi), so'ng email/parolni tekshiradi, so'ng
+// supabase.auth.signUp() chaqiradi (nik "name" metadata sifatida
+// yuboriladi — Supabase tomonidagi on_auth_user_created trigger shu
+// metadata'dan profiles qatorini avtomatik yaratadi).
+async function wsSubmitRegister() {
   var nameVal = (wsState.regName || '').trim();
+  var emailVal = (wsState.regEmail || '').trim();
+  var passVal = wsState.regPass || '';
+
   if (nameVal.length < 3 || nameVal.length > USERNAME_MAX_LEN || !USERNAME_ALLOWED_REGEX.test(nameVal) || isUsernameBlocked(nameVal)) {
     try { toast(t('ws_reg_name_invalid_toast')); } catch (e) {}
     return;
@@ -29510,15 +29921,146 @@ function wsSubmitLocalName() {
     try { toast(t('ws_reg_taken_toast')); } catch (e) {}
     return;
   }
-  wsState.name = nameVal;
-  wsFinish('register', 'ws_reg_success_toast');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) {
+    try { toast(t('ws_email_invalid_toast')); } catch (e) {}
+    return;
+  }
+  if (passVal.length < 6) {
+    try { toast(t('ws_reg_pass_invalid_toast')); } catch (e) {}
+    return;
+  }
+
+  wsSetAuthBusy('ws-reg-submit-btn', true, '⏳ ...');
+  try {
+    var res = await supabase.auth.signUp({
+      email: emailVal,
+      password: passVal,
+      options: { data: { name: nameVal } }
+    });
+    if (res.error) {
+      toast('⚠️ ' + res.error.message);
+      return;
+    }
+    S.cloudLinked = true;
+    S.cloudUserId = res.data.user ? res.data.user.id : null;
+    S.cloudEmail = emailVal;
+    wsState.name = nameVal;
+    wsFinish('register', 'ws_reg_success_toast');
+    // Yangi akkaunt uchun profil qatori trigger orqali yaratiladi — hozirgi
+    // mahalliy tanga/xp/streak holatini shu yangi qatorga darhol yozamiz.
+    scheduleCloudSync(true);
+  } catch (e) {
+    toast('⚠️ ' + (e && e.message ? e.message : String(e)));
+  } finally {
+    wsSetAuthBusy('ws-reg-submit-btn', false);
+  }
+}
+
+// Kirish formasini yuboradi: supabase.auth.signInWithPassword() chaqiradi,
+// muvaffaqiyatli bo'lsa "profiles" jadvalidan bulutdagi profilni o'qiydi
+// va SHU QURILMADAGI ma'lumotlarni bulutdagi qiymatlar bilan almashtiradi
+// (chunki "Kirish" — boshqa qurilmada ochilgan akkauntni tiklash degani).
+async function wsSubmitLogin() {
+  var emailVal = (wsState.loginEmail || '').trim();
+  var passVal = wsState.loginPass || '';
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) {
+    try { toast(t('ws_email_invalid_toast')); } catch (e) {}
+    return;
+  }
+  if (!passVal) {
+    try { toast(t('ws_login_fail_toast')); } catch (e) {}
+    return;
+  }
+
+  wsSetAuthBusy('ws-login-submit-btn', true, '⏳ ...');
+  try {
+    var res = await supabase.auth.signInWithPassword({ email: emailVal, password: passVal });
+    if (res.error) {
+      toast('⚠️ ' + t('ws_login_fail_toast'));
+      return;
+    }
+    var uid = res.data.user ? res.data.user.id : null;
+    S.cloudLinked = true;
+    S.cloudUserId = uid;
+    S.cloudEmail = emailVal;
+
+    var profRes = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle();
+    if (profRes.data) {
+      var p = profRes.data;
+      wsState.name = p.name || (S.profile && S.profile.name) || '';
+      if (!S.profile) S.profile = {};
+      S.coins = p.coins || 0;
+      S.xp = p.xp || 0;
+      S.streak = p.streak || 0;
+    }
+    wsFinish('login', 'ws_login_success_toast');
+  } catch (e) {
+    toast('⚠️ ' + (e && e.message ? e.message : String(e)));
+  } finally {
+    wsSetAuthBusy('ws-login-submit-btn', false);
+  }
 }
 
 // Mehmon sifatida davom etish — hech qanday ism kiritilmaydi, avtomatik
 // (masalan "O'quvchi #123" kabi) ism ishlatiladi. Bari mahalliy: faqat
-// shu qurilmadagi (S) holatda davom etiladi.
+// shu qurilmadagi (S) holatda davom etiladi, tarmoq so'rovi yubormaydi.
 function wsGuestLogin() {
   wsFinish('guest', 'ws_guest_success_toast');
+}
+
+// ------------------------------------------------------------
+// ☁️ Fon rejimida sinxronlash: save() har chaqirilganda (agar akkaunt
+// bulutga ulangan bo'lsa) profilni Supabase'ga debounce bilan yuboradi —
+// har bir mayda o'zgarishda emas, 1.5s kutib, faqat oxirgi holatni.
+// ------------------------------------------------------------
+var _cloudSyncTimer = null;
+function scheduleCloudSync(immediate) {
+  if (!S.cloudLinked || !S.cloudUserId) return;
+  if (_cloudSyncTimer) clearTimeout(_cloudSyncTimer);
+  var run = function () {
+    supabase.from('profiles').upsert({
+      id: S.cloudUserId,
+      name: (S.profile && S.profile.name) || null,
+      coins: S.coins || 0,
+      xp: S.xp || 0,
+      level: (typeof getLevel === 'function' ? getLevel(S.xp || 0).level : 1) || 1,
+      streak: S.streak || 0,
+      updated_at: new Date().toISOString()
+    }).then(function (r) {
+      if (r.error) console.warn('[Cloud sync] xatolik:', r.error.message);
+    });
+  };
+  if (immediate) run(); else _cloudSyncTimer = setTimeout(run, 1500);
+}
+
+// Sahifa ochilganda (ilk yuklanishda) — brauzerda saqlangan Supabase
+// sessiyasi bormi tekshiradi (supabase-js buni o'zi localStorage'da
+// saqlaydi). Bor bo'lsa, S.cloudLinked/cloudUserId o'rnatiladi — shundan
+// keyin oddiy save() chaqiruvlari o'zi fon rejimida sinxlanaveradi.
+// Hech qanday ma'lumot bu bosqichda qayta yozilmaydi (faqat "Kirish"
+// formasi orqali ongli ravishda kirilganda bulut ma'lumoti tortib olinadi).
+async function wsCheckSupabaseSession() {
+  try {
+    var res = await supabase.auth.getSession();
+    var session = res.data && res.data.session;
+    if (session && session.user) {
+      S.cloudLinked = true;
+      S.cloudUserId = session.user.id;
+      S.cloudEmail = session.user.email;
+    }
+  } catch (e) { console.warn('[Supabase session] tekshirishda xatolik:', e); }
+}
+
+// Akkauntdan chiqish: Supabase sessiyasini yopadi va mahalliy bulut
+// bayroqlarini tozalaydi. Vazifalar/tanga/xp kabi ma'lumotlar shu
+// qurilmada (localStorage) qoladi — faqat keyingi o'zgarishlar endi
+// bulutga sinxlanmay qo'yadi.
+async function cloudLogout() {
+  try { await supabase.auth.signOut(); } catch (e) {}
+  S.cloudLinked = false;
+  S.cloudUserId = null;
+  S.cloudEmail = null;
 }
 
 // So'rovnomani yakunlaydi: to'plangan javoblarni (ism, maqsad, tavsiya
@@ -29589,12 +30131,8 @@ function wsFinish(method, toastKey) {
   }
 }
 
-// 🔴 TUZATILDI: ilgari shu yerda sahifa Google OAuth redirect'idan
-// qaytganda Supabase sessiyasini tekshirib, avtomatik kirishni yakunlovchi
-// wsCheckSupabaseSession() funksiyasi bor edi. Ilova endi hech qanday
-// tashqi backend yoki OAuth bilan ishlamaydi (Google kirish tugmasi ham
-// olib tashlandi), shuning uchun bu funksiyaga va uning
-// "ws_pending_google_auth" localStorage belgisiga ehtiyoj qolmadi.
+// Eslatma: Google OAuth hali ulanmagan (faqat email+parol ishlaydi).
+// Google keyinroq alohida bosqichda qo'shiladi.
 </script>
 <script>
 /* ============================================================
@@ -35023,40 +35561,13 @@ document.addEventListener('DOMContentLoaded', function () {
   try { ensureFriendsDefaults(); updateFriendsAcceptReqSwitchUI(); } catch (e) {}
 });
 
-// ---------------- DEMO: VAQTI-VAQTI BILAN KELGAN SO'ROV SIMULYATSIYASI ----------------
-// Haqiqiy backend yo'qligi sabab, boshqa (haqiqiy) foydalanuvchi sizga real
-// so'rov yubora olmaydi — shu o'rniga demo direktoriyadan tasodifiy bir NPC
-// vaqti-vaqti bilan (agar "So'rovlarni qabul qilish" yoqilgan bo'lsa) sizga
-// sababli do'stlik so'rovi "yuboradi" — bu orqali Accept/Decline, profil
-// ko'rish va bildirishnoma oqimini sinab ko'rish mumkin.
-var FRIENDS_DEMO_REASONS = ['friends_demo_reason_1', 'friends_demo_reason_2', 'friends_demo_reason_3', 'friends_demo_reason_4'];
-function friendsMaybeSimulateIncomingRequest() {
-  ensureFriendsDefaults();
-  if (!S.friends.acceptRequestsEnabled) return;
-  if (Math.random() > 0.35) return;
-  var existingIds = (S.friends.list || []).map(function (f) { return f.id; })
-    .concat((S.friends.incoming || []).map(function (r) { return r.id; }))
-    .concat((S.friends.outgoing || []).map(function (o) { return o.id; }))
-    .concat((S.friends.banned || []).map(function (b) { return b.id; }))
-    .concat([S.friends.myId]);
-  var candidates = FRIENDS_DEMO_DIRECTORY.filter(function (u) { return existingIds.indexOf(u.id) === -1; });
-  if (!candidates.length) return;
-  var u = candidates[Math.floor(Math.random() * candidates.length)];
-  var reasonKey = FRIENDS_DEMO_REASONS[Math.floor(Math.random() * FRIENDS_DEMO_REASONS.length)];
-  S.friends.incoming.push({ id: u.id, name: u.name, icon: u.icon, sentAt: Date.now(), reason: t(reasonKey) });
-  save();
-  var overlay = document.getElementById('friends-modal-overlay');
-  if (overlay && overlay.classList.contains('open')) renderFriendsAll(); else updateFriendsBadges();
-  toast('👥 ' + t('friends_notify_incoming_body').replace('{name}', u.name));
-  try {
-    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-      new Notification(t('friends_notify_incoming_title'), { body: t('friends_notify_incoming_body').replace('{name}', u.name), icon: '👥' });
-    }
-  } catch (e) {}
-}
-setTimeout(function () {
-  setInterval(friendsMaybeSimulateIncomingRequest, 120000);
-}, 20000);
+// ---------------- OLIB TASHLANDI: soxta/bot do'stlik so'rovlari ----------------
+// Ilgari shu yerda demo direktoriyadagi soxta foydalanuvchilardan har ~2
+// daqiqada tasodifiy do'stlik so'rovi "kelib turgan" edi (faqat ko'rinish
+// uchun, haqiqiy backend yo'qligi sabab). Foydalanuvchi so'rovi bilan
+// butunlay olib tashlandi — endi hech qanday soxta/bot so'rov kelmaydi.
+// "Qidiruv" orqali odam qo'shish (FRIENDS_DEMO_DIRECTORY) hali ham
+// ishlaydi, faqat avtomatik/istalmagan so'rov kelishi to'xtatildi.
 
 // 🆕 QO'SHILDI: muddati o'tgan chorlovlarni ilova OCHIQ turganda ham
 // muntazam tekshirib turadi — ilgari bu faqat "Chorlov" tabi ochilganda
@@ -35070,9 +35581,12 @@ setInterval(function () {
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const supabase = window.supabase.createClient(
-  'https://piwuokcqnfhovjhkjqnl.supabase.co',
-  'sb_publishable_I7C5hRRMJqhnmC3TI-tN2w_q5xBty2E'
+  'https://zzcvpenkevxlurgpjltz.supabase.co',
+  'sb_publishable_KbjJQoICYY8BoIqeBw_OKQ_xTTk_yu8'
 );
+// supabase client shu yerda yaratilgach, saqlangan sessiya bor-yo'qligini
+// tekshiramiz (wsCheckSupabaseSession — welcome-survey skriptida yozilgan).
+try { if (typeof wsCheckSupabaseSession === 'function') wsCheckSupabaseSession(); } catch (e) {}
 </script>
 
 </body>
