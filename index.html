@@ -2097,6 +2097,53 @@ if ('serviceWorker' in navigator) {
       <div class="stat"><div class="stat-label" data-i18n="goals_stat_today">Bugun belgilandi</div><div class="stat-val" id="goals-stat-today">0</div></div>
     </div>
 
+    <!-- 🆕 MAQSADLAR KALENDARI — vazifalar bo'limidagi kalendar (calendar-section)
+         bilan bir xil naqsh: oy ko'rinishi, har bir kun barcha maqsadlar bo'yicha
+         umumiy holatga qarab rangga bo'yaladi, va kunni bosganda o'sha kunga
+         tegishli (jadvalga mos) BARCHA maqsadlar ro'yxati ochilib, har birini
+         ✅/⬜ bosib bajarilgan/bajarilmagan deb belgilash mumkin — shu jumladan
+         o'tgan kunlar uchun ham. Funksiyalar: renderGoalsCalendar, showGoalsDayDetail,
+         gcalToggleGoal, goalsCalPrevMonth/NextMonth/GoToday. Bitta yagona manba —
+         isGoalDueOnDate/_goalToggleDateCore — xuddi kartochkadagi "Bugun bajardim"
+         tugmasi va yuqoridagi bitta-maqsad modal-kalendari (openGoalCalendar) bilan
+         bir xil, shu sababli barcha joyda natija izchil bo'ladi. -->
+    <div id="goals-calendar-section" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px;margin-bottom:16px">
+      <div style="font-size:var(--fs-xs);color:var(--text-muted);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:14px" data-i18n="goals_calendar_title">📅 Maqsadlar kalendari</div>
+      <!-- Month nav -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:6px">
+        <button onclick="goalsCalPrevMonth()" style="width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:var(--fs-md);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">‹</button>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:1px;flex:1;min-width:0">
+          <div id="gcal-month-label" style="font-family:Syne,sans-serif;font-size:var(--fs-base);font-weight:700;color:var(--text);padding:2px 8px"></div>
+          <button type="button" id="gcal-today-btn" onclick="goalsCalGoToday()" data-i18n="cal_today_btn" style="font-size:var(--fs-3xs);color:var(--accent);background:none;border:none;cursor:pointer;padding:0;line-height:1.4">Bugun</button>
+        </div>
+        <button onclick="goalsCalNextMonth()" style="width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:var(--fs-md);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">›</button>
+      </div>
+      <!-- Day headers -->
+      <div id="gcal-day-headers" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:3px"></div>
+      <!-- Calendar grid -->
+      <div id="gcal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:14px;max-width:100%"></div>
+      <!-- Legend -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+        <span style="font-size:var(--fs-2xs);color:var(--text-muted);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:var(--radius-2xs);background:#34D399;display:inline-block"></span><span data-i18n="cal_legend_all">Hammasi</span></span>
+        <span style="font-size:var(--fs-2xs);color:var(--text-muted);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:var(--radius-2xs);background:#F5A623;display:inline-block"></span><span data-i18n="cal_legend_partial">Qisman</span></span>
+        <span style="font-size:var(--fs-2xs);color:var(--text-muted);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:var(--radius-2xs);background:#F87171;display:inline-block"></span><span data-i18n="cal_legend_none">Bajarilmadi</span></span>
+        <span style="font-size:var(--fs-2xs);color:var(--text-muted);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:var(--radius-2xs);background:var(--surface2);border:1px solid var(--border);display:inline-block"></span><span data-i18n="cal_legend_empty">Vazifa yo'q</span></span>
+      </div>
+      <!-- Day detail -->
+      <div id="gcal-detail" style="display:none;border-top:1px solid var(--border);margin-top:10px">
+        <div id="gcal-detail-header" onclick="toggleGoalsCalDetail()" style="display:flex;align-items:center;justify-content:space-between;padding:10px 2px;cursor:pointer;user-select:none">
+          <div id="gcal-detail-title" style="font-size:var(--fs-2xs);font-weight:600;color:var(--text-muted);letter-spacing:0.06em;text-transform:uppercase"></div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span id="gcal-detail-progress" style="font-size:var(--fs-xs);font-weight:700;color:var(--text-dim)"></span>
+            <span id="gcal-detail-arrow" style="font-size:var(--fs-sm);color:var(--text-dim);transition:transform 0.2s">›</span>
+          </div>
+        </div>
+        <div id="gcal-detail-body" style="display:none;padding-bottom:10px">
+          <div id="gcal-detail-list" style="display:flex;flex-direction:column;gap:6px"></div>
+        </div>
+      </div>
+    </div>
+
     <div id="goals-list" style="display:flex;flex-direction:column;gap:10px"></div>
     <div id="goals-empty" style="text-align:center;padding:48px 20px;color:var(--text-dim);font-size:var(--fs-base);line-height:1.7;display:none">
       <div style="font-size:var(--fs-5xl);margin-bottom:12px;opacity:0.6">🎯</div>
@@ -4122,6 +4169,33 @@ if ('serviceWorker' in navigator) {
   </div>
 </div>
 
+<!-- 📅 GOAL CALENDAR MODAL — bitta maqsadning o'tgan/joriy/kelajak kunlarini
+     oy ko'rinishida ko'rsatadi (tasklar kalendari kabi), o'tgan kunlarni ham
+     jadvalga mos kelsa bosib done/undone qilish mumkin. JS: openGoalCalendar,
+     closeGoalCalendar, goalCalPrevMonth/NextMonth, renderGoalCalendar. -->
+<div class="modal-overlay" id="goal-cal-modal-overlay" onclick="if(event.target===this)closeGoalCalendar()">
+  <div class="modal" id="goal-cal-modal-box" style="width:100%;position:relative">
+    <button type="button" onclick="closeGoalCalendar()" data-i18n-title="btn_close" style="position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);color:var(--text-muted);font-size:var(--fs-base);cursor:pointer;z-index:2;display:flex;align-items:center;justify-content:center">✕</button>
+    <h2 id="goal-cal-title" style="margin-bottom:4px;padding-right:34px"></h2>
+    <div style="font-size:var(--fs-2xs);color:var(--text-muted);margin-bottom:16px" data-i18n="goal_cal_subtitle">O'tgan kunlarni ham bosib, bajarilgan/bajarilmagan deb belgilashingiz mumkin</div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <button type="button" onclick="goalCalPrevMonth()" style="width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:var(--fs-md);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">‹</button>
+      <div id="goal-cal-month-label" style="font-family:Syne,sans-serif;font-size:var(--fs-base);font-weight:700;color:var(--text)"></div>
+      <button type="button" onclick="goalCalNextMonth()" style="width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:var(--fs-md);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">›</button>
+    </div>
+
+    <div id="goal-cal-weekdays" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:3px"></div>
+    <div id="goal-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:14px"></div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <span style="font-size:var(--fs-2xs);color:var(--text-muted);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:var(--radius-2xs);background:#34D399;display:inline-block"></span><span data-i18n="goal_cal_legend_done">Bajarilgan</span></span>
+      <span style="font-size:var(--fs-2xs);color:var(--text-muted);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:var(--radius-2xs);background:rgba(248,113,113,0.7);display:inline-block"></span><span data-i18n="goal_cal_legend_missed">O'tkazib yuborilgan</span></span>
+      <span style="font-size:var(--fs-2xs);color:var(--text-muted);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:var(--radius-2xs);background:var(--surface2);opacity:0.45;display:inline-block"></span><span data-i18n="goal_cal_legend_notdue">Navbatda emas</span></span>
+    </div>
+  </div>
+</div>
+
 <!-- EDIT REWARD MODAL -->
 <div class="modal-overlay" id="reward-modal-overlay">
   <div class="modal">
@@ -4883,6 +4957,10 @@ const I18N = {
     goal_check_done_today: '✅ Bugun bajardim!',
     goal_check_todo_today: '☐ Bugun bajardim',
     goal_not_today: '📅 Bugun navbati emas',
+    goal_cal_subtitle: "O'tgan kunlarni ham bosib, bajarilgan/bajarilmagan deb belgilashingiz mumkin",
+    goal_cal_legend_done: 'Bajarilgan',
+    goal_cal_legend_missed: "O'tkazib yuborilgan",
+    goal_cal_legend_notdue: 'Navbatda emas',
     // Chest
     chest_tasks_title: '🎲 Chest Vazifalar',
     chest_add_btn: "+ Qo'shish",
@@ -5111,6 +5189,8 @@ const I18N = {
     day_name_5: 'Juma',
     day_name_6: 'Shanba',
     calendar_title: '📅 Kalendar',
+    goals_calendar_title: '📅 Maqsadlar kalendari',
+    goals_cal_day_empty: 'Bu kunda maqsad yo\'q edi',
     cal_edit_task_title: "Vazifani tahrirlash",
     cal_legend_all: 'Hammasi',
     cal_legend_partial: 'Qisman',
@@ -6447,6 +6527,10 @@ const I18N = {
     goal_check_done_today: '✅ Done today!',
     goal_check_todo_today: '☐ Done today',
     goal_not_today: '📅 Not scheduled today',
+    goal_cal_subtitle: 'You can also tap past days to mark them done/undone',
+    goal_cal_legend_done: 'Done',
+    goal_cal_legend_missed: 'Missed',
+    goal_cal_legend_notdue: 'Not scheduled',
     // Chest
     chest_tasks_title: '🎲 Chest Tasks',
     chest_add_btn: '+ Add',
@@ -6680,6 +6764,8 @@ const I18N = {
     day_name_5: 'Friday',
     day_name_6: 'Saturday',
     calendar_title: '📅 Calendar',
+    goals_calendar_title: '📅 Goals calendar',
+    goals_cal_day_empty: 'No goals for this day',
     cal_edit_task_title: "Edit task",
     cal_legend_all: 'All',
     cal_legend_partial: 'Partial',
@@ -8013,6 +8099,10 @@ const I18N = {
     goal_check_done_today: '✅ Сегодня выполнил!',
     goal_check_todo_today: '☐ Сегодня выполнил',
     goal_not_today: '📅 Сегодня не по графику',
+    goal_cal_subtitle: 'Можно нажать и на прошедшие дни, чтобы отметить выполнено/не выполнено',
+    goal_cal_legend_done: 'Выполнено',
+    goal_cal_legend_missed: 'Пропущено',
+    goal_cal_legend_notdue: 'Не по графику',
     // Сундук
     chest_tasks_title: '🎲 Задачи сундука',
     chest_add_btn: '+ Добавить',
@@ -8244,6 +8334,8 @@ const I18N = {
     day_name_6: 'Суббота',
     // Календарь
     calendar_title: '📅 Календарь',
+    goals_calendar_title: '📅 Календарь целей',
+    goals_cal_day_empty: 'В этот день целей не было',
     cal_edit_task_title: "Редактировать задачу",
     cal_legend_all: 'Все',
     cal_legend_partial: 'Частично',
@@ -10926,6 +11018,8 @@ function applyLanguage() {
   // Kalendar hafta-kunlari sarlavhasi va oy xulosasi ham til o'zgarganda
   // darhol yangi tilda qayta chizilsin (ilgari bular hardcoded edi).
   try { if (typeof renderCalendar === 'function' && document.getElementById('cal-grid')) renderCalendar(); } catch(e) {}
+  // Maqsadlar kalendari ham til o'zgarganda qayta chizilsin
+  try { if (typeof renderGoalsCalendar === 'function' && document.getElementById('gcal-grid')) renderGoalsCalendar(); } catch(e) {}
   // 👥 Do'stlar modali ochiq bo'lsa, uning matnlari ham yangi tilda qayta chizilsin
   try {
     var frOverlay = document.getElementById('friends-modal-overlay');
@@ -14835,7 +14929,7 @@ function showTab(tab) {
   if(tab==='profile') { renderProfile(); renderStats(); renderCalendar(); renderIeltsCountdown(); }
   if(tab==='tarix') renderTarix();
   if(tab==='secret') openSecretTab();
-  if(tab==='goals') { checkNotifBar(); renderGoals(); }
+  if(tab==='goals') { checkNotifBar(); renderGoals(); renderGoalsCalendar(); }
   if(tab==='reyting') renderReyting();
   if(tab==='chest') renderChest();
   if(tab==='ielts') renderIeltsTab();
@@ -20100,6 +20194,7 @@ function _rstPerform(doCoins, doStats, doTasks, examTypes) {
   if (typeof renderTaskList === 'function') renderTaskList();
   if (typeof renderRewards === 'function') renderRewards();
   if (typeof renderGoals === 'function') renderGoals();
+  if (typeof renderGoalsCalendar === 'function' && document.getElementById('gcal-grid')) renderGoalsCalendar();
   if (typeof renderChest === 'function') renderChest();
   if (typeof renderSecretContent === 'function' && typeof _secretUnlocked !== 'undefined' && _secretUnlocked) renderSecretContent();
   if (examTypes && examTypes.length) {
@@ -21271,14 +21366,22 @@ function secretLog(status, when) {
   // ── 2. YANGI TANLOV effektlarini qo'llash ────────────────────────────────────
   if(status === 'clean') {
     var coinGain = 3;
-    d.logCoins[logDate] = coinGain; // earnedOrPenalizedCoins — aynan shu kun uchun (streak bonusisiz)
-    addLifetimeCoins(coinGain); // ijobiy topilgan tanga — S.totalCoins ham to'g'ri oshadi
+    // 🐛 KATTA XATOLIK TUZATILDI (Goals bo'limidagi bilan bir xil sabab):
+    // ilgari d.logCoins ga XOM coinGain (discount qo'llanilmagan) saqlanib,
+    // lekin addLifetimeCoins() qarzda bo'lsa balansga undan KAMROQ (chegirmali)
+    // miqdor qo'shardi — natijada rollback (secretEditLog/qaytadan belgilash)
+    // paytida XOM (kattaroq) miqdor yechib olinib, har safar balans qo'shimcha
+    // kamayib, qarzda ekan bir kunni qayta-qayta belgilab/bekor qilib tangani
+    // cheksiz minusga tushirish mumkin edi. Endi d.logCoins ga addLifetimeCoins()
+    // dan QAYTGAN HAQIQIY (chegirma qo'llangandan keyingi) miqdor saqlanadi.
+    var actualCoinGain = addLifetimeCoins(coinGain); // ijobiy topilgan tanga — S.totalCoins ham to'g'ri oshadi
+    d.logCoins[logDate] = actualCoinGain; // earnedOrPenalizedCoins — aynan shu kun uchun (streak bonusisiz)
     // uniqueKey bilan yozsak, fikr o'zgartirish tarixga spam qilmaydi
-    addTarixLog('in', tr('secret_clean_log'), coinGain, 'secret_clean_'+logDate);
+    addTarixLog('in', tr('secret_clean_log'), actualCoinGain, 'secret_clean_'+logDate);
 
     // Streak bonuslarini tekshir (d.log[logDate] allaqachon 'clean' qilib yozilgan)
     var newStreak = calcSecretStreak(d.log);
-    var totalCoinGain = coinGain;
+    var totalCoinGain = actualCoinGain;
     // Faqat bitta — ENG YUQORI milestone bonusi beriladi (if-else if zanjiri).
     // streakBonusByDate[logDate+'_m']: bu kun uchun bonus allaqachon berilganini tekshiradi
     // (toggle/fikr o'zgartirish holatida spam oldini oladi va rollback uchun kerak).
@@ -21291,11 +21394,12 @@ function secretLog(status, when) {
       else if (newStreak >= 10) { mBonus = SEC_STREAK_BONUSES[10]; mLabel = 10; }
       else if (newStreak >= 5)  { mBonus = SEC_STREAK_BONUSES[5];  mLabel = 5;  }
       if(mBonus > 0) {
-        d.streakBonusByDate[streakBonusKey] = mBonus; // rollback + spam himoya
-        totalCoinGain += mBonus;
-        addLifetimeCoins(mBonus); // ijobiy bonus — S.totalCoins ham oshadi
-        addTarixLog('in', tr('secret_streak_bonus_log').replace('{label}', mLabel), mBonus, 'secret_bonus_'+logDate);
-        setTimeout(function(ml, mb){ return function(){ toast(t('secret_streak_bonus_toast').replace('{ml}', ml).replace('{mb}', mb)); }; }(mLabel, mBonus), 400);
+        // 🐛 Xuddi yuqoridagi kabi — endi HAQIQIY (chegirmali) bonus miqdori saqlanadi.
+        var actualBonus = addLifetimeCoins(mBonus); // ijobiy bonus — S.totalCoins ham oshadi
+        d.streakBonusByDate[streakBonusKey] = actualBonus; // rollback + spam himoya
+        totalCoinGain += actualBonus;
+        addTarixLog('in', tr('secret_streak_bonus_log').replace('{label}', mLabel), actualBonus, 'secret_bonus_'+logDate);
+        setTimeout(function(ml, mb){ return function(){ toast(t('secret_streak_bonus_toast').replace('{ml}', ml).replace('{mb}', mb)); }; }(mLabel, actualBonus), 400);
       }
     }
     save();
@@ -21841,7 +21945,7 @@ function saveGoal() {
     });
     toast(emoji + t('gm_added_toast'));
   }
-  save(); closeGoalModal(); renderGoals();
+  save(); closeGoalModal(); renderGoals(); renderGoalsCalendar();
 }
 
 // Umumiy ICHKI funksiya: ma'lum bir SANA uchun maqsadni belgilaydi yoki
@@ -21876,9 +21980,20 @@ function _goalToggleDateCore(g, dateStr) {
     // aynan shu miqdorni (coinAward) o'sha kun uchun "muzlatib" saqlaymiz.
     g.daysChecked[dateStr] = 1;
     if(!g.daysCoinsGiven[dateStr]) {
-      g.daysCoinsGiven[dateStr] = coinAward;
-      addLifetimeCoins(coinAward);
-      addTarixLog('in', g.emoji+' '+g.name, coinAward, 'goal_'+g.id);
+      // 🐛 KATTA XATOLIK TUZATILDI: ilgari bu yerda XOM (discount qo'llanilmagan)
+      // coinAward qiymati "muzlatilgan" deb saqlanardi, lekin addLifetimeCoins()
+      // balansga QARZDA bo'lsa 1.5x KAMROQ (chegirmali) miqdor qo'shadi. Natijada:
+      // check → balansga faqat chegirmali miqdor qo'shilardi, lekin uncheck →
+      // spendCoins() XOM (kattaroq) miqdorni yechib olardi. Shu tafovut tufayli
+      // foydalanuvchi qarzda ekan payt bitta maqsadni ✅→⬜→✅→⬜ deb qayta-qayta
+      // bossa, har safar balans qo'shimcha kamayib, tangani cheksiz katta
+      // minusga tushirib yuborish mumkin edi. Endi daysCoinsGiven ga addLifetimeCoins()
+      // dan QAYTGAN HAQIQIY (chegirma qo'llangandan keyingi) miqdor saqlanadi —
+      // shunda check/uncheck har doim aynan bir xil miqdorda muvozanatlashadi.
+      var actualAward = addLifetimeCoins(coinAward);
+      g.daysCoinsGiven[dateStr] = actualAward;
+      addTarixLog('in', g.emoji+' '+g.name, actualAward, 'goal_'+g.id);
+      coinAward = actualAward; // toast/natija ham haqiqiy berilgan miqdorni ko'rsatsin
     }
     nowChecked = true;
   }
@@ -21910,7 +22025,7 @@ function goalCheckToday(id) {
   }
   if (result.justCompleted) toast('🏆 ' + g.emoji + ' ' + t('goal_completed'));
 
-  save(); renderGoals(); render();
+  save(); renderGoals(); renderGoalsCalendar(); render();
 }
 
 // ============================================================
@@ -21979,6 +22094,17 @@ function renderGoalCalendar() {
 
   var label = document.getElementById('goal-cal-month-label');
   if (label) label.textContent = getMonthsFullArr()[_goalCalMonth] + ' ' + _goalCalYear;
+
+  // Hafta kunlari sarlavhasi — mavjud getShortDaysArr() orqali joriy tilga
+  // moslashtiriladi (0=Yak...6=Sha), kalendar esa Dushanbadan boshlanadi.
+  var weekdaysEl = document.getElementById('goal-cal-weekdays');
+  if (weekdaysEl) {
+    var sd = getShortDaysArr();
+    var order = [1,2,3,4,5,6,0];
+    weekdaysEl.innerHTML = order.map(function(d){
+      return '<div style="text-align:center;font-size:var(--fs-3xs);color:var(--text-dim);font-weight:600">' + esc(sd[d]) + '</div>';
+    }).join('');
+  }
 
   var grid = document.getElementById('goal-cal-grid');
   if (!grid) return;
@@ -22056,16 +22182,277 @@ function renderGoalCalendar() {
   }
 }
 
+// ============================================================
+// 📅 MAQSADLAR BO'LIMI KALENDARI (Goals bo'limining o'zida) — yuqoridagi
+// bitta-maqsad modal-kalendaridan farqli, bu BARCHA maqsadlarni bir vaqtda
+// ko'rsatadi: xuddi Vazifalar bo'limidagi asosiy kalendar (renderCalendar/
+// showDayDetail) kabi — har bir kun barcha maqsadlar bo'yicha umumiy holatga
+// qarab rangga bo'yaladi, kunni bosganda esa o'sha kunga tegishli (jadvalga
+// mos) BARCHA maqsadlar ro'yxati ochiladi va har birini ✅/⬜ bosib, hatto
+// o'tgan kunlar uchun ham, bajarilgan/bajarilmagan deb belgilash mumkin.
+// Bitta yagona manba — isGoalDueOnDate/_goalToggleDateCore — kartochkadagi
+// "Bugun bajardim" tugmasi va bitta-maqsad modal-kalendari bilan bir xil,
+// shu sababli natija hamma joyda izchil bo'ladi.
+// ============================================================
+var _gCalYear = new Date().getFullYear();
+var _gCalMonth = new Date().getMonth();
 
-  // 🔴 TUZATILDI (v2): ilgari native window.confirm() ishlatilgan edi —
-  // PWA "standalone" rejimida (uy ekraniga qo'shilgan ilova) va ko'plab
-  // mobil in-app brauzerlarda (Instagram, Telegram va h.k. ichki brauzeri)
-  // window.confirm() ISHLAMAYDI yoki hech narsa ko'rsatmasdan sukut bo'yicha
-  // false qaytaradi — natijada tugma "bosilmayotgandek" ko'rinardi, chunki
-  // funksiya darhol (return) bilan to'xtab qolardi va hech qanday tasdiqlash
-  // oynasi chiqmasdi. Endi ilovaning boshqa joylarida ishlatilgan mavjud
-  // showConfirmModal() ga o'tkazildi — bu barcha
-  // muhitlarda (PWA, in-app brauzerlar) ishonchli ishlaydi.
+function goalsCalPrevMonth() {
+  _gCalMonth--;
+  if (_gCalMonth < 0) { _gCalMonth = 11; _gCalYear--; }
+  renderGoalsCalendar();
+}
+function goalsCalNextMonth() {
+  _gCalMonth++;
+  if (_gCalMonth > 11) { _gCalMonth = 0; _gCalYear++; }
+  renderGoalsCalendar();
+}
+function goalsCalGoToday() {
+  var d = new Date();
+  _gCalYear = d.getFullYear();
+  _gCalMonth = d.getMonth();
+  renderGoalsCalendar();
+}
+
+function renderGoalsCalDayHeaders() {
+  var el = document.getElementById('gcal-day-headers');
+  if (!el) return;
+  var shortDays = getShortDaysArr();
+  var mondayFirstOrder = [1,2,3,4,5,6,0];
+  var html = '';
+  for (var i = 0; i < mondayFirstOrder.length; i++) {
+    var dow = mondayFirstOrder[i];
+    var isSunday = dow === 0;
+    html += '<div style="text-align:center;font-size:var(--fs-3xs);color:' +
+      (isSunday ? 'var(--accent)' : 'var(--text-dim)') + ';padding:3px 0">' + esc(shortDays[dow]) + '</div>';
+  }
+  el.innerHTML = html;
+}
+
+// O'sha kunda navbatda bo'lgan (due) va belgilangan (done) maqsadlar soni.
+// isGoalDueOnDate/g.daysChecked — bitta-maqsad modal-kalendari va
+// goalCheckToday() bilan aynan bir xil manbadan foydalanadi.
+function getGoalsDayStats(dateStr) {
+  var due = 0, done = 0;
+  (S.goals || []).forEach(function(g) {
+    if (g.startDate && dateStr < g.startDate) return;
+    if (!isGoalDueOnDate(g, dateStr)) return;
+    due++;
+    if (g.daysChecked && g.daysChecked[dateStr]) done++;
+  });
+  return { due: due, done: done };
+}
+
+function renderGoalsCalendar() {
+  var label = document.getElementById('gcal-month-label');
+  if (label) label.textContent = getMonthsFullArr()[_gCalMonth] + ' ' + _gCalYear;
+
+  renderGoalsCalDayHeaders();
+
+  var grid = document.getElementById('gcal-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  var detail = document.getElementById('gcal-detail');
+  if (detail) detail.style.display = 'none';
+
+  var firstDay = new Date(_gCalYear, _gCalMonth, 1).getDay();
+  var startOffset = (firstDay === 0) ? 6 : firstDay - 1;
+  var daysInMonth = new Date(_gCalYear, _gCalMonth + 1, 0).getDate();
+  var todayStr = today();
+
+  for (var i = 0; i < startOffset; i++) {
+    var empty = document.createElement('div');
+    empty.style.cssText = 'aspect-ratio:1;max-height:48px;';
+    grid.appendChild(empty);
+  }
+
+  for (var day = 1; day <= daysInMonth; day++) {
+    var dateStr = getDateStr(_gCalYear, _gCalMonth, day);
+    var isFuture = dateStr > todayStr;
+    var isToday = dateStr === todayStr;
+
+    var stats = isFuture ? { due: 0, done: 0 } : getGoalsDayStats(dateStr);
+
+    var bg, opacity = '1';
+    if (isFuture) {
+      bg = 'transparent'; opacity = '0.35';
+    } else if (stats.due === 0) {
+      bg = 'var(--surface2)'; opacity = '0.5';
+    } else {
+      var pct = stats.done / stats.due;
+      if (pct >= 1)      bg = '#34D399';
+      else if (pct > 0)  bg = '#F5A623';
+      else               bg = '#F87171';
+    }
+
+    var cell = document.createElement('div');
+    cell.dataset.date = dateStr;
+    cell.style.cssText =
+      'aspect-ratio:1;max-height:48px;border-radius:var(--radius-sm);background:' + bg +
+      ';opacity:' + opacity +
+      ';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:var(--fs-2xs);font-weight:600' +
+      ';color:' + (bg === 'transparent' || bg === 'var(--surface2)' ? 'var(--text-dim)' : 'rgba(0,0,0,0.75)') +
+      ';cursor:' + (isFuture ? 'default' : 'pointer') +
+      ';transition:transform 0.15s;position:relative;' +
+      (isToday ? 'box-shadow:0 0 0 2px var(--accent);' : '');
+
+    var dayNumEl = document.createElement('span');
+    dayNumEl.style.cssText = 'line-height:1';
+    dayNumEl.textContent = day;
+    cell.appendChild(dayNumEl);
+
+    if (!isFuture && stats.due > 0) {
+      var miniEl = document.createElement('span');
+      miniEl.style.cssText = 'font-size:7px;line-height:1;font-weight:700;opacity:0.85';
+      miniEl.textContent = stats.done + '/' + stats.due;
+      cell.appendChild(miniEl);
+      cell.title = stats.done + '/' + stats.due;
+    }
+
+    if (!isFuture) {
+      cell.tabIndex = 0;
+      cell.setAttribute('role', 'button');
+      cell.setAttribute('aria-label', dateStr + (stats.due > 0 ? ', ' + stats.done + '/' + stats.due : ''));
+
+      cell.addEventListener('click', function(e) {
+        var ds = e.currentTarget.dataset.date;
+        showGoalsDayDetail(ds);
+        grid.querySelectorAll('[data-date]').forEach(function(c) { c.style.outline = ''; });
+        e.currentTarget.style.outline = '2px solid var(--accent)';
+        e.currentTarget.style.outlineOffset = '2px';
+      });
+      cell.addEventListener('mouseenter', function(e) { if(!e.currentTarget.style.outline) e.currentTarget.style.transform='scale(1.12)'; });
+      cell.addEventListener('mouseleave', function(e) { e.currentTarget.style.transform=''; });
+      cell.addEventListener('keydown', function(e) {
+        var dayCells = Array.prototype.slice.call(grid.querySelectorAll('[data-date]'));
+        var idx = dayCells.indexOf(e.currentTarget);
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.currentTarget.click(); }
+        else if (e.key === 'ArrowRight') { e.preventDefault(); if (dayCells[idx+1]) dayCells[idx+1].focus(); }
+        else if (e.key === 'ArrowLeft')  { e.preventDefault(); if (dayCells[idx-1]) dayCells[idx-1].focus(); }
+        else if (e.key === 'ArrowDown')  { e.preventDefault(); if (dayCells[idx+7]) dayCells[idx+7].focus(); }
+        else if (e.key === 'ArrowUp')    { e.preventDefault(); if (dayCells[idx-7]) dayCells[idx-7].focus(); }
+      });
+    }
+
+    grid.appendChild(cell);
+  }
+}
+
+function toggleGoalsCalDetail() {
+  var body  = document.getElementById('gcal-detail-body');
+  var arrow = document.getElementById('gcal-detail-arrow');
+  if (!body) return;
+  var isOpen = body.style.display !== 'none';
+  body.style.display  = isOpen ? 'none' : '';
+  if (arrow) arrow.style.transform = isOpen ? '' : 'rotate(90deg)';
+}
+
+function renderGoalsDayDetailContent(dateStr) {
+  var detail = document.getElementById('gcal-detail');
+  var title  = document.getElementById('gcal-detail-title');
+  var list   = document.getElementById('gcal-detail-list');
+  if (!detail || !title || !list) return;
+
+  var d = new Date(dateStr + 'T00:00:00');
+  var dayName = getDaysArr()[d.getDay()];
+  title.textContent = dayName + ', ' + d.getDate() + ' ' + getMonthsArr()[d.getMonth()] + ' ' + d.getFullYear();
+
+  var html = '';
+  var anyGoal = false, totalCount = 0, doneCount = 0;
+
+  (S.goals || []).forEach(function(g) {
+    if (g.startDate && dateStr < g.startDate) return;
+    if (!isGoalDueOnDate(g, dateStr)) return;
+    anyGoal = true;
+
+    var checked = !!(g.daysChecked && g.daysChecked[dateStr]);
+    totalCount++;
+    if (checked) doneCount++;
+
+    var icon  = checked ? '✅' : '⬜';
+    var coins = checked ? ('+' + g.coins + ' 🪙') : '';
+
+    html +=
+      '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:rgba(124,92,252,0.08);border:1px solid rgba(124,92,252,0.25);border-radius:var(--radius-sm)">' +
+        '<button onclick="gcalToggleGoal(' + g.id + ',\'' + dateStr + '\')" title="' + esc(t('goal_check_done_today')) + '" ' +
+          'style="background:none;border:none;padding:0;margin:0;cursor:pointer;font-size:var(--fs-md);flex-shrink:0;line-height:1">' + icon + '</button>' +
+        '<span style="flex:1;font-size:var(--fs-sm);color:var(--text)">' + esc(g.emoji||'🎯') + ' ' + esc(g.name) + '</span>' +
+        '<span style="font-size:var(--fs-xs);color:#F5A623;font-weight:600">' + coins + '</span>' +
+      '</div>';
+  });
+
+  if (!anyGoal) {
+    html = '<div style="color:var(--text-dim);font-size:var(--fs-sm);text-align:center;padding:12px">' + esc(t('goals_cal_day_empty')) + '</div>';
+  }
+
+  list.innerHTML = html;
+
+  var progressEl = document.getElementById('gcal-detail-progress');
+  if (progressEl) {
+    if (anyGoal) {
+      progressEl.textContent = doneCount + '/' + totalCount;
+      progressEl.style.color = doneCount === totalCount ? '#34D399' : 'var(--text-dim)';
+    } else {
+      progressEl.textContent = '';
+    }
+  }
+}
+
+function showGoalsDayDetail(dateStr) {
+  var detail = document.getElementById('gcal-detail');
+  if (!detail) return;
+
+  renderGoalsDayDetailContent(dateStr);
+
+  var arrow = document.getElementById('gcal-detail-arrow');
+  var body  = document.getElementById('gcal-detail-body');
+  var alreadyOpen = detail.dataset.openDate === dateStr && body && body.style.display !== 'none';
+  detail.style.display = '';
+  detail.dataset.openDate = dateStr;
+  if (body) body.style.display = alreadyOpen ? 'none' : '';
+  if (arrow) arrow.style.transform = alreadyOpen ? '' : 'rotate(90deg)';
+
+  if (!alreadyOpen) {
+    setTimeout(function () {
+      try { detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {}
+    }, 50);
+  }
+}
+
+// Maqsadlar kalendari kun-detali ichidagi ✅/⬜ bosilganda ishlaydi —
+// _goalToggleDateCore bitta umumiy manba bo'lgani uchun bugungi va o'tgan
+// kunlar uchun ham tanga/holat mantig'i har doim bir xil va izchil bo'ladi.
+function gcalToggleGoal(id, dateStr) {
+  var g = (S.goals || []).find(function(x){ return x.id === id; });
+  if (!g) return;
+  var td = today();
+  if (dateStr > td) return;
+  if (!isGoalDueOnDate(g, dateStr)) { toast(t('goal_not_today')); return; }
+
+  var result = _goalToggleDateCore(g, dateStr);
+  if (result.nowChecked) {
+    toast(g.emoji + ' ' + dateStr + ' — +' + result.coinAward + ' 🪙');
+    if (dateStr === td) { confetti(); SFX.coin(); }
+  } else {
+    toast(t('goal_mark_removed_toast'));
+  }
+  if (result.justCompleted) toast('🏆 ' + g.emoji + ' ' + t('goal_completed'));
+
+  save(); renderGoalsCalendar(); showGoalsDayDetail(dateStr); renderGoals(); render();
+}
+
+
+// 🔴 TUZATILDI (v2): ilgari native window.confirm() ishlatilgan edi —
+// PWA "standalone" rejimida (uy ekraniga qo'shilgan ilova) va ko'plab
+// mobil in-app brauzerlarda (Instagram, Telegram va h.k. ichki brauzeri)
+// window.confirm() ISHLAMAYDI yoki hech narsa ko'rsatmasdan sukut bo'yicha
+// false qaytaradi — natijada tugma "bosilmayotgandek" ko'rinardi, chunki
+// funksiya darhol (return) bilan to'xtab qolardi va hech qanday tasdiqlash
+// oynasi chiqmasdi. Endi ilovaning boshqa joylarida ishlatilgan mavjud
+// showConfirmModal() ga o'tkazildi — bu barcha
+// muhitlarda (PWA, in-app brauzerlar) ishonchli ishlaydi.
+function deleteGoal(id) {
   var g = (S.goals||[]).find(function(x){return x.id===id;});
   if (!g) return;
   var name = g.name || '';
@@ -22073,7 +22460,7 @@ function renderGoalCalendar() {
   showConfirmModal(msg, function(){
     try{SFX.delete();}catch(e){}
     S.goals = (S.goals||[]).filter(function(x){return x.id!==id;});
-    save(); renderGoals(); toast(t('goal_deleted_toast'));
+    save(); renderGoals(); renderGoalsCalendar(); toast(t('goal_deleted_toast'));
   }, { icon: '🗑️' });
 }
 
@@ -22146,6 +22533,7 @@ function renderGoals() {
         '</div>' +
         '<div style="display:flex;align-items:center;gap:4px">' +
           '<span style="font-size:var(--fs-2xs);font-weight:600;color:'+coinColor+';background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:var(--radius-full);padding:3px 8px">' + coinLabel + '</span>' +
+          '<button onclick="openGoalCalendar('+g.id+')" title="' + esc(t('goal_cal_subtitle')) + '" style="background:none;border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 8px;font-size:var(--fs-2xs);color:var(--text-muted);cursor:pointer">📅</button>' +
           '<button onclick="openGoalModal('+g.id+')" style="background:none;border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 8px;font-size:var(--fs-2xs);color:var(--text-muted);cursor:pointer">✏️</button>' +
           '<button onclick="deleteGoal('+g.id+')" style="background:none;border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 8px;font-size:var(--fs-2xs);color:var(--text-muted);cursor:pointer">🗑</button>' +
         '</div>' +
